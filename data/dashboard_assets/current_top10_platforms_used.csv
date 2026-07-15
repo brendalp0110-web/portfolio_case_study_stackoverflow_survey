@@ -1,0 +1,11 @@
+platform,count,rank,share_pct
+Amazon Web Services (AWS),10871,1,26.46
+Microsoft Azure,6681,2,16.26
+Google Cloud,5537,3,13.48
+Cloudflare,3874,4,9.43
+Digital Ocean,3170,5,7.71
+Firebase,3025,6,7.36
+Vercel,2875,7,7.0
+Heroku,2002,8,4.87
+Netlify,1662,9,4.04
+Hetzner,1392,10,3.39

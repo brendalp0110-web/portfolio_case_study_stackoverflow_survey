@@ -1,0 +1,11 @@
+database,count,rank,share_pct
+PostgreSQL,11514,1,20.43
+MySQL,8556,2,15.18
+SQLite,7021,3,12.46
+MongoDB,5930,4,10.52
+Microsoft SQL Server,5870,5,10.41
+Redis,5814,6,10.31
+MariaDB,3994,7,7.09
+Elasticsearch,3491,8,6.19
+Dynamodb,2268,9,4.02
+Oracle,1907,10,3.38

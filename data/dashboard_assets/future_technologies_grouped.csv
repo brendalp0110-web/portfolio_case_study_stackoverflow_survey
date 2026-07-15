@@ -1,0 +1,11 @@
+rank,future_language,future_language_count,future_language_share_pct,future_database,future_database_count,future_database_share_pct,future_platform,future_platform_count,future_platform_share_pct,future_web_framework,future_web_framework_count,future_web_framework_share_pct
+1,JavaScript,11541,14.73,PostgreSQL,12193,23.65,Amazon Web Services (AWS),10516,26.85,React,8223,18.94
+2,SQL,10944,13.97,Redis,6384,12.38,Microsoft Azure,6380,16.29,Node.js,8096,18.64
+3,TypeScript,10437,13.32,SQLite,6295,12.21,Google Cloud,5431,13.87,Next.js,4458,10.27
+4,HTML/CSS,10016,12.79,MySQL,6204,12.03,Cloudflare,4219,10.77,ASP.NET CORE,4166,9.59
+5,Python,8919,11.39,MongoDB,5618,10.9,Digital Ocean,2908,7.43,Vue.js,3903,8.99
+6,Go,5661,7.23,Microsoft SQL Server,4345,8.43,Vercel,2776,7.09,Angular,3309,7.62
+7,Rust,5597,7.14,Elasticsearch,3665,7.11,Firebase,2720,6.95,Express,3216,7.41
+8,C#,5590,7.14,MariaDB,3078,5.97,Hetzner,1577,4.03,FastAPI,2823,6.5
+9,Bash/Shell (all shells),5582,7.13,Dynamodb,2154,4.18,Supabase,1368,3.49,Spring Boot,2674,6.16
+10,Java,4048,5.17,Supabase,1623,3.15,Netlify,1267,3.24,Svelte,2559,5.89

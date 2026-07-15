@@ -1,0 +1,11 @@
+rank,current_language,current_language_count,current_language_share_pct,current_database,current_database_count,current_database_share_pct,current_platform,current_platform_count,current_platform_share_pct,current_web_framework,current_web_framework_count,current_web_framework_share_pct
+1,JavaScript,14943,17.0,PostgreSQL,11514,20.43,Amazon Web Services (AWS),10871,26.46,Node.js,9230,18.51
+2,SQL,12602,14.34,MySQL,8556,15.18,Microsoft Azure,6681,16.26,React,8999,18.05
+3,HTML/CSS,12410,14.12,SQLite,7021,12.46,Google Cloud,5537,13.48,jQuery,4810,9.65
+4,TypeScript,10709,12.18,MongoDB,5930,10.52,Cloudflare,3874,9.43,Express,4408,8.84
+5,Python,9590,10.91,Microsoft SQL Server,5870,10.41,Digital Ocean,3170,7.71,Next.js,4399,8.82
+6,Bash/Shell (all shells),7244,8.24,Redis,5814,10.31,Firebase,3025,7.36,ASP.NET CORE,4319,8.66
+7,C#,6340,7.21,MariaDB,3994,7.09,Vercel,2875,7.0,Angular,4038,8.1
+8,Java,5982,6.81,Elasticsearch,3491,6.19,Heroku,2002,4.87,Vue.js,3642,7.31
+9,PHP,4644,5.28,Dynamodb,2268,4.02,Netlify,1662,4.04,ASP.NET,3094,6.21
+10,PowerShell,3438,3.91,Oracle,1907,3.38,Hetzner,1392,3.39,Spring Boot,2916,5.85
