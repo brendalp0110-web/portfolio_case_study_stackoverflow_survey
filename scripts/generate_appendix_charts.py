@@ -34,7 +34,7 @@ AGE_MID_MAP = {
 
 
 def load_dataset() -> pd.DataFrame:
-    preferred = DATA_DIR / "survey_data_correlation_ready.csv"
+    preferred = DATA_DIR / "cleaned_outputs" / "survey_data_cleaned_reduced.csv"
     fallback = DATA_DIR / "survey_data_updated.csv"
     source = preferred if preferred.exists() else fallback
     return pd.read_csv(source)
