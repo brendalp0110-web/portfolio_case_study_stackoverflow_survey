@@ -1,8 +1,8 @@
 # Curation Notes
 
-## Goal of the Curated Folder
+## Goal of the Project Folder
 
-Turn a course capstone workspace into a portfolio-friendly case study that highlights analytical judgment, reproducibility, and communication.
+Shape the repository into a portfolio-friendly case study that highlights analytical judgment, reproducibility, and communication.
 
 ## What Was Kept
 
@@ -14,13 +14,13 @@ Turn a course capstone workspace into a portfolio-friendly case study that highl
 
 ## What Was Intentionally Left Out
 
-- Course labs with vendor branding and assignment instructions.
-- Intermediate files whose main purpose is classroom progression rather than portfolio storytelling.
+- Legacy worksheets, duplicate exports, and setup-heavy materials that distract from the main narrative.
+- Intermediate files whose main purpose is process overhead rather than portfolio storytelling.
 - Large numbers of near-duplicate notebooks that dilute the main narrative.
 
 ## Initial Weaknesses Still Present
 
-- The notebook still contains traces of lab framing and should be rewritten later.
+- The project can still sharpen its opening business framing and intended audience.
 - The project needs a stronger business-facing problem statement and audience definition.
 - Some findings are descriptive but not yet turned into recommendations or decision support.
 

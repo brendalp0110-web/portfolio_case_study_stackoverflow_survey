@@ -1,0 +1,20 @@
+summary_type,category,job_postings
+location,Washington DC,5316
+location,Detroit,3945
+location,Seattle,3375
+location,New York,3226
+location,Los Angeles,640
+location,San Francisco,435
+location,Austin,434
+technology,JavaScript,2248
+technology,C,1655
+technology,Java,1601
+technology,Python,1173
+technology,Oracle,899
+technology,C#,526
+technology,C++,506
+technology,SQL Server,423
+technology,MongoDB,208
+technology,Scala,138
+technology,PostgreSQL,86
+technology,MySQL Server,0

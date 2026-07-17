@@ -48,7 +48,7 @@ Numeric columns preserved without additional imputation:
 
 Note:
 
-- `ConvertedCompYearly` and its derived normalization columns had already been handled in prior labs and were recomputed consistently in the new output.
+- `ConvertedCompYearly` and its derived normalization columns were already part of the prior workflow and were recomputed consistently in the new output.
 
 ### Categorical variables
 
@@ -232,5 +232,5 @@ Reasoning:
 
 Result:
 
-- `survey-data-correlation-ready.csv` is the softened output for the correlation lab.
+- `survey-data-correlation-ready.csv` is the softened output for the correlation-ready stage.
 - This version preserves substantially more rows while still removing the most extreme values.
