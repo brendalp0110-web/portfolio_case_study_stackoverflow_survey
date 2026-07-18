@@ -1,0 +1,306 @@
+from __future__ import annotations
+
+import math
+from typing import List
+
+import pandas as pd
+from bokeh.models import ColorBar, ColumnDataSource, FactorRange, HoverTool, LinearColorMapper, NumeralTickFormatter
+from bokeh.palettes import Viridis256
+from bokeh.plotting import figure
+from bokeh.tile_providers import Vendors, get_provider
+
+
+PLOT_TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
+TECH_COLORS = {
+    "languages": "#2f6690",
+    "databases": "#f28e2b",
+    "platforms": "#59a14f",
+    "frameworks": "#e15759",
+}
+WORLD_X_RANGE = (-20_000_000, 20_000_000)
+WORLD_Y_RANGE = (-7_000_000, 18_500_000)
+REMOTE_COLORS = {
+    "Remote": "#2f6690",
+    "Hybrid": "#59a14f",
+    "In-person": "#e15759",
+}
+
+
+def _format_axis(plot: figure, metric_mode: str) -> None:
+    if metric_mode == "Share of respondents":
+        plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
+
+
+def make_horizontal_bar_chart(
+    data: pd.DataFrame,
+    category_col: str,
+    value_col: str,
+    title: str,
+    metric_mode: str,
+    color: str,
+) -> figure:
+    chart_data = data.sort_values(value_col, ascending=True).copy()
+    source = ColumnDataSource(chart_data)
+
+    height = max(320, 45 * len(chart_data) + 80)
+    plot = figure(
+        y_range=chart_data[category_col].tolist(),
+        x_range=(0, max(chart_data[value_col].max() * 1.15, 1)),
+        height=height,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+    )
+    plot.hbar(y=category_col, right=value_col, height=0.7, color=color, source=source)
+    plot.ygrid.grid_line_color = None
+    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
+    plot.yaxis.axis_label = ""
+    plot.add_tools(
+        HoverTool(
+            tooltips=[
+                (category_col.replace("_", " ").title(), "@{" + category_col + "}"),
+                ("Count", "@count{0,0}"),
+                ("Share %", "@share_pct{0.0}"),
+            ]
+        )
+    )
+    _format_axis(plot, metric_mode)
+    return plot
+
+
+def _lon_to_mercator(longitude: float) -> float:
+    return longitude * 20037508.34 / 180
+
+
+def _lat_to_mercator(latitude: float) -> float:
+    latitude = max(min(latitude, 89.5), -89.5)
+    radians = math.radians(latitude)
+    return math.log(math.tan((math.pi / 4) + (radians / 2))) * 6378137.0
+
+
+def make_country_bubble_map(
+    data: pd.DataFrame,
+    title: str,
+    metric_mode: str,
+) -> figure:
+    chart_data = data.copy()
+    value_col = "share_pct" if metric_mode == "Share of respondents" else "count"
+
+    chart_data["mercator_x"] = chart_data["longitude"].astype(float).map(_lon_to_mercator)
+    chart_data["mercator_y"] = chart_data["latitude"].astype(float).map(_lat_to_mercator)
+
+    values = chart_data[value_col].astype(float)
+    if values.nunique() == 1:
+        chart_data["bubble_size"] = 24
+    else:
+        scaled = (values - values.min()) / (values.max() - values.min())
+        chart_data["bubble_size"] = 14 + scaled * 26
+
+    mapper = LinearColorMapper(
+        palette=Viridis256,
+        low=float(chart_data["share_pct"].min()),
+        high=float(chart_data["share_pct"].max()),
+    )
+    source = ColumnDataSource(chart_data)
+
+    plot = figure(
+        x_axis_type="mercator",
+        y_axis_type="mercator",
+        x_range=WORLD_X_RANGE,
+        y_range=WORLD_Y_RANGE,
+        height=430,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+        active_scroll="wheel_zoom",
+    )
+    plot.add_tile(get_provider(Vendors.CARTODBPOSITRON))
+    renderer = plot.circle(
+        x="mercator_x",
+        y="mercator_y",
+        size="bubble_size",
+        source=source,
+        fill_color={"field": "share_pct", "transform": mapper},
+        line_color="white",
+        line_width=1.2,
+        fill_alpha=0.85,
+    )
+    plot.add_tools(
+        HoverTool(
+            renderers=[renderer],
+            tooltips=[
+                ("Country", "@country"),
+                ("Count", "@count{0,0}"),
+                ("Share %", "@share_pct{0.0}"),
+            ],
+        )
+    )
+    color_bar = ColorBar(color_mapper=mapper, title="Share %", location=(0, 0))
+    plot.add_layout(color_bar, "right")
+    plot.xaxis.visible = False
+    plot.yaxis.visible = False
+    plot.xgrid.visible = False
+    plot.ygrid.visible = False
+    plot.outline_line_color = "#d9e2ec"
+    return plot
+
+
+def make_dumbbell_chart(
+    data: pd.DataFrame,
+    label_col: str,
+    current_col: str,
+    future_col: str,
+    title: str,
+    metric_mode: str,
+) -> figure:
+    chart_data = data.sort_values(future_col, ascending=False).reset_index(drop=True).copy()
+
+    source = ColumnDataSource(chart_data)
+    category_range = chart_data[label_col].tolist()
+    x_max = max(chart_data[[current_col, future_col]].max().max() * 1.15, 1)
+
+    plot = figure(
+        y_range=category_range,
+        x_range=(0, x_max),
+        height=max(420, 42 * len(chart_data) + 120),
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+    )
+    plot.segment(
+        x0=current_col,
+        y0=label_col,
+        x1=future_col,
+        y1=label_col,
+        source=source,
+        line_width=3,
+        color="#9aa5b1",
+        alpha=0.9,
+    )
+    current_renderer = plot.circle(
+        x=current_col,
+        y=label_col,
+        size=11,
+        color="#2f6690",
+        line_color="white",
+        line_width=1,
+        source=source,
+        legend_label="Current",
+    )
+    future_renderer = plot.circle(
+        x=future_col,
+        y=label_col,
+        size=11,
+        color="#f28e2b",
+        line_color="white",
+        line_width=1,
+        source=source,
+        legend_label="Future",
+    )
+    plot.ygrid.grid_line_color = None
+    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
+    plot.yaxis.axis_label = ""
+    plot.legend.location = "top_left"
+    plot.legend.orientation = "horizontal"
+    plot.add_tools(
+        HoverTool(
+            renderers=[current_renderer, future_renderer],
+            tooltips=[
+                (label_col.replace("_", " ").title(), "@{" + label_col + "}"),
+                ("Current count", "@count_current{0,0}"),
+                ("Future count", "@count_future{0,0}"),
+                ("Current share %", "@share_pct_current{0.0}"),
+                ("Future share %", "@share_pct_future{0.0}"),
+                ("Delta share %", "@delta_share_pct{0.0}"),
+            ],
+        )
+    )
+    _format_axis(plot, metric_mode)
+    return plot
+
+
+def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
+    chart_data = data.copy()
+    categories = chart_data["Age"].tolist()
+    stacks: List[str] = [column for column in chart_data.columns if column != "Age"]
+    colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
+
+    source = ColumnDataSource(chart_data)
+    plot = figure(
+        x_range=categories,
+        height=430,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+    )
+    renderers = plot.vbar_stack(stacks, x="Age", width=0.8, color=colors[: len(stacks)], source=source, legend_label=stacks)
+    plot.xaxis.major_label_orientation = 0.8
+    plot.yaxis.axis_label = "Respondent count"
+    plot.legend.location = "top_right"
+    plot.legend.click_policy = "hide"
+    plot.add_tools(
+        HoverTool(
+            renderers=renderers,
+            tooltips=[("Age group", "@Age"), ("Count", "$y{0,0}")]
+        )
+    )
+    return plot
+
+
+def make_grouped_box_plot(data: pd.DataFrame, title: str) -> figure:
+    chart_data = data.copy()
+    chart_data["box_color"] = chart_data["remote_label"].map(REMOTE_COLORS).fillna("#2f6690")
+    source = ColumnDataSource(chart_data)
+    categories = chart_data["factor"].tolist()
+    y_max = max(chart_data["upper"].max() * 1.1, 1)
+
+    plot = figure(
+        x_range=FactorRange(*categories),
+        y_range=(0, y_max),
+        height=420,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+    )
+    plot.segment("factor", "upper", "factor", "q3", source=source, line_color="#334e68")
+    plot.segment("factor", "lower", "factor", "q1", source=source, line_color="#334e68")
+    upper_boxes = plot.vbar(
+        "factor",
+        0.75,
+        "q2",
+        "q3",
+        source=source,
+        fill_color="box_color",
+        fill_alpha=0.8,
+        line_color="#243b53",
+    )
+    lower_boxes = plot.vbar(
+        "factor",
+        0.75,
+        "q1",
+        "q2",
+        source=source,
+        fill_color="box_color",
+        fill_alpha=0.45,
+        line_color="#243b53",
+    )
+    plot.rect("factor", "lower", 0.25, 0.01, source=source, line_color="#243b53")
+    plot.rect("factor", "upper", 0.25, 0.01, source=source, line_color="#243b53")
+    plot.xaxis.major_label_orientation = 1.0
+    plot.yaxis.axis_label = "Converted annual compensation"
+    plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
+    plot.add_tools(
+        HoverTool(
+            renderers=[upper_boxes, lower_boxes],
+            tooltips=[
+                ("Work style", "@remote_label"),
+                ("Experience band", "@experience_band"),
+                ("Median", "@q2{0,0}"),
+                ("Mean", "@mean{0,0}"),
+                ("Count", "@count{0,0}"),
+            ]
+        )
+    )
+    plot.x_range.group_padding = 0.15
+    plot.xaxis.separator_line_color = "#bcccdc"
+    return plot
