@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 import pandas as pd
 
@@ -177,14 +177,16 @@ def build_comparison_table(
     return merged
 
 
-def top_country_distribution(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
-    counts = df["Country"].value_counts().head(top_n)
+def top_country_distribution(df: pd.DataFrame, top_n: Optional[int] = 10) -> pd.DataFrame:
+    counts = df["Country"].value_counts()
+    if top_n is not None:
+        counts = counts.head(top_n)
     result = counts.rename_axis("country").reset_index(name="count")
     result["share_pct"] = (result["count"] / max(len(df), 1) * 100).round(2)
     return result
 
 
-def country_map_distribution(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
+def country_map_distribution(df: pd.DataFrame, top_n: Optional[int] = 10) -> pd.DataFrame:
     countries = top_country_distribution(df, top_n=top_n).copy()
     countries["country_lookup"] = countries["country"].replace(COUNTRY_NAME_ALIASES)
     countries = countries[countries["country"] != "Nomadic"]
@@ -323,8 +325,9 @@ def age_workexp_sample(df: pd.DataFrame, sample_size: int = 3000) -> pd.DataFram
 
 def build_kpis(df: pd.DataFrame) -> dict:
     median_salary = float(df["ConvertedCompYearly"].median()) if not df.empty else 0.0
+    countries = df.loc[df["Country"] != "Nomadic", "Country"].nunique()
     return {
         "respondents": int(len(df)),
-        "countries": int(df["Country"].nunique()),
+        "countries": int(countries),
         "median_salary": median_salary,
     }

@@ -31,6 +31,18 @@ def _format_axis(plot: figure, metric_mode: str) -> None:
         plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
 
 
+def _apply_readability_theme(plot: figure) -> None:
+    plot.title.text_font_size = "15pt"
+    plot.title.text_font_style = "bold"
+    plot.xaxis.axis_label_text_font_size = "11pt"
+    plot.yaxis.axis_label_text_font_size = "11pt"
+    plot.xaxis.major_label_text_font_size = "10pt"
+    plot.yaxis.major_label_text_font_size = "10pt"
+    plot.toolbar.logo = None
+    if plot.legend:
+        plot.legend.label_text_font_size = "10pt"
+
+
 def make_horizontal_bar_chart(
     data: pd.DataFrame,
     category_col: str,
@@ -42,7 +54,7 @@ def make_horizontal_bar_chart(
     chart_data = data.sort_values(value_col, ascending=True).copy()
     source = ColumnDataSource(chart_data)
 
-    height = max(320, 45 * len(chart_data) + 80)
+    height = max(430, 44 * len(chart_data) + 100)
     plot = figure(
         y_range=chart_data[category_col].tolist(),
         x_range=(0, max(chart_data[value_col].max() * 1.15, 1)),
@@ -50,6 +62,7 @@ def make_horizontal_bar_chart(
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
+        sizing_mode="stretch_width",
     )
     plot.hbar(y=category_col, right=value_col, height=0.7, color=color, source=source)
     plot.ygrid.grid_line_color = None
@@ -65,6 +78,7 @@ def make_horizontal_bar_chart(
         )
     )
     _format_axis(plot, metric_mode)
+    _apply_readability_theme(plot)
     return plot
 
 
@@ -82,6 +96,7 @@ def make_country_bubble_map(
     data: pd.DataFrame,
     title: str,
     metric_mode: str,
+    height: int = 480,
 ) -> figure:
     chart_data = data.copy()
     value_col = "share_pct" if metric_mode == "Share of respondents" else "count"
@@ -108,11 +123,12 @@ def make_country_bubble_map(
         y_axis_type="mercator",
         x_range=WORLD_X_RANGE,
         y_range=WORLD_Y_RANGE,
-        height=430,
+        height=height,
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
         active_scroll="wheel_zoom",
+        sizing_mode="stretch_width",
     )
     plot.add_tile(get_provider(Vendors.CARTODBPOSITRON))
     renderer = plot.circle(
@@ -142,6 +158,7 @@ def make_country_bubble_map(
     plot.xgrid.visible = False
     plot.ygrid.visible = False
     plot.outline_line_color = "#d9e2ec"
+    _apply_readability_theme(plot)
     return plot
 
 
@@ -162,10 +179,11 @@ def make_dumbbell_chart(
     plot = figure(
         y_range=category_range,
         x_range=(0, x_max),
-        height=max(420, 42 * len(chart_data) + 120),
+        height=max(440, 40 * len(chart_data) + 120),
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
+        sizing_mode="stretch_width",
     )
     plot.segment(
         x0=current_col,
@@ -216,6 +234,7 @@ def make_dumbbell_chart(
         )
     )
     _format_axis(plot, metric_mode)
+    _apply_readability_theme(plot)
     return plot
 
 
@@ -228,10 +247,11 @@ def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     source = ColumnDataSource(chart_data)
     plot = figure(
         x_range=categories,
-        height=430,
+        height=500,
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
+        sizing_mode="stretch_width",
     )
     renderers = plot.vbar_stack(stacks, x="Age", width=0.8, color=colors[: len(stacks)], source=source, legend_label=stacks)
     plot.xaxis.major_label_orientation = 0.8
@@ -244,6 +264,109 @@ def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
             tooltips=[("Age group", "@Age"), ("Count", "$y{0,0}")]
         )
     )
+    _apply_readability_theme(plot)
+    return plot
+
+
+def make_age_percent_bar_chart(data: pd.DataFrame, title: str) -> figure:
+    chart_data = data.copy()
+    chart_data = chart_data[chart_data["count"] > 0].iloc[::-1].reset_index(drop=True)
+    source = ColumnDataSource(chart_data)
+
+    plot = figure(
+        y_range=chart_data["age"].tolist(),
+        x_range=(0, max(chart_data["share_pct"].max() * 1.15, 1)),
+        height=500,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+        sizing_mode="stretch_width",
+    )
+    plot.hbar(y="age", right="share_pct", height=0.72, color="#2f6690", source=source)
+    plot.ygrid.grid_line_color = None
+    plot.xaxis.axis_label = "Share of respondents (%)"
+    plot.yaxis.axis_label = "Age group"
+    plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
+    plot.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Age group", "@age"),
+                ("Count", "@count{0,0}"),
+                ("Share", "@share_pct{0.0}%"),
+            ]
+        )
+    )
+    _apply_readability_theme(plot)
+    return plot
+
+
+def make_percent_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
+    source_data = data.copy()
+    stacks: List[str] = [column for column in source_data.columns if column != "Age"]
+    colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
+
+    long_rows = []
+    for _, row in source_data.iterrows():
+        total = float(row[stacks].sum())
+        bottom = 0.0
+        for stack in stacks:
+            count = float(row[stack])
+            share = count / total * 100 if total else 0.0
+            top = bottom + share
+            long_rows.append(
+                {
+                    "Age": row["Age"],
+                    "education_level": stack,
+                    "count": count,
+                    "share_pct": share,
+                    "bottom": bottom,
+                    "top": top,
+                    "color": colors[stacks.index(stack) % len(colors)],
+                }
+            )
+            bottom = top
+
+    chart_data = pd.DataFrame(long_rows)
+    categories = source_data["Age"].tolist()
+    source = ColumnDataSource(chart_data)
+
+    plot = figure(
+        x_range=categories,
+        y_range=(0, 100),
+        height=500,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+        sizing_mode="stretch_width",
+    )
+    bars = plot.vbar(
+        x="Age",
+        width=0.8,
+        bottom="bottom",
+        top="top",
+        fill_color="color",
+        line_color="white",
+        source=source,
+        legend_field="education_level",
+    )
+    plot.xaxis.major_label_orientation = 0.8
+    plot.yaxis.axis_label = "Share within age group (%)"
+    plot.xaxis.axis_label = "Age group"
+    plot.yaxis.formatter = NumeralTickFormatter(format="0")
+    plot.legend.location = "top_right"
+    plot.legend.click_policy = "hide"
+    plot.add_tools(
+        HoverTool(
+            renderers=[bars],
+            tooltips=[
+                ("Age group", "@Age"),
+                ("Education level", "@education_level"),
+                ("Count", "@count{0,0}"),
+                ("Share within age", "@share_pct{0.0}%"),
+            ]
+        )
+    )
+    _apply_readability_theme(plot)
     return plot
 
 
@@ -257,10 +380,11 @@ def make_grouped_box_plot(data: pd.DataFrame, title: str) -> figure:
     plot = figure(
         x_range=FactorRange(*categories),
         y_range=(0, y_max),
-        height=420,
+        height=500,
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
+        sizing_mode="stretch_width",
     )
     plot.segment("factor", "upper", "factor", "q3", source=source, line_color="#334e68")
     plot.segment("factor", "lower", "factor", "q1", source=source, line_color="#334e68")
@@ -303,4 +427,68 @@ def make_grouped_box_plot(data: pd.DataFrame, title: str) -> figure:
     )
     plot.x_range.group_padding = 0.15
     plot.xaxis.separator_line_color = "#bcccdc"
+    _apply_readability_theme(plot)
+    return plot
+
+
+def make_compensation_experience_box_plot(
+    data: pd.DataFrame,
+    title: str,
+    y_max: float,
+    color: str,
+) -> figure:
+    chart_data = data.copy()
+    chart_data["factor"] = chart_data["experience_band"].astype(str)
+    source = ColumnDataSource(chart_data)
+    categories = chart_data["factor"].tolist()
+
+    plot = figure(
+        x_range=categories,
+        y_range=(0, max(y_max, 1)),
+        height=500,
+        title=title,
+        tools=PLOT_TOOLS,
+        toolbar_location="right",
+        sizing_mode="stretch_width",
+    )
+    plot.segment("factor", "upper", "factor", "q3", source=source, line_color="#334e68")
+    plot.segment("factor", "lower", "factor", "q1", source=source, line_color="#334e68")
+    upper_boxes = plot.vbar(
+        "factor",
+        0.68,
+        "q2",
+        "q3",
+        source=source,
+        fill_color=color,
+        fill_alpha=0.85,
+        line_color="#243b53",
+    )
+    lower_boxes = plot.vbar(
+        "factor",
+        0.68,
+        "q1",
+        "q2",
+        source=source,
+        fill_color=color,
+        fill_alpha=0.45,
+        line_color="#243b53",
+    )
+    plot.rect("factor", "lower", 0.24, 0.01, source=source, line_color="#243b53")
+    plot.rect("factor", "upper", 0.24, 0.01, source=source, line_color="#243b53")
+    plot.xaxis.major_label_orientation = 0.8
+    plot.xaxis.axis_label = "Experience band"
+    plot.yaxis.axis_label = "Converted annual compensation"
+    plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
+    plot.add_tools(
+        HoverTool(
+            renderers=[upper_boxes, lower_boxes],
+            tooltips=[
+                ("Experience band", "@experience_band"),
+                ("Median", "@q2{0,0}"),
+                ("Mean", "@mean{0,0}"),
+                ("Count", "@count{0,0}"),
+            ]
+        )
+    )
+    _apply_readability_theme(plot)
     return plot
