@@ -268,25 +268,26 @@ def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     return plot
 
 
-def make_age_percent_bar_chart(data: pd.DataFrame, title: str) -> figure:
+def make_age_percent_bar_chart(data: pd.DataFrame, title: str, metric_mode: str) -> figure:
     chart_data = data.copy()
     chart_data = chart_data[chart_data["count"] > 0].iloc[::-1].reset_index(drop=True)
+    value_col = "share_pct" if metric_mode == "Share of respondents" else "count"
     source = ColumnDataSource(chart_data)
 
     plot = figure(
         y_range=chart_data["age"].tolist(),
-        x_range=(0, max(chart_data["share_pct"].max() * 1.15, 1)),
+        x_range=(0, max(chart_data[value_col].max() * 1.15, 1)),
         height=500,
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    plot.hbar(y="age", right="share_pct", height=0.72, color="#2f6690", source=source)
+    plot.hbar(y="age", right=value_col, height=0.72, color="#2f6690", source=source)
     plot.ygrid.grid_line_color = None
-    plot.xaxis.axis_label = "Share of respondents (%)"
+    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
     plot.yaxis.axis_label = "Age group"
-    plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
+    _format_axis(plot, metric_mode)
     plot.add_tools(
         HoverTool(
             tooltips=[

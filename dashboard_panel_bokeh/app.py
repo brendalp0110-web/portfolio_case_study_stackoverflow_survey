@@ -117,29 +117,45 @@ age_filter = pn.widgets.MultiSelect(
     value=AGE_ORDER,
     size=8,
 )
+age_filter_enabled = pn.widgets.Checkbox(name="Activate Age filter", value=True)
 remote_filter = pn.widgets.CheckBoxGroup(
-    name="Remote work",
+    name="Workstyle",
     options=REMOTE_OPTIONS,
     value=REMOTE_OPTIONS,
 )
+remote_filter_enabled = pn.widgets.Checkbox(name="Activate Workstyle filter", value=True)
 country_scope = pn.widgets.Select(
     name="Country scope",
-    options=["All respondents", "Top 10 countries only"],
-    value="All respondents",
+    options=["All countries", "Top N countries"],
+    value="All countries",
 )
-metric_selector = pn.widgets.Select(
+country_filter_enabled = pn.widgets.Checkbox(name="Activate Countries filter", value=True)
+metric_selector = pn.widgets.RadioButtonGroup(
     name="Metric",
     options=["Respondent count", "Share of respondents"],
     value="Respondent count",
+    button_type="primary",
 )
-top_n_selector = pn.widgets.IntSlider(name="Top N", start=5, end=12, step=1, value=10)
+metric_filter_enabled = pn.widgets.Checkbox(name="Activate Metrics filter", value=True)
+top_n_selector = pn.widgets.RadioButtonGroup(
+    name="Top N",
+    options=[5, 10, 12],
+    value=10,
+    button_type="primary",
+)
+top_n_filter_enabled = pn.widgets.Checkbox(name="Activate Top N filter", value=True)
 reset_button = pn.widgets.Button(name="Reset filters", button_type="primary")
 
 
 def reset_filters(event) -> None:
+    top_n_filter_enabled.value = True
+    age_filter_enabled.value = True
+    remote_filter_enabled.value = True
+    country_filter_enabled.value = True
+    metric_filter_enabled.value = True
     age_filter.value = list(AGE_ORDER)
     remote_filter.value = list(REMOTE_OPTIONS)
-    country_scope.value = "All respondents"
+    country_scope.value = "All countries"
     metric_selector.value = "Respondent count"
     top_n_selector.value = 10
 
@@ -147,8 +163,64 @@ def reset_filters(event) -> None:
 reset_button.on_click(reset_filters)
 
 
-def _filtered_df(selected_ages, selected_remote, selected_country_scope):
-    filtered = filter_dataset(BASE_DF, selected_ages, selected_remote, selected_country_scope)
+def _sync_filter_control_states(event=None) -> None:
+    top_n_selector.disabled = not top_n_filter_enabled.value
+    age_filter.disabled = not age_filter_enabled.value
+    remote_filter.disabled = not remote_filter_enabled.value
+    country_scope.disabled = not country_filter_enabled.value
+    metric_selector.disabled = not metric_filter_enabled.value
+
+
+for toggle in [
+    top_n_filter_enabled,
+    age_filter_enabled,
+    remote_filter_enabled,
+    country_filter_enabled,
+    metric_filter_enabled,
+]:
+    toggle.param.watch(_sync_filter_control_states, "value")
+
+_sync_filter_control_states()
+
+
+def _effective_top_n(selected_top_n, use_top_n):
+    return int(selected_top_n) if use_top_n else 10
+
+
+def _effective_ages(selected_ages, use_age):
+    return list(selected_ages) if use_age else list(AGE_ORDER)
+
+
+def _effective_remote(selected_remote, use_remote):
+    return list(selected_remote) if use_remote else list(REMOTE_OPTIONS)
+
+
+def _effective_country_scope(selected_country_scope, use_country):
+    return selected_country_scope if use_country else "All countries"
+
+
+def _effective_metric(selected_metric, use_metric):
+    return selected_metric if use_metric else "Respondent count"
+
+
+def _filtered_df(
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    selected_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    use_top_n,
+):
+    effective_top_n = _effective_top_n(selected_top_n, use_top_n)
+    filtered = filter_dataset(
+        BASE_DF,
+        _effective_ages(selected_ages, use_age),
+        _effective_remote(selected_remote, use_remote),
+        _effective_country_scope(selected_country_scope, use_country),
+        country_top_n=effective_top_n,
+    )
     return filtered if not filtered.empty else BASE_DF.copy()
 
 
@@ -215,57 +287,172 @@ def _technology_momentum_view(filtered, selected_metric, top_n, selected_family)
     )
 
 
+def _filtered_df_from_filter_values(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    top_n,
+):
+    return _filtered_df(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_top_n,
+    )
+
+
 @pn.depends(
+    top_n_filter_enabled.param.value,
+    age_filter_enabled.param.value,
+    remote_filter_enabled.param.value,
+    country_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    metric_selector.param.value,
     top_n_selector.param.value,
 )
-def momentum_comparison(selected_ages, selected_remote, selected_country_scope, selected_metric, top_n):
-    filtered = _filtered_df(selected_ages, selected_remote, selected_country_scope)
+def momentum_kpis(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    top_n,
+):
+    filtered = _filtered_df_from_filter_values(
+        use_top_n,
+        use_age,
+        use_remote,
+        use_country,
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+    )
     kpis = build_kpis(filtered)
+    return _grid_box(
+        _kpi_card("Respondents", f"{kpis['respondents']:,}", "Rows in the current filtered view"),
+        _kpi_card("Countries", f"{kpis['countries']:,}", "Distinct countries represented, excluding Nomadic"),
+        _kpi_card("Median compensation", f"${kpis['median_salary']:,.0f}", "Converted annual compensation"),
+        ncols=3,
+    )
 
+
+def _technology_momentum_panel(selected_family):
+    @pn.depends(
+        top_n_filter_enabled.param.value,
+        age_filter_enabled.param.value,
+        remote_filter_enabled.param.value,
+        country_filter_enabled.param.value,
+        metric_filter_enabled.param.value,
+        age_filter.param.value,
+        remote_filter.param.value,
+        country_scope.param.value,
+        metric_selector.param.value,
+        top_n_selector.param.value,
+    )
+    def technology_view(
+        use_top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_metric,
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        selected_metric,
+        top_n,
+    ):
+        effective_top_n = _effective_top_n(top_n, use_top_n)
+        effective_metric = _effective_metric(selected_metric, use_metric)
+        filtered = _filtered_df_from_filter_values(
+            use_top_n,
+            use_age,
+            use_remote,
+            use_country,
+            selected_ages,
+            selected_remote,
+            selected_country_scope,
+            top_n,
+        )
+        return _technology_momentum_view(filtered, effective_metric, effective_top_n, selected_family)
+
+    return pn.panel(technology_view, sizing_mode="stretch_width")
+
+
+def momentum_comparison():
     heading = pn.pane.Markdown(
             """
             ### Momentum and Comparison
 
             This tab separates the technology comparison into four subtabs. Each subtab shows the
             `current ranking`, the `future ranking`, and the direct `current vs future` dumbbell chart
-            for one technology family.
+            for one technology family. The left filter panel controls respondent slice, metric, and ranking depth.
             """
-    )
-    kpis_grid = _grid_box(
-        _kpi_card("Respondents", f"{kpis['respondents']:,}", "Rows in the current filtered view"),
-        _kpi_card("Countries", f"{kpis['countries']:,}", "Distinct countries represented, excluding Nomadic"),
-        _kpi_card("Median compensation", f"${kpis['median_salary']:,.0f}", "Converted annual compensation"),
-        ncols=3,
     )
     technology_tabs = pn.Tabs(
         *[
-            (family, _technology_momentum_view(filtered, selected_metric, top_n, family))
+            (family, _technology_momentum_panel(family))
             for family in MOMENTUM_OPTIONS
         ],
         sizing_mode="stretch_width",
+        dynamic=True,
     )
     return pn.Column(
         heading,
-        kpis_grid,
+        pn.panel(momentum_kpis),
         technology_tabs,
         sizing_mode="stretch_width",
     )
 
 
 @pn.depends(
+    top_n_filter_enabled.param.value,
+    age_filter_enabled.param.value,
+    remote_filter_enabled.param.value,
+    country_filter_enabled.param.value,
+    metric_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
     metric_selector.param.value,
     top_n_selector.param.value,
 )
-def demographics_context(selected_ages, selected_remote, selected_country_scope, selected_metric, top_n):
-    filtered = _filtered_df(selected_ages, selected_remote, selected_country_scope)
-    countries_map = country_map_distribution(filtered, top_n=min(top_n, 12))
+def demographics_context(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    use_metric,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    selected_metric,
+    top_n,
+):
+    effective_top_n = _effective_top_n(top_n, use_top_n)
+    effective_metric = _effective_metric(selected_metric, use_metric)
+    filtered = _filtered_df(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_top_n,
+    )
+    countries_map = country_map_distribution(filtered, top_n=effective_top_n)
     age_education = age_education_distribution(filtered)
     salary_box = salary_remote_experience_box_summary(filtered)
 
@@ -278,7 +465,7 @@ def demographics_context(selected_ages, selected_remote, selected_country_scope,
             """
     )
     top_grid = _grid_box(
-        make_country_bubble_map(countries_map, "Respondent Map by Country", selected_metric),
+        make_country_bubble_map(countries_map, "Respondent Map by Country", effective_metric),
         make_grouped_box_plot(salary_box, "Compensation Distribution by Work Style and Experience"),
         ncols=2,
     )
@@ -291,12 +478,40 @@ def demographics_context(selected_ages, selected_remote, selected_country_scope,
 
 
 @pn.depends(
+    top_n_filter_enabled.param.value,
+    age_filter_enabled.param.value,
+    remote_filter_enabled.param.value,
+    country_filter_enabled.param.value,
+    metric_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
+    metric_selector.param.value,
+    top_n_selector.param.value,
 )
-def detailed_age_education(selected_ages, selected_remote, selected_country_scope):
-    filtered = _filtered_df(selected_ages, selected_remote, selected_country_scope)
+def detailed_age_education(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    use_metric,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    selected_metric,
+    top_n,
+):
+    effective_metric = _effective_metric(selected_metric, use_metric)
+    filtered = _filtered_df(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_top_n,
+    )
     age_profile = age_distribution(filtered)
     age_education = age_education_distribution(filtered)
 
@@ -309,7 +524,7 @@ def detailed_age_education(selected_ages, selected_remote, selected_country_scop
             """
         ),
         _grid_box(
-            make_age_percent_bar_chart(age_profile, "Respondent Age Distribution"),
+            make_age_percent_bar_chart(age_profile, "Respondent Age Distribution", effective_metric),
             make_percent_stacked_bar_chart(age_education, "Education Level Composition by Age Group"),
             ncols=2,
         ),
@@ -318,11 +533,35 @@ def detailed_age_education(selected_ages, selected_remote, selected_country_scop
 
 
 @pn.depends(
+    top_n_filter_enabled.param.value,
+    age_filter_enabled.param.value,
+    remote_filter_enabled.param.value,
+    country_filter_enabled.param.value,
     age_filter.param.value,
+    remote_filter.param.value,
     country_scope.param.value,
+    top_n_selector.param.value,
 )
-def detailed_compensation_experience(selected_ages, selected_country_scope):
-    filtered = _filtered_df(selected_ages, REMOTE_OPTIONS, selected_country_scope)
+def detailed_compensation_experience(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    top_n,
+):
+    filtered = _filtered_df(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_top_n,
+    )
     salary_box = salary_remote_experience_box_summary(filtered)
     y_max = float(salary_box["upper"].max() * 1.1) if not salary_box.empty else 1.0
     remote_labels = [REMOTE_WORK_LABELS[option] for option in REMOTE_OPTIONS if option in REMOTE_WORK_LABELS]
@@ -356,10 +595,43 @@ def detailed_compensation_experience(selected_ages, selected_country_scope):
     )
 
 
-@pn.depends(metric_selector.param.value)
-def detailed_country_distribution(selected_metric):
-    map_data = country_map_distribution(BASE_DF, top_n=None)
-    geographic_countries = set(BASE_DF.loc[BASE_DF["Country"] != "Nomadic", "Country"].dropna().unique())
+@pn.depends(
+    top_n_filter_enabled.param.value,
+    age_filter_enabled.param.value,
+    remote_filter_enabled.param.value,
+    country_filter_enabled.param.value,
+    metric_filter_enabled.param.value,
+    age_filter.param.value,
+    remote_filter.param.value,
+    country_scope.param.value,
+    metric_selector.param.value,
+    top_n_selector.param.value,
+)
+def detailed_country_distribution(
+    use_top_n,
+    use_age,
+    use_remote,
+    use_country,
+    use_metric,
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    selected_metric,
+    top_n,
+):
+    effective_metric = _effective_metric(selected_metric, use_metric)
+    filtered = _filtered_df(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        top_n,
+        use_age,
+        use_remote,
+        use_country,
+        use_top_n,
+    )
+    map_data = country_map_distribution(filtered, top_n=None)
+    geographic_countries = set(filtered.loc[filtered["Country"] != "Nomadic", "Country"].dropna().unique())
     total_country_values = len(geographic_countries)
     mapped_countries = map_data["country"].nunique()
     unmapped_countries = sorted(geographic_countries - set(map_data["country"].unique()))
@@ -370,8 +642,8 @@ def detailed_country_distribution(selected_metric):
             f"""
             ### Full Country Distribution Map
 
-            This view shows all mappable countries present in the dataset, without applying the `Country scope`
-            top-10 limit. Countries shown: `{mapped_countries}` of `{total_country_values}` countries.
+            This view shows the mappable countries in the current filtered dataset.
+            Countries shown: `{mapped_countries}` of `{total_country_values}` countries.
             Unmapped countries: `{unmapped_note}`. The non-geographic value `Nomadic` is excluded from the
             country count.
             """
@@ -379,7 +651,7 @@ def detailed_country_distribution(selected_metric):
         make_country_bubble_map(
             map_data,
             "Respondent Distribution Across All Countries",
-            selected_metric,
+            effective_metric,
             height=640,
         ),
         sizing_mode="stretch_width",
@@ -397,6 +669,7 @@ def detailed_views() -> pn.Column:
         ("Compensation by Experience", pn.panel(detailed_compensation_experience)),
         ("Country Distribution", pn.panel(detailed_country_distribution)),
         sizing_mode="stretch_width",
+        dynamic=True,
     )
     return pn.Column(
         pn.pane.Markdown(
@@ -413,28 +686,76 @@ def detailed_views() -> pn.Column:
 
 
 def create_dashboard():
-    sidebar = pn.Column(
-        "## Controls",
+    filter_accordion = pn.Accordion(
+        (
+            "Top N",
+            pn.Column(
+                top_n_filter_enabled,
+                pn.pane.Markdown("Choose the ranking depth used by technology rankings and Top N country filtering."),
+                top_n_selector,
+                sizing_mode="stretch_width",
+            ),
+        ),
+        (
+            "Age",
+            pn.Column(
+                age_filter_enabled,
+                pn.pane.Markdown("Limit the dashboard to selected age groups."),
+                age_filter,
+                sizing_mode="stretch_width",
+            ),
+        ),
+        (
+            "Workstyle",
+            pn.Column(
+                remote_filter_enabled,
+                pn.pane.Markdown("Include one or more workstyle categories."),
+                remote_filter,
+                sizing_mode="stretch_width",
+            ),
+        ),
+        (
+            "Countries",
+            pn.Column(
+                country_filter_enabled,
+                pn.pane.Markdown("Use all countries or restrict the dashboard to the selected Top N countries."),
+                country_scope,
+                sizing_mode="stretch_width",
+            ),
+        ),
+        (
+            "Metrics",
+            pn.Column(
+                metric_filter_enabled,
+                pn.pane.Markdown("Switch charts between respondent counts and share of respondents where applicable."),
+                metric_selector,
+                sizing_mode="stretch_width",
+            ),
+        ),
+        active=[0, 1, 2, 3, 4],
+        sizing_mode="stretch_width",
+    )
+    sidebar = pn.Card(
         pn.pane.Markdown(
             """
-            Adjust the respondent slice, switch between count and share, and tune ranking depth.
-            The default state is designed to be readable without interaction.
+            Use the checkbox inside each category to activate or deactivate that filter group.
+            Inactive groups fall back to the broad default.
             """
         ),
-        age_filter,
-        remote_filter,
-        country_scope,
-        metric_selector,
-        top_n_selector,
+        filter_accordion,
         reset_button,
+        title="Filters",
+        collapsible=True,
+        collapsed=False,
         width=280,
         sizing_mode="fixed",
     )
 
     tabs = pn.Tabs(
-        ("Momentum and Comparison", pn.panel(momentum_comparison)),
+        ("Momentum and Comparison", momentum_comparison()),
         ("Respondent Context", detailed_views()),
         sizing_mode="stretch_width",
+        dynamic=True,
     )
 
     header = pn.pane.HTML(

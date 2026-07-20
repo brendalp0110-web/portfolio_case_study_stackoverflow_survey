@@ -116,6 +116,7 @@ def filter_dataset(
     selected_ages: Iterable[str],
     selected_remote_modes: Iterable[str],
     country_scope: str,
+    country_top_n: int = 10,
 ) -> pd.DataFrame:
     filtered = df.copy()
 
@@ -128,8 +129,8 @@ def filter_dataset(
     if selected_remote_modes:
         filtered = filtered[filtered["RemoteWork"].isin(selected_remote_modes)]
 
-    if country_scope == "Top 10 countries only":
-        top_countries = df["Country"].value_counts().head(10).index.tolist()
+    if country_scope == "Top N countries":
+        top_countries = df.loc[df["Country"] != "Nomadic", "Country"].value_counts().head(country_top_n).index.tolist()
         filtered = filtered[filtered["Country"].isin(top_countries)]
 
     return filtered
@@ -178,7 +179,7 @@ def build_comparison_table(
 
 
 def top_country_distribution(df: pd.DataFrame, top_n: Optional[int] = 10) -> pd.DataFrame:
-    counts = df["Country"].value_counts()
+    counts = df.loc[df["Country"] != "Nomadic", "Country"].value_counts()
     if top_n is not None:
         counts = counts.head(top_n)
     result = counts.rename_axis("country").reset_index(name="count")
