@@ -73,7 +73,7 @@ def make_horizontal_bar_chart(
             tooltips=[
                 (category_col.replace("_", " ").title(), "@{" + category_col + "}"),
                 ("Count", "@count{0,0}"),
-                ("Share %", "@share_pct{0.0}"),
+                ("Share of filtered respondents", "@share_pct{0.0}%"),
             ]
         )
     )
@@ -147,11 +147,11 @@ def make_country_bubble_map(
             tooltips=[
                 ("Country", "@country"),
                 ("Count", "@count{0,0}"),
-                ("Share %", "@share_pct{0.0}"),
+                ("Share of filtered country respondents", "@share_pct{0.0}%"),
             ],
         )
     )
-    color_bar = ColorBar(color_mapper=mapper, title="Share %", location=(0, 0))
+    color_bar = ColorBar(color_mapper=mapper, title="Share of filtered country respondents", location=(0, 0))
     plot.add_layout(color_bar, "right")
     plot.xaxis.visible = False
     plot.yaxis.visible = False
@@ -227,9 +227,9 @@ def make_dumbbell_chart(
                 (label_col.replace("_", " ").title(), "@{" + label_col + "}"),
                 ("Current count", "@count_current{0,0}"),
                 ("Future count", "@count_future{0,0}"),
-                ("Current share %", "@share_pct_current{0.0}"),
-                ("Future share %", "@share_pct_future{0.0}"),
-                ("Delta share %", "@delta_share_pct{0.0}"),
+                ("Current share of filtered respondents", "@share_pct_current{0.0}%"),
+                ("Future share of filtered respondents", "@share_pct_future{0.0}%"),
+                ("Delta share of filtered respondents", "@delta_share_pct{0.0}%"),
             ],
         )
     )
@@ -293,7 +293,7 @@ def make_age_percent_bar_chart(data: pd.DataFrame, title: str, metric_mode: str)
             tooltips=[
                 ("Age group", "@age"),
                 ("Count", "@count{0,0}"),
-                ("Share", "@share_pct{0.0}%"),
+                ("Share of filtered respondents", "@share_pct{0.0}%"),
             ]
         )
     )

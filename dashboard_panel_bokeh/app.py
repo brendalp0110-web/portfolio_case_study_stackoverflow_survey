@@ -32,7 +32,6 @@ from dashboard_panel_bokeh.data_utils import (  # noqa: E402
     country_map_distribution,
     filter_dataset,
     load_dataset,
-    metric_column,
     REMOTE_WORK_LABELS,
     salary_remote_experience_box_summary,
     top_multiselect_counts,
@@ -76,6 +75,7 @@ pn.extension(
 DATASET_PATH = PROJECT_ROOT / "data" / "survey_data_cleaned_reduced.csv"
 BASE_DF = load_dataset(DATASET_PATH)
 REMOTE_OPTIONS = BASE_DF["RemoteWork"].value_counts().index.tolist()
+METRIC_MODE = "Respondent count"
 MOMENTUM_OPTIONS = {
     "Languages": {
         "current_column": "LanguageHaveWorkedWith",
@@ -132,13 +132,6 @@ country_scope = pn.widgets.Select(
     value="All countries",
 )
 country_filter_enabled = pn.widgets.Checkbox(name="Activate Countries filter", value=True)
-metric_selector = pn.widgets.RadioButtonGroup(
-    name="Metric",
-    options=["Respondent count", "Share of respondents"],
-    value="Respondent count",
-    button_type="primary",
-)
-metric_filter_enabled = pn.widgets.Checkbox(name="Activate Metrics filter", value=True)
 TOP_N_DEFAULT = 10
 top_n_value = pn.widgets.IntInput(name="Top N value", value=TOP_N_DEFAULT)
 top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False)
@@ -274,11 +267,9 @@ remote_reset_button.on_click(reset_remote)
 
 def reset_filters(event) -> None:
     country_filter_enabled.value = True
-    metric_filter_enabled.value = True
     reset_age()
     reset_remote()
     country_scope.value = "All countries"
-    metric_selector.value = "Respondent count"
     reset_top_n()
 
 
@@ -287,12 +278,10 @@ reset_button.on_click(reset_filters)
 
 def _sync_filter_control_states(event=None) -> None:
     country_scope.disabled = not country_filter_enabled.value
-    metric_selector.disabled = not metric_filter_enabled.value
 
 
 for toggle in [
     country_filter_enabled,
-    metric_filter_enabled,
 ]:
     toggle.param.watch(_sync_filter_control_states, "value")
 
@@ -313,10 +302,6 @@ def _effective_remote(selected_remote):
 
 def _effective_country_scope(selected_country_scope, use_country):
     return selected_country_scope if use_country else "All countries"
-
-
-def _effective_metric(selected_metric, use_metric):
-    return selected_metric if use_metric else "Respondent count"
 
 
 def _filter_key(
@@ -415,8 +400,8 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
 
 
-def _technology_momentum_view(filter_key, selected_metric, top_n, selected_family):
-    value_col = metric_column(selected_metric)
+def _technology_momentum_view(filter_key, top_n, selected_family):
+    value_col = "count"
     config = MOMENTUM_OPTIONS[selected_family]
     current_ranking = _cached_top_multiselect_counts(filter_key, config["current_column"], top_n, config["label"])
     future_ranking = _cached_top_multiselect_counts(filter_key, config["future_column"], top_n, config["label"])
@@ -435,7 +420,7 @@ def _technology_momentum_view(filter_key, selected_metric, top_n, selected_famil
             config["label"],
             value_col,
             config["current_title"],
-            selected_metric,
+            METRIC_MODE,
             color,
         ),
         make_horizontal_bar_chart(
@@ -443,7 +428,7 @@ def _technology_momentum_view(filter_key, selected_metric, top_n, selected_famil
             config["label"],
             value_col,
             config["future_title"],
-            selected_metric,
+            METRIC_MODE,
             color,
         ),
         ncols=2,
@@ -454,10 +439,10 @@ def _technology_momentum_view(filter_key, selected_metric, top_n, selected_famil
         make_dumbbell_chart(
             comparison,
             config["label"],
-            "share_pct_current" if selected_metric == "Share of respondents" else "count_current",
-            "share_pct_future" if selected_metric == "Share of respondents" else "count_future",
+            "count_current",
+            "count_future",
             f"Current vs Future {selected_family} Momentum",
-            selected_metric,
+            METRIC_MODE,
         ),
         sizing_mode="stretch_width",
     )
@@ -512,24 +497,19 @@ def momentum_kpis(
 def _technology_momentum_panel(selected_family):
     @pn.depends(
         country_filter_enabled.param.value,
-        metric_filter_enabled.param.value,
         age_filter.param.value,
         remote_filter.param.value,
         country_scope.param.value,
-        metric_selector.param.value,
         top_n_value.param.value,
     )
     def technology_view(
         use_country,
-        use_metric,
         selected_ages,
         selected_remote,
         selected_country_scope,
-        selected_metric,
         top_n,
     ):
         effective_top_n = _effective_top_n(top_n)
-        effective_metric = _effective_metric(selected_metric, use_metric)
         filter_key = _filter_key_from_filter_values(
             use_country,
             selected_ages,
@@ -537,7 +517,7 @@ def _technology_momentum_panel(selected_family):
             selected_country_scope,
             top_n,
         )
-        return _technology_momentum_view(filter_key, effective_metric, effective_top_n, selected_family)
+        return _technology_momentum_view(filter_key, effective_top_n, selected_family)
 
     return pn.panel(technology_view, sizing_mode="stretch_width")
 
@@ -570,24 +550,19 @@ def momentum_comparison():
 
 @pn.depends(
     country_filter_enabled.param.value,
-    metric_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    metric_selector.param.value,
     top_n_value.param.value,
 )
 def demographics_context(
     use_country,
-    use_metric,
     selected_ages,
     selected_remote,
     selected_country_scope,
-    selected_metric,
     top_n,
 ):
     effective_top_n = _effective_top_n(top_n)
-    effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
         use_country,
         selected_ages,
@@ -608,7 +583,7 @@ def demographics_context(
             """
     )
     top_grid = _grid_box(
-        make_country_bubble_map(countries_map, "Respondent Map by Country", effective_metric),
+        make_country_bubble_map(countries_map, "Respondent Map by Country", METRIC_MODE),
         make_grouped_box_plot(salary_box, "Compensation Distribution by Work Style and Experience"),
         ncols=2,
     )
@@ -622,23 +597,18 @@ def demographics_context(
 
 @pn.depends(
     country_filter_enabled.param.value,
-    metric_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    metric_selector.param.value,
     top_n_value.param.value,
 )
 def detailed_age_education(
     use_country,
-    use_metric,
     selected_ages,
     selected_remote,
     selected_country_scope,
-    selected_metric,
     top_n,
 ):
-    effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
         use_country,
         selected_ages,
@@ -658,7 +628,7 @@ def detailed_age_education(
             """
         ),
         _grid_box(
-            make_age_percent_bar_chart(age_profile, "Respondent Age Distribution", effective_metric),
+            make_age_percent_bar_chart(age_profile, "Respondent Age Distribution", METRIC_MODE),
             make_percent_stacked_bar_chart(age_education, "Education Level Composition by Age Group"),
             ncols=2,
         ),
@@ -722,23 +692,18 @@ def detailed_compensation_experience(
 
 @pn.depends(
     country_filter_enabled.param.value,
-    metric_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    metric_selector.param.value,
     top_n_value.param.value,
 )
 def detailed_country_distribution(
     use_country,
-    use_metric,
     selected_ages,
     selected_remote,
     selected_country_scope,
-    selected_metric,
     top_n,
 ):
-    effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
         use_country,
         selected_ages,
@@ -768,7 +733,7 @@ def detailed_country_distribution(
         make_country_bubble_map(
             map_data,
             "Respondent Distribution Across All Countries",
-            effective_metric,
+            METRIC_MODE,
             height=640,
         ),
         sizing_mode="stretch_width",
@@ -859,23 +824,14 @@ def create_dashboard():
                 sizing_mode="stretch_width",
             ),
         ),
-        (
-            "Metrics",
-            pn.Column(
-                metric_filter_enabled,
-                pn.pane.Markdown("Switch charts between respondent counts and share of respondents where applicable."),
-                metric_selector,
-                sizing_mode="stretch_width",
-            ),
-        ),
-        active=[0, 1, 2, 3, 4],
+        active=[0, 1, 2, 3],
         sizing_mode="stretch_width",
     )
     sidebar = pn.Card(
         pn.pane.Markdown(
             """
             Use each category to refine the dashboard. Reset buttons restore category defaults where available.
-            Categories with activation checkboxes can be temporarily disabled.
+            The dashboard uses respondent counts as its fixed metric.
             """
         ),
         filter_accordion,

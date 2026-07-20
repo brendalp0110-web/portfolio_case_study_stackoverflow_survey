@@ -180,10 +180,11 @@ def build_comparison_table(
 
 def top_country_distribution(df: pd.DataFrame, top_n: Optional[int] = 10) -> pd.DataFrame:
     counts = df.loc[df["Country"] != "Nomadic", "Country"].value_counts()
+    denominator = max(int(counts.sum()), 1)
     if top_n is not None:
         counts = counts.head(top_n)
     result = counts.rename_axis("country").reset_index(name="count")
-    result["share_pct"] = (result["count"] / max(len(df), 1) * 100).round(2)
+    result["share_pct"] = (result["count"] / denominator * 100).round(2)
     return result
 
 
