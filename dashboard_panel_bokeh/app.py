@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 import sys
 from pathlib import Path
 
@@ -137,18 +138,58 @@ metric_selector = pn.widgets.RadioButtonGroup(
     button_type="primary",
 )
 metric_filter_enabled = pn.widgets.Checkbox(name="Activate Metrics filter", value=True)
-top_n_selector = pn.widgets.RadioButtonGroup(
-    name="Top N",
-    options=[5, 10, 12],
-    value=10,
-    button_type="primary",
-)
-top_n_filter_enabled = pn.widgets.Checkbox(name="Activate Top N filter", value=True)
+TOP_N_DEFAULT = 10
+top_n_value = pn.widgets.IntInput(name="Top N value", value=TOP_N_DEFAULT)
+top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False)
+top_n_10_checkbox = pn.widgets.Checkbox(name="Top 10", value=True)
+top_n_12_checkbox = pn.widgets.Checkbox(name="Top 12", value=False)
+top_n_reset_button = pn.widgets.Button(name="Reset", width=58)
 reset_button = pn.widgets.Button(name="Reset filters", button_type="primary")
 
 
+_syncing_top_n = False
+_TOP_N_CHECKBOXES = {
+    5: top_n_5_checkbox,
+    10: top_n_10_checkbox,
+    12: top_n_12_checkbox,
+}
+
+
+def _set_top_n_value(value: int) -> None:
+    global _syncing_top_n
+    _syncing_top_n = True
+    top_n_value.value = int(value)
+    for option, checkbox in _TOP_N_CHECKBOXES.items():
+        checkbox.value = option == int(value)
+    _syncing_top_n = False
+
+
+def _top_n_checkbox_changed(event) -> None:
+    if _syncing_top_n:
+        return
+
+    if event.new:
+        for option, checkbox in _TOP_N_CHECKBOXES.items():
+            if checkbox is event.obj:
+                _set_top_n_value(option)
+                return
+
+    if not any(checkbox.value for checkbox in _TOP_N_CHECKBOXES.values()):
+        _set_top_n_value(top_n_value.value)
+
+
+for checkbox in _TOP_N_CHECKBOXES.values():
+    checkbox.param.watch(_top_n_checkbox_changed, "value")
+
+
+def reset_top_n(event=None) -> None:
+    _set_top_n_value(TOP_N_DEFAULT)
+
+
+top_n_reset_button.on_click(reset_top_n)
+
+
 def reset_filters(event) -> None:
-    top_n_filter_enabled.value = True
     age_filter_enabled.value = True
     remote_filter_enabled.value = True
     country_filter_enabled.value = True
@@ -157,14 +198,13 @@ def reset_filters(event) -> None:
     remote_filter.value = list(REMOTE_OPTIONS)
     country_scope.value = "All countries"
     metric_selector.value = "Respondent count"
-    top_n_selector.value = 10
+    reset_top_n()
 
 
 reset_button.on_click(reset_filters)
 
 
 def _sync_filter_control_states(event=None) -> None:
-    top_n_selector.disabled = not top_n_filter_enabled.value
     age_filter.disabled = not age_filter_enabled.value
     remote_filter.disabled = not remote_filter_enabled.value
     country_scope.disabled = not country_filter_enabled.value
@@ -172,7 +212,6 @@ def _sync_filter_control_states(event=None) -> None:
 
 
 for toggle in [
-    top_n_filter_enabled,
     age_filter_enabled,
     remote_filter_enabled,
     country_filter_enabled,
@@ -183,8 +222,8 @@ for toggle in [
 _sync_filter_control_states()
 
 
-def _effective_top_n(selected_top_n, use_top_n):
-    return int(selected_top_n) if use_top_n else 10
+def _effective_top_n(selected_top_n):
+    return int(selected_top_n)
 
 
 def _effective_ages(selected_ages, use_age):
@@ -203,6 +242,36 @@ def _effective_metric(selected_metric, use_metric):
     return selected_metric if use_metric else "Respondent count"
 
 
+def _filter_key(
+    selected_ages,
+    selected_remote,
+    selected_country_scope,
+    selected_top_n,
+    use_age,
+    use_remote,
+    use_country,
+):
+    effective_top_n = _effective_top_n(selected_top_n)
+    return (
+        tuple(_effective_ages(selected_ages, use_age)),
+        tuple(_effective_remote(selected_remote, use_remote)),
+        _effective_country_scope(selected_country_scope, use_country),
+        effective_top_n,
+    )
+
+
+@lru_cache(maxsize=128)
+def _cached_filtered_df(age_values, remote_values, country_scope_value, country_top_n):
+    filtered = filter_dataset(
+        BASE_DF,
+        age_values,
+        remote_values,
+        country_scope_value,
+        country_top_n=country_top_n,
+    )
+    return filtered if not filtered.empty else BASE_DF.copy()
+
+
 def _filtered_df(
     selected_ages,
     selected_remote,
@@ -211,17 +280,53 @@ def _filtered_df(
     use_age,
     use_remote,
     use_country,
-    use_top_n,
 ):
-    effective_top_n = _effective_top_n(selected_top_n, use_top_n)
-    filtered = filter_dataset(
-        BASE_DF,
-        _effective_ages(selected_ages, use_age),
-        _effective_remote(selected_remote, use_remote),
-        _effective_country_scope(selected_country_scope, use_country),
-        country_top_n=effective_top_n,
+    key = _filter_key(
+        selected_ages,
+        selected_remote,
+        selected_country_scope,
+        selected_top_n,
+        use_age,
+        use_remote,
+        use_country,
     )
-    return filtered if not filtered.empty else BASE_DF.copy()
+    filtered = _cached_filtered_df(*key)
+    return filtered
+
+
+@lru_cache(maxsize=128)
+def _cached_kpis(filter_key):
+    return build_kpis(_cached_filtered_df(*filter_key))
+
+
+@lru_cache(maxsize=256)
+def _cached_top_multiselect_counts(filter_key, column, top_n, label):
+    return top_multiselect_counts(_cached_filtered_df(*filter_key), column, top_n, label)
+
+
+@lru_cache(maxsize=256)
+def _cached_comparison_table(filter_key, current_column, future_column, label, top_n):
+    return build_comparison_table(_cached_filtered_df(*filter_key), current_column, future_column, label, top_n)
+
+
+@lru_cache(maxsize=128)
+def _cached_country_map_distribution(filter_key, top_n):
+    return country_map_distribution(_cached_filtered_df(*filter_key), top_n=top_n)
+
+
+@lru_cache(maxsize=128)
+def _cached_age_distribution(filter_key):
+    return age_distribution(_cached_filtered_df(*filter_key))
+
+
+@lru_cache(maxsize=128)
+def _cached_age_education_distribution(filter_key):
+    return age_education_distribution(_cached_filtered_df(*filter_key))
+
+
+@lru_cache(maxsize=128)
+def _cached_salary_remote_experience_box_summary(filter_key):
+    return salary_remote_experience_box_summary(_cached_filtered_df(*filter_key))
 
 
 def _kpi_card(title: str, value: str, subtitle: str) -> pn.pane.HTML:
@@ -239,13 +344,13 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
 
 
-def _technology_momentum_view(filtered, selected_metric, top_n, selected_family):
+def _technology_momentum_view(filter_key, selected_metric, top_n, selected_family):
     value_col = metric_column(selected_metric)
     config = MOMENTUM_OPTIONS[selected_family]
-    current_ranking = top_multiselect_counts(filtered, config["current_column"], top_n, config["label"])
-    future_ranking = top_multiselect_counts(filtered, config["future_column"], top_n, config["label"])
-    comparison = build_comparison_table(
-        filtered,
+    current_ranking = _cached_top_multiselect_counts(filter_key, config["current_column"], top_n, config["label"])
+    future_ranking = _cached_top_multiselect_counts(filter_key, config["future_column"], top_n, config["label"])
+    comparison = _cached_comparison_table(
+        filter_key,
         config["current_column"],
         config["future_column"],
         config["label"],
@@ -287,8 +392,7 @@ def _technology_momentum_view(filtered, selected_metric, top_n, selected_family)
     )
 
 
-def _filtered_df_from_filter_values(
-    use_top_n,
+def _filter_key_from_filter_values(
     use_age,
     use_remote,
     use_country,
@@ -297,7 +401,7 @@ def _filtered_df_from_filter_values(
     selected_country_scope,
     top_n,
 ):
-    return _filtered_df(
+    return _filter_key(
         selected_ages,
         selected_remote,
         selected_country_scope,
@@ -305,22 +409,19 @@ def _filtered_df_from_filter_values(
         use_age,
         use_remote,
         use_country,
-        use_top_n,
     )
 
 
 @pn.depends(
-    top_n_filter_enabled.param.value,
     age_filter_enabled.param.value,
     remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    top_n_selector.param.value,
+    top_n_value.param.value,
 )
 def momentum_kpis(
-    use_top_n,
     use_age,
     use_remote,
     use_country,
@@ -329,8 +430,7 @@ def momentum_kpis(
     selected_country_scope,
     top_n,
 ):
-    filtered = _filtered_df_from_filter_values(
-        use_top_n,
+    filter_key = _filter_key_from_filter_values(
         use_age,
         use_remote,
         use_country,
@@ -339,7 +439,7 @@ def momentum_kpis(
         selected_country_scope,
         top_n,
     )
-    kpis = build_kpis(filtered)
+    kpis = _cached_kpis(filter_key)
     return _grid_box(
         _kpi_card("Respondents", f"{kpis['respondents']:,}", "Rows in the current filtered view"),
         _kpi_card("Countries", f"{kpis['countries']:,}", "Distinct countries represented, excluding Nomadic"),
@@ -350,7 +450,6 @@ def momentum_kpis(
 
 def _technology_momentum_panel(selected_family):
     @pn.depends(
-        top_n_filter_enabled.param.value,
         age_filter_enabled.param.value,
         remote_filter_enabled.param.value,
         country_filter_enabled.param.value,
@@ -359,10 +458,9 @@ def _technology_momentum_panel(selected_family):
         remote_filter.param.value,
         country_scope.param.value,
         metric_selector.param.value,
-        top_n_selector.param.value,
+        top_n_value.param.value,
     )
     def technology_view(
-        use_top_n,
         use_age,
         use_remote,
         use_country,
@@ -373,10 +471,9 @@ def _technology_momentum_panel(selected_family):
         selected_metric,
         top_n,
     ):
-        effective_top_n = _effective_top_n(top_n, use_top_n)
+        effective_top_n = _effective_top_n(top_n)
         effective_metric = _effective_metric(selected_metric, use_metric)
-        filtered = _filtered_df_from_filter_values(
-            use_top_n,
+        filter_key = _filter_key_from_filter_values(
             use_age,
             use_remote,
             use_country,
@@ -385,7 +482,7 @@ def _technology_momentum_panel(selected_family):
             selected_country_scope,
             top_n,
         )
-        return _technology_momentum_view(filtered, effective_metric, effective_top_n, selected_family)
+        return _technology_momentum_view(filter_key, effective_metric, effective_top_n, selected_family)
 
     return pn.panel(technology_view, sizing_mode="stretch_width")
 
@@ -417,7 +514,6 @@ def momentum_comparison():
 
 
 @pn.depends(
-    top_n_filter_enabled.param.value,
     age_filter_enabled.param.value,
     remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
@@ -426,10 +522,9 @@ def momentum_comparison():
     remote_filter.param.value,
     country_scope.param.value,
     metric_selector.param.value,
-    top_n_selector.param.value,
+    top_n_value.param.value,
 )
 def demographics_context(
-    use_top_n,
     use_age,
     use_remote,
     use_country,
@@ -440,21 +535,20 @@ def demographics_context(
     selected_metric,
     top_n,
 ):
-    effective_top_n = _effective_top_n(top_n, use_top_n)
+    effective_top_n = _effective_top_n(top_n)
     effective_metric = _effective_metric(selected_metric, use_metric)
-    filtered = _filtered_df(
+    filter_key = _filter_key_from_filter_values(
+        use_age,
+        use_remote,
+        use_country,
         selected_ages,
         selected_remote,
         selected_country_scope,
         top_n,
-        use_age,
-        use_remote,
-        use_country,
-        use_top_n,
     )
-    countries_map = country_map_distribution(filtered, top_n=effective_top_n)
-    age_education = age_education_distribution(filtered)
-    salary_box = salary_remote_experience_box_summary(filtered)
+    countries_map = _cached_country_map_distribution(filter_key, effective_top_n)
+    age_education = _cached_age_education_distribution(filter_key)
+    salary_box = _cached_salary_remote_experience_box_summary(filter_key)
 
     heading = pn.pane.Markdown(
             """
@@ -478,7 +572,6 @@ def demographics_context(
 
 
 @pn.depends(
-    top_n_filter_enabled.param.value,
     age_filter_enabled.param.value,
     remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
@@ -487,10 +580,9 @@ def demographics_context(
     remote_filter.param.value,
     country_scope.param.value,
     metric_selector.param.value,
-    top_n_selector.param.value,
+    top_n_value.param.value,
 )
 def detailed_age_education(
-    use_top_n,
     use_age,
     use_remote,
     use_country,
@@ -502,18 +594,17 @@ def detailed_age_education(
     top_n,
 ):
     effective_metric = _effective_metric(selected_metric, use_metric)
-    filtered = _filtered_df(
+    filter_key = _filter_key_from_filter_values(
+        use_age,
+        use_remote,
+        use_country,
         selected_ages,
         selected_remote,
         selected_country_scope,
         top_n,
-        use_age,
-        use_remote,
-        use_country,
-        use_top_n,
     )
-    age_profile = age_distribution(filtered)
-    age_education = age_education_distribution(filtered)
+    age_profile = _cached_age_distribution(filter_key)
+    age_education = _cached_age_education_distribution(filter_key)
 
     return pn.Column(
         pn.pane.Markdown(
@@ -533,17 +624,15 @@ def detailed_age_education(
 
 
 @pn.depends(
-    top_n_filter_enabled.param.value,
     age_filter_enabled.param.value,
     remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
     country_scope.param.value,
-    top_n_selector.param.value,
+    top_n_value.param.value,
 )
 def detailed_compensation_experience(
-    use_top_n,
     use_age,
     use_remote,
     use_country,
@@ -552,17 +641,16 @@ def detailed_compensation_experience(
     selected_country_scope,
     top_n,
 ):
-    filtered = _filtered_df(
+    filter_key = _filter_key_from_filter_values(
+        use_age,
+        use_remote,
+        use_country,
         selected_ages,
         selected_remote,
         selected_country_scope,
         top_n,
-        use_age,
-        use_remote,
-        use_country,
-        use_top_n,
     )
-    salary_box = salary_remote_experience_box_summary(filtered)
+    salary_box = _cached_salary_remote_experience_box_summary(filter_key)
     y_max = float(salary_box["upper"].max() * 1.1) if not salary_box.empty else 1.0
     remote_labels = [REMOTE_WORK_LABELS[option] for option in REMOTE_OPTIONS if option in REMOTE_WORK_LABELS]
 
@@ -596,7 +684,6 @@ def detailed_compensation_experience(
 
 
 @pn.depends(
-    top_n_filter_enabled.param.value,
     age_filter_enabled.param.value,
     remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
@@ -605,10 +692,9 @@ def detailed_compensation_experience(
     remote_filter.param.value,
     country_scope.param.value,
     metric_selector.param.value,
-    top_n_selector.param.value,
+    top_n_value.param.value,
 )
 def detailed_country_distribution(
-    use_top_n,
     use_age,
     use_remote,
     use_country,
@@ -620,17 +706,17 @@ def detailed_country_distribution(
     top_n,
 ):
     effective_metric = _effective_metric(selected_metric, use_metric)
-    filtered = _filtered_df(
+    filter_key = _filter_key_from_filter_values(
+        use_age,
+        use_remote,
+        use_country,
         selected_ages,
         selected_remote,
         selected_country_scope,
         top_n,
-        use_age,
-        use_remote,
-        use_country,
-        use_top_n,
     )
-    map_data = country_map_distribution(filtered, top_n=None)
+    filtered = _cached_filtered_df(*filter_key)
+    map_data = _cached_country_map_distribution(filter_key, None)
     geographic_countries = set(filtered.loc[filtered["Country"] != "Nomadic", "Country"].dropna().unique())
     total_country_values = len(geographic_countries)
     mapped_countries = map_data["country"].nunique()
@@ -690,9 +776,16 @@ def create_dashboard():
         (
             "Top N",
             pn.Column(
-                top_n_filter_enabled,
+                pn.Row(
+                    pn.pane.Markdown("#### Top N", margin=(0, 0, 0, 0)),
+                    pn.Spacer(width=10),
+                    top_n_reset_button,
+                    sizing_mode="stretch_width",
+                ),
                 pn.pane.Markdown("Choose the ranking depth used by technology rankings and Top N country filtering."),
-                top_n_selector,
+                top_n_5_checkbox,
+                top_n_10_checkbox,
+                top_n_12_checkbox,
                 sizing_mode="stretch_width",
             ),
         ),
