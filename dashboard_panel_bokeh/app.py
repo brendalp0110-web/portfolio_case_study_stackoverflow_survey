@@ -119,12 +119,13 @@ age_filter = pn.widgets.CheckBoxGroup(
     value=AGE_ORDER,
 )
 age_reset_button = pn.widgets.Button(name="Reset", width=58)
+remote_check_all = pn.widgets.Checkbox(name="Check All", value=True)
 remote_filter = pn.widgets.CheckBoxGroup(
     name="Workstyle",
     options=REMOTE_OPTIONS,
     value=REMOTE_OPTIONS,
 )
-remote_filter_enabled = pn.widgets.Checkbox(name="Activate Workstyle filter", value=True)
+remote_reset_button = pn.widgets.Button(name="Reset", width=58)
 country_scope = pn.widgets.Select(
     name="Country scope",
     options=["All countries", "Top N countries"],
@@ -149,7 +150,9 @@ reset_button = pn.widgets.Button(name="Reset filters", button_type="primary")
 
 _syncing_top_n = False
 _syncing_age = False
+_syncing_remote = False
 _last_valid_ages = list(AGE_ORDER)
+_last_valid_remote = list(REMOTE_OPTIONS)
 _TOP_N_CHECKBOXES = {
     5: top_n_5_checkbox,
     10: top_n_10_checkbox,
@@ -230,12 +233,50 @@ def reset_age(event=None) -> None:
 age_reset_button.on_click(reset_age)
 
 
+def _set_remote_values(values) -> None:
+    global _syncing_remote, _last_valid_remote
+    selected = [style for style in REMOTE_OPTIONS if style in list(values)]
+    if not selected:
+        selected = list(_last_valid_remote)
+
+    _syncing_remote = True
+    remote_filter.value = selected
+    remote_check_all.value = selected == list(REMOTE_OPTIONS)
+    _syncing_remote = False
+    _last_valid_remote = list(selected)
+
+
+def _remote_filter_changed(event) -> None:
+    if _syncing_remote:
+        return
+    _set_remote_values(event.new)
+
+
+def _remote_check_all_changed(event) -> None:
+    if _syncing_remote:
+        return
+    if event.new:
+        _set_remote_values(REMOTE_OPTIONS)
+    else:
+        _set_remote_values(remote_filter.value)
+
+
+remote_filter.param.watch(_remote_filter_changed, "value")
+remote_check_all.param.watch(_remote_check_all_changed, "value")
+
+
+def reset_remote(event=None) -> None:
+    _set_remote_values(REMOTE_OPTIONS)
+
+
+remote_reset_button.on_click(reset_remote)
+
+
 def reset_filters(event) -> None:
-    remote_filter_enabled.value = True
     country_filter_enabled.value = True
     metric_filter_enabled.value = True
     reset_age()
-    remote_filter.value = list(REMOTE_OPTIONS)
+    reset_remote()
     country_scope.value = "All countries"
     metric_selector.value = "Respondent count"
     reset_top_n()
@@ -245,13 +286,11 @@ reset_button.on_click(reset_filters)
 
 
 def _sync_filter_control_states(event=None) -> None:
-    remote_filter.disabled = not remote_filter_enabled.value
     country_scope.disabled = not country_filter_enabled.value
     metric_selector.disabled = not metric_filter_enabled.value
 
 
 for toggle in [
-    remote_filter_enabled,
     country_filter_enabled,
     metric_filter_enabled,
 ]:
@@ -268,8 +307,8 @@ def _effective_ages(selected_ages):
     return list(selected_ages) or list(AGE_ORDER)
 
 
-def _effective_remote(selected_remote, use_remote):
-    return list(selected_remote) if use_remote else list(REMOTE_OPTIONS)
+def _effective_remote(selected_remote):
+    return list(selected_remote) or list(REMOTE_OPTIONS)
 
 
 def _effective_country_scope(selected_country_scope, use_country):
@@ -285,13 +324,12 @@ def _filter_key(
     selected_remote,
     selected_country_scope,
     selected_top_n,
-    use_remote,
     use_country,
 ):
     effective_top_n = _effective_top_n(selected_top_n)
     return (
         tuple(_effective_ages(selected_ages)),
-        tuple(_effective_remote(selected_remote, use_remote)),
+        tuple(_effective_remote(selected_remote)),
         _effective_country_scope(selected_country_scope, use_country),
         effective_top_n,
     )
@@ -314,7 +352,6 @@ def _filtered_df(
     selected_remote,
     selected_country_scope,
     selected_top_n,
-    use_remote,
     use_country,
 ):
     key = _filter_key(
@@ -322,7 +359,6 @@ def _filtered_df(
         selected_remote,
         selected_country_scope,
         selected_top_n,
-        use_remote,
         use_country,
     )
     filtered = _cached_filtered_df(*key)
@@ -428,7 +464,6 @@ def _technology_momentum_view(filter_key, selected_metric, top_n, selected_famil
 
 
 def _filter_key_from_filter_values(
-    use_remote,
     use_country,
     selected_ages,
     selected_remote,
@@ -440,13 +475,11 @@ def _filter_key_from_filter_values(
         selected_remote,
         selected_country_scope,
         top_n,
-        use_remote,
         use_country,
     )
 
 
 @pn.depends(
-    remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
@@ -454,7 +487,6 @@ def _filter_key_from_filter_values(
     top_n_value.param.value,
 )
 def momentum_kpis(
-    use_remote,
     use_country,
     selected_ages,
     selected_remote,
@@ -462,7 +494,6 @@ def momentum_kpis(
     top_n,
 ):
     filter_key = _filter_key_from_filter_values(
-        use_remote,
         use_country,
         selected_ages,
         selected_remote,
@@ -480,7 +511,6 @@ def momentum_kpis(
 
 def _technology_momentum_panel(selected_family):
     @pn.depends(
-        remote_filter_enabled.param.value,
         country_filter_enabled.param.value,
         metric_filter_enabled.param.value,
         age_filter.param.value,
@@ -490,7 +520,6 @@ def _technology_momentum_panel(selected_family):
         top_n_value.param.value,
     )
     def technology_view(
-        use_remote,
         use_country,
         use_metric,
         selected_ages,
@@ -502,7 +531,6 @@ def _technology_momentum_panel(selected_family):
         effective_top_n = _effective_top_n(top_n)
         effective_metric = _effective_metric(selected_metric, use_metric)
         filter_key = _filter_key_from_filter_values(
-            use_remote,
             use_country,
             selected_ages,
             selected_remote,
@@ -541,7 +569,6 @@ def momentum_comparison():
 
 
 @pn.depends(
-    remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     metric_filter_enabled.param.value,
     age_filter.param.value,
@@ -551,7 +578,6 @@ def momentum_comparison():
     top_n_value.param.value,
 )
 def demographics_context(
-    use_remote,
     use_country,
     use_metric,
     selected_ages,
@@ -563,7 +589,6 @@ def demographics_context(
     effective_top_n = _effective_top_n(top_n)
     effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
-        use_remote,
         use_country,
         selected_ages,
         selected_remote,
@@ -596,7 +621,6 @@ def demographics_context(
 
 
 @pn.depends(
-    remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     metric_filter_enabled.param.value,
     age_filter.param.value,
@@ -606,7 +630,6 @@ def demographics_context(
     top_n_value.param.value,
 )
 def detailed_age_education(
-    use_remote,
     use_country,
     use_metric,
     selected_ages,
@@ -617,7 +640,6 @@ def detailed_age_education(
 ):
     effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
-        use_remote,
         use_country,
         selected_ages,
         selected_remote,
@@ -645,7 +667,6 @@ def detailed_age_education(
 
 
 @pn.depends(
-    remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     age_filter.param.value,
     remote_filter.param.value,
@@ -653,7 +674,6 @@ def detailed_age_education(
     top_n_value.param.value,
 )
 def detailed_compensation_experience(
-    use_remote,
     use_country,
     selected_ages,
     selected_remote,
@@ -661,7 +681,6 @@ def detailed_compensation_experience(
     top_n,
 ):
     filter_key = _filter_key_from_filter_values(
-        use_remote,
         use_country,
         selected_ages,
         selected_remote,
@@ -702,7 +721,6 @@ def detailed_compensation_experience(
 
 
 @pn.depends(
-    remote_filter_enabled.param.value,
     country_filter_enabled.param.value,
     metric_filter_enabled.param.value,
     age_filter.param.value,
@@ -712,7 +730,6 @@ def detailed_compensation_experience(
     top_n_value.param.value,
 )
 def detailed_country_distribution(
-    use_remote,
     use_country,
     use_metric,
     selected_ages,
@@ -723,7 +740,6 @@ def detailed_country_distribution(
 ):
     effective_metric = _effective_metric(selected_metric, use_metric)
     filter_key = _filter_key_from_filter_values(
-        use_remote,
         use_country,
         selected_ages,
         selected_remote,
@@ -822,7 +838,13 @@ def create_dashboard():
         (
             "Workstyle",
             pn.Column(
-                remote_filter_enabled,
+                pn.Row(
+                    pn.pane.Markdown("#### Workstyle", margin=(0, 0, 0, 0)),
+                    pn.Spacer(width=10),
+                    remote_reset_button,
+                    sizing_mode="stretch_width",
+                ),
+                remote_check_all,
                 pn.pane.Markdown("Include one or more workstyle categories."),
                 remote_filter,
                 sizing_mode="stretch_width",
