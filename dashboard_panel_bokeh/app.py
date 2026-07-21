@@ -43,36 +43,45 @@ pn.extension(
     raw_css=[
         """
         .bk-root {
-          font-size: 15px;
+          font-size: 16px;
         }
         .bk-root h2 {
-          font-size: 24px;
+          font-size: 26px;
         }
         .bk-root h3 {
-          font-size: 22px;
+          font-size: 24px;
           margin: 8px 0 8px 0;
         }
         .bk-root h4 {
-          font-size: 17px;
+          font-size: 19px;
           margin: 4px 0 8px 0;
+        }
+        .bk-root p,
+        .bk-root li {
+          font-size: 16px;
+          line-height: 1.55;
         }
         .bk-root .bk-input,
         .bk-root select,
         .bk-root label {
-          font-size: 14px;
+          font-size: 15px;
         }
         .bk-root .bk-btn {
-          font-size: 13px;
+          font-size: 14px;
         }
         .bk-root .bk-tab {
-          font-size: 14px;
-          padding: 10px 16px;
+          font-size: 16px;
+          padding: 12px 18px;
+        }
+        .bk-root .bk-tab button,
+        .bk-root .bk-tab div {
+          font-size: 16px;
         }
         .filter-sidebar {
           background: #ffffff;
           border: 1px solid #d9e2ec;
           border-radius: 10px;
-          padding: 12px;
+          padding: 14px;
           font-size: 16px;
         }
         .filter-sidebar .bk-input,
@@ -84,29 +93,38 @@ pn.extension(
           font-size: 14px;
         }
         .filter-sidebar h3 {
-          font-size: 22px;
+          font-size: 23px;
         }
         .filter-sidebar h4 {
-          font-size: 18px;
+          font-size: 19px;
+        }
+        .filter-sidebar p,
+        .filter-sidebar li {
+          font-size: 15px;
+          line-height: 1.5;
         }
         .filter-rail {
           background: #ffffff;
           border: 1px solid #d9e2ec;
           border-radius: 10px;
-          padding: 10px 8px;
+          padding: 8px;
           position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 58px;
         }
         .filter-rail:hover::after {
           content: "Open filters";
           position: absolute;
-          left: 52px;
-          top: 10px;
+          left: 58px;
+          top: 8px;
           z-index: 1000;
           background: #102a43;
           color: #ffffff;
           border-radius: 6px;
           padding: 8px 10px;
-          font-size: 15px;
+          font-size: 16px;
           font-weight: 700;
           white-space: nowrap;
           box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
@@ -120,6 +138,72 @@ BASE_DF = load_dataset(DATASET_PATH)
 TOTAL_KPIS = build_kpis(BASE_DF)
 REMOTE_OPTIONS = BASE_DF["RemoteWork"].value_counts().index.tolist()
 METRIC_MODE = "Respondent count"
+TAB_STYLESHEET = """
+:host {
+  font-size: 18px;
+}
+.bk-tab,
+.bk-tab button,
+.bk-tab div,
+button,
+[role="tab"] {
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+  padding: 12px 18px !important;
+}
+"""
+INFO_MARKDOWN_STYLESHEET = """
+:host {
+  font-size: 18px;
+  line-height: 1.62;
+}
+h3 {
+  font-size: 25px;
+  margin: 10px 0 8px 0;
+}
+p {
+  font-size: 18px;
+  line-height: 1.62;
+}
+code {
+  font-size: 16px;
+}
+"""
+FILTER_WIDGET_STYLESHEET = """
+:host {
+  font-size: 16px;
+}
+label,
+.bk-input,
+.bk-input-group,
+.bk-checkbox-label,
+.bk-label,
+select,
+button {
+  font-size: 16px !important;
+  line-height: 1.45 !important;
+}
+input[type="checkbox"] {
+  transform: scale(1.06);
+  margin-right: 8px;
+}
+"""
+FILTER_MARKDOWN_STYLESHEET = """
+:host {
+  font-size: 16px;
+  line-height: 1.55;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 20px;
+}
+p {
+  font-size: 16px;
+  line-height: 1.55;
+}
+"""
 MOMENTUM_OPTIONS = {
     "Languages": {
         "current_column": "LanguageHaveWorkedWith",
@@ -156,30 +240,41 @@ MOMENTUM_OPTIONS = {
 }
 
 
-age_check_all = pn.widgets.Checkbox(name="Check All", value=True)
+age_check_all = pn.widgets.Checkbox(name="Check All", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
 age_filter = pn.widgets.CheckBoxGroup(
     name="Age groups",
     options=AGE_ORDER,
     value=AGE_ORDER,
+    stylesheets=[FILTER_WIDGET_STYLESHEET],
 )
-age_reset_button = pn.widgets.Button(name="Reset", width=58)
-remote_check_all = pn.widgets.Checkbox(name="Check All", value=True)
+age_reset_button = pn.widgets.Button(name="Reset", width=64, stylesheets=[FILTER_WIDGET_STYLESHEET])
+remote_check_all = pn.widgets.Checkbox(name="Check All", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
 remote_filter = pn.widgets.CheckBoxGroup(
     name="Workstyle",
     options=REMOTE_OPTIONS,
     value=REMOTE_OPTIONS,
+    stylesheets=[FILTER_WIDGET_STYLESHEET],
 )
-remote_reset_button = pn.widgets.Button(name="Reset", width=58)
-country_show_all = pn.widgets.Checkbox(name="Show all countries", value=False)
-country_apply_dashboard = pn.widgets.Checkbox(name="Apply country scope to full dashboard", value=False)
-country_reset_button = pn.widgets.Button(name="Reset", width=58)
+remote_reset_button = pn.widgets.Button(name="Reset", width=64, stylesheets=[FILTER_WIDGET_STYLESHEET])
+country_show_all = pn.widgets.Checkbox(name="Show all countries", value=False, stylesheets=[FILTER_WIDGET_STYLESHEET])
+country_apply_dashboard = pn.widgets.Checkbox(
+    name="Apply country scope to full dashboard",
+    value=False,
+    stylesheets=[FILTER_WIDGET_STYLESHEET],
+)
+country_reset_button = pn.widgets.Button(name="Reset", width=64, stylesheets=[FILTER_WIDGET_STYLESHEET])
 TOP_N_DEFAULT = 10
 top_n_value = pn.widgets.IntInput(name="Top N value", value=TOP_N_DEFAULT)
-top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False)
-top_n_10_checkbox = pn.widgets.Checkbox(name="Top 10", value=True)
-top_n_12_checkbox = pn.widgets.Checkbox(name="Top 12", value=False)
-top_n_reset_button = pn.widgets.Button(name="Reset", width=58)
-reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=104)
+top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False, stylesheets=[FILTER_WIDGET_STYLESHEET])
+top_n_10_checkbox = pn.widgets.Checkbox(name="Top 10", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
+top_n_12_checkbox = pn.widgets.Checkbox(name="Top 12", value=False, stylesheets=[FILTER_WIDGET_STYLESHEET])
+top_n_reset_button = pn.widgets.Button(name="Reset", width=64, stylesheets=[FILTER_WIDGET_STYLESHEET])
+reset_button = pn.widgets.Button(
+    name="Reset filters",
+    button_type="primary",
+    width=120,
+    stylesheets=[FILTER_WIDGET_STYLESHEET],
+)
 filter_panel_open = pn.widgets.Toggle(value=True, visible=False)
 filter_panel_collapse_button = pn.widgets.ButtonIcon(
     icon="chevrons-left",
@@ -190,8 +285,10 @@ filter_panel_collapse_button = pn.widgets.ButtonIcon(
 filter_panel_expand_button = pn.widgets.ButtonIcon(
     icon="filter",
     description="",
-    width=38,
-    height=38,
+    width=42,
+    height=42,
+    margin=0,
+    align="center",
 )
 
 
@@ -453,13 +550,12 @@ def _kpi_card(title: str, total_value: str, total_label: str, filtered_value: st
     html = f"""
     <div style="background:#f5f7fb;border:1px solid #d9e2ec;border-radius:8px;padding:14px 18px;height:112px;">
       <div style="font-size:13px;color:#486581;text-transform:uppercase;letter-spacing:0.06em;">{title}</div>
-      <div style="display:flex;align-items:flex-start;gap:18px;margin-top:8px;">
-        <div style="flex:1;">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px;margin-top:8px;">
+        <div style="min-width:0;">
           <div style="font-size:29px;font-weight:700;color:#102a43;line-height:1.05;">{total_value}</div>
           <div style="font-size:13px;color:#627d98;line-height:1.35;margin-top:6px;">{total_label}</div>
         </div>
-        <div style="width:1px;align-self:stretch;background:#c9d6e2;"></div>
-        <div style="flex:1;">
+        <div style="min-width:0;border-left:2px solid #b6c5d4;padding-left:18px;">
           <div style="font-size:23px;font-weight:700;color:#334e68;line-height:1.15;">{filtered_value}</div>
           <div style="font-size:13px;color:#829ab1;line-height:1.35;margin-top:6px;">{filtered_label}</div>
         </div>
@@ -471,6 +567,14 @@ def _kpi_card(title: str, total_value: str, total_label: str, filtered_value: st
 
 def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
+
+
+def _info_markdown(text: str, **kwargs) -> pn.pane.Markdown:
+    return pn.pane.Markdown(text, stylesheets=[INFO_MARKDOWN_STYLESHEET], **kwargs)
+
+
+def _filter_markdown(text: str, **kwargs) -> pn.pane.Markdown:
+    return pn.pane.Markdown(text, stylesheets=[FILTER_MARKDOWN_STYLESHEET], **kwargs)
 
 
 def _technology_momentum_view(filter_key, top_n, selected_family):
@@ -571,7 +675,14 @@ def dashboard_kpis(
         apply_country_scope,
         top_n,
     )
+    map_filter_key = _map_filter_key_from_filter_values(
+        selected_ages,
+        selected_remote,
+        show_all_countries,
+        top_n,
+    )
     kpis = _cached_kpis(filter_key)
+    countries_shown_on_map = _cached_country_map_distribution(map_filter_key, None)["country"].nunique()
     return _grid_box(
         _kpi_card(
             "Respondents",
@@ -584,8 +695,8 @@ def dashboard_kpis(
             "Countries",
             f"{TOTAL_KPIS['countries']:,}",
             "Total, excluding Nomadic",
-            f"{kpis['countries']:,}",
-            "Filtered view",
+            f"{countries_shown_on_map:,}",
+            "Shown on map",
         ),
         _kpi_card(
             "Average compensation",
@@ -627,7 +738,7 @@ def _technology_momentum_panel(selected_family):
 
 
 def momentum_comparison():
-    heading = pn.pane.Markdown(
+    heading = _info_markdown(
             """
             ### Momentum and Comparison
 
@@ -643,6 +754,7 @@ def momentum_comparison():
         ],
         sizing_mode="stretch_width",
         dynamic=True,
+        stylesheets=[TAB_STYLESHEET],
     )
     return pn.Column(
         heading,
@@ -677,7 +789,7 @@ def demographics_context(
     age_education = _cached_age_education_distribution(filter_key)
     salary_box = _cached_salary_remote_experience_box_summary(filter_key)
 
-    heading = pn.pane.Markdown(
+    heading = _info_markdown(
             """
             ### Demographics and Context
 
@@ -723,7 +835,7 @@ def detailed_age_education(
     age_education = _cached_age_education_distribution(filter_key)
 
     return pn.Column(
-        pn.pane.Markdown(
+        _info_markdown(
             """
             ### Age Profile and Education Composition
 
@@ -780,7 +892,7 @@ def detailed_compensation_experience(
         )
 
     return pn.Column(
-        pn.pane.Markdown(
+        _info_markdown(
             """
             ### Compensation Distribution by Experience and Work Style
 
@@ -820,7 +932,7 @@ def detailed_country_distribution(
     unmapped_note = ", ".join(unmapped_countries) if unmapped_countries else "None"
 
     return pn.Column(
-        pn.pane.Markdown(
+        _info_markdown(
             f"""
             ### Full Country Distribution Map
 
@@ -852,9 +964,10 @@ def detailed_views() -> pn.Column:
         ("Country Distribution", pn.panel(detailed_country_distribution)),
         sizing_mode="stretch_width",
         dynamic=True,
+        stylesheets=[TAB_STYLESHEET],
     )
     return pn.Column(
-        pn.pane.Markdown(
+        _info_markdown(
             """
             ### Respondent Context
 
@@ -873,12 +986,12 @@ def create_dashboard():
             "Top N",
             pn.Column(
                 pn.Row(
-                    pn.pane.Markdown("#### Top N", margin=(0, 0, 0, 0)),
+                    _filter_markdown("#### Top N", margin=(0, 0, 0, 0)),
                     pn.Spacer(width=10),
                     top_n_reset_button,
                     sizing_mode="stretch_width",
                 ),
-                pn.pane.Markdown("Choose the ranking depth used by technology rankings and Top N country filtering."),
+                _filter_markdown("Choose the ranking depth used by technology rankings and Top N country filtering."),
                 top_n_5_checkbox,
                 top_n_10_checkbox,
                 top_n_12_checkbox,
@@ -889,13 +1002,13 @@ def create_dashboard():
             "Age",
             pn.Column(
                 pn.Row(
-                    pn.pane.Markdown("#### Age", margin=(0, 0, 0, 0)),
+                    _filter_markdown("#### Age", margin=(0, 0, 0, 0)),
                     pn.Spacer(width=10),
                     age_reset_button,
                     sizing_mode="stretch_width",
                 ),
                 age_check_all,
-                pn.pane.Markdown("Limit the dashboard to selected age groups."),
+                _filter_markdown("Limit the dashboard to selected age groups."),
                 age_filter,
                 sizing_mode="stretch_width",
             ),
@@ -904,13 +1017,13 @@ def create_dashboard():
             "Workstyle",
             pn.Column(
                 pn.Row(
-                    pn.pane.Markdown("#### Workstyle", margin=(0, 0, 0, 0)),
+                    _filter_markdown("#### Workstyle", margin=(0, 0, 0, 0)),
                     pn.Spacer(width=10),
                     remote_reset_button,
                     sizing_mode="stretch_width",
                 ),
                 remote_check_all,
-                pn.pane.Markdown("Include one or more workstyle categories."),
+                _filter_markdown("Include one or more workstyle categories."),
                 remote_filter,
                 sizing_mode="stretch_width",
             ),
@@ -919,12 +1032,12 @@ def create_dashboard():
             "Countries",
             pn.Column(
                 pn.Row(
-                    pn.pane.Markdown("#### Countries", margin=(0, 0, 0, 0)),
+                    _filter_markdown("#### Countries", margin=(0, 0, 0, 0)),
                     pn.Spacer(width=10),
                     country_reset_button,
                     sizing_mode="stretch_width",
                 ),
-                pn.pane.Markdown("By default, the map is limited by the selected Top N countries."),
+                _filter_markdown("By default, the map is limited by the selected Top N countries."),
                 country_show_all,
                 country_apply_dashboard,
                 sizing_mode="stretch_width",
@@ -932,12 +1045,14 @@ def create_dashboard():
         ),
         active=[0, 1, 2, 3],
         sizing_mode="stretch_width",
+        stylesheets=[FILTER_WIDGET_STYLESHEET],
     )
     tabs = pn.Tabs(
         ("Momentum and Comparison", momentum_comparison()),
         ("Respondent Context", detailed_views()),
         sizing_mode="stretch_width",
         dynamic=True,
+        stylesheets=[TAB_STYLESHEET],
     )
 
     header = pn.pane.HTML(
@@ -956,14 +1071,14 @@ def create_dashboard():
     def _open_filter_sidebar() -> pn.Column:
         return pn.Column(
             pn.Row(
-                pn.pane.Markdown("### Filters", margin=(2, 8, 0, 0)),
+                _filter_markdown("### Filters", margin=(2, 8, 0, 0)),
                 reset_button,
                 pn.Spacer(sizing_mode="stretch_width"),
                 filter_panel_collapse_button,
                 sizing_mode="stretch_width",
                 margin=(0, 0, 8, 0),
             ),
-            pn.pane.Markdown(
+            _filter_markdown(
                 """
                 Use each category to refine the dashboard. Reset buttons restore category defaults where available.
                 The dashboard uses respondent counts as its fixed metric.

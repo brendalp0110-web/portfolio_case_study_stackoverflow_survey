@@ -283,6 +283,7 @@ def age_education_distribution(df: pd.DataFrame) -> pd.DataFrame:
 
     pivot = grouped.pivot(index="Age", columns="EducationGroup", values="count").fillna(0)
     pivot = pivot.reindex(AGE_ORDER, fill_value=0)
+    pivot = pivot[pivot.sum(axis=1) > 0]
     return pivot.reset_index()
 
 
