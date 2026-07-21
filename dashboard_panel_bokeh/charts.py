@@ -43,6 +43,20 @@ def _apply_readability_theme(plot: figure) -> None:
         plot.legend.label_text_font_size = "10pt"
 
 
+def _place_legend_below(plot: figure) -> None:
+    if not plot.legend:
+        return
+
+    legend = plot.legend[0]
+    legend.orientation = "horizontal"
+    legend.location = "center"
+    legend.click_policy = "hide"
+    legend.label_text_font_size = "9pt"
+    legend.spacing = 12
+    legend.margin = 8
+    plot.add_layout(legend, "below")
+
+
 def make_horizontal_bar_chart(
     data: pd.DataFrame,
     category_col: str,
@@ -256,8 +270,7 @@ def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     renderers = plot.vbar_stack(stacks, x="Age", width=0.8, color=colors[: len(stacks)], source=source, legend_label=stacks)
     plot.xaxis.major_label_orientation = 0.8
     plot.yaxis.axis_label = "Respondent count"
-    plot.legend.location = "top_right"
-    plot.legend.click_policy = "hide"
+    _place_legend_below(plot)
     plot.add_tools(
         HoverTool(
             renderers=renderers,
@@ -354,8 +367,7 @@ def make_percent_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     plot.yaxis.axis_label = "Share within age group (%)"
     plot.xaxis.axis_label = "Age group"
     plot.yaxis.formatter = NumeralTickFormatter(format="0")
-    plot.legend.location = "top_right"
-    plot.legend.click_policy = "hide"
+    _place_legend_below(plot)
     plot.add_tools(
         HoverTool(
             renderers=[bars],

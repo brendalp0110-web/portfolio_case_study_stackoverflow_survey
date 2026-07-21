@@ -327,9 +327,11 @@ def age_workexp_sample(df: pd.DataFrame, sample_size: int = 3000) -> pd.DataFram
 
 def build_kpis(df: pd.DataFrame) -> dict:
     median_salary = float(df["ConvertedCompYearly"].median()) if not df.empty else 0.0
+    average_salary = float(df["ConvertedCompYearly"].mean()) if not df.empty else 0.0
     countries = df.loc[df["Country"] != "Nomadic", "Country"].nunique()
     return {
         "respondents": int(len(df)),
         "countries": int(countries),
         "median_salary": median_salary,
+        "average_salary": average_salary,
     }

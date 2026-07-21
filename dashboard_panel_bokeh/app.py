@@ -73,22 +73,43 @@ pn.extension(
           border: 1px solid #d9e2ec;
           border-radius: 10px;
           padding: 12px;
+          font-size: 16px;
+        }
+        .filter-sidebar .bk-input,
+        .filter-sidebar select,
+        .filter-sidebar label {
+          font-size: 15px;
+        }
+        .filter-sidebar .bk-btn {
+          font-size: 14px;
+        }
+        .filter-sidebar h3 {
+          font-size: 22px;
+        }
+        .filter-sidebar h4 {
+          font-size: 18px;
         }
         .filter-rail {
           background: #ffffff;
           border: 1px solid #d9e2ec;
           border-radius: 10px;
           padding: 10px 8px;
+          position: relative;
         }
-        .filter-rail-label {
-          writing-mode: vertical-rl;
-          transform: rotate(180deg);
-          color: #486581;
-          font-size: 13px;
+        .filter-rail:hover::after {
+          content: "Open filters";
+          position: absolute;
+          left: 52px;
+          top: 10px;
+          z-index: 1000;
+          background: #102a43;
+          color: #ffffff;
+          border-radius: 6px;
+          padding: 8px 10px;
+          font-size: 15px;
           font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          margin-top: 8px;
+          white-space: nowrap;
+          box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
         }
         """
     ],
@@ -168,7 +189,7 @@ filter_panel_collapse_button = pn.widgets.ButtonIcon(
 )
 filter_panel_expand_button = pn.widgets.ButtonIcon(
     icon="filter",
-    description="Open filters",
+    description="",
     width=38,
     height=38,
 )
@@ -428,17 +449,21 @@ def _cached_salary_remote_experience_box_summary(filter_key):
     return salary_remote_experience_box_summary(_cached_filtered_df(*filter_key))
 
 
-def _kpi_card(title: str, value: str, subtitle: str, secondary: str | None = None) -> pn.pane.HTML:
-    secondary_html = ""
-    if secondary:
-        secondary_html = f'<div style="font-size:13px;color:#829ab1;line-height:1.35;margin-top:4px;">{secondary}</div>'
-
+def _kpi_card(title: str, total_value: str, total_label: str, filtered_value: str, filtered_label: str) -> pn.pane.HTML:
     html = f"""
-    <div style="background:#f5f7fb;border:1px solid #d9e2ec;border-radius:8px;padding:16px 18px;height:126px;">
+    <div style="background:#f5f7fb;border:1px solid #d9e2ec;border-radius:8px;padding:14px 18px;height:112px;">
       <div style="font-size:13px;color:#486581;text-transform:uppercase;letter-spacing:0.06em;">{title}</div>
-      <div style="font-size:30px;font-weight:700;color:#102a43;margin:8px 0 6px 0;">{value}</div>
-      <div style="font-size:14px;color:#627d98;line-height:1.4;">{subtitle}</div>
-      {secondary_html}
+      <div style="display:flex;align-items:flex-start;gap:18px;margin-top:8px;">
+        <div style="flex:1;">
+          <div style="font-size:29px;font-weight:700;color:#102a43;line-height:1.05;">{total_value}</div>
+          <div style="font-size:13px;color:#627d98;line-height:1.35;margin-top:6px;">{total_label}</div>
+        </div>
+        <div style="width:1px;align-self:stretch;background:#c9d6e2;"></div>
+        <div style="flex:1;">
+          <div style="font-size:23px;font-weight:700;color:#334e68;line-height:1.15;">{filtered_value}</div>
+          <div style="font-size:13px;color:#829ab1;line-height:1.35;margin-top:6px;">{filtered_label}</div>
+        </div>
+      </div>
     </div>
     """
     return pn.pane.HTML(html, sizing_mode="stretch_width")
@@ -532,7 +557,7 @@ def _map_filter_key_from_filter_values(
     remote_filter.param.value,
     top_n_value.param.value,
 )
-def momentum_kpis(
+def dashboard_kpis(
     show_all_countries,
     apply_country_scope,
     selected_ages,
@@ -551,16 +576,24 @@ def momentum_kpis(
         _kpi_card(
             "Respondents",
             f"{TOTAL_KPIS['respondents']:,}",
-            "Total rows in the dataset",
-            f"Filtered view: {kpis['respondents']:,} respondents",
+            "Total dataset",
+            f"{kpis['respondents']:,}",
+            "Filtered view",
         ),
         _kpi_card(
             "Countries",
             f"{TOTAL_KPIS['countries']:,}",
-            "Total countries, excluding Nomadic",
-            f"Filtered view: {kpis['countries']:,} countries",
+            "Total, excluding Nomadic",
+            f"{kpis['countries']:,}",
+            "Filtered view",
         ),
-        _kpi_card("Median compensation", f"${kpis['median_salary']:,.0f}", "Converted annual compensation"),
+        _kpi_card(
+            "Average compensation",
+            f"${TOTAL_KPIS['average_salary']:,.0f}",
+            "Total dataset",
+            f"${kpis['average_salary']:,.0f}",
+            "Filtered view",
+        ),
         ncols=3,
     )
 
@@ -613,7 +646,6 @@ def momentum_comparison():
     )
     return pn.Column(
         heading,
-        pn.panel(momentum_kpis),
         technology_tabs,
         sizing_mode="stretch_width",
     )
@@ -947,7 +979,6 @@ def create_dashboard():
     def _collapsed_filter_rail() -> pn.Column:
         return pn.Column(
             filter_panel_expand_button,
-            pn.pane.HTML('<div class="filter-rail-label">Filters</div>', width=34),
             css_classes=["filter-rail"],
             width=56,
             sizing_mode="fixed",
@@ -966,6 +997,7 @@ def create_dashboard():
 
     return pn.Column(
         header,
+        pn.panel(dashboard_kpis),
         body,
         sizing_mode="stretch_width",
         min_width=1200,
