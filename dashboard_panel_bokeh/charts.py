@@ -41,6 +41,57 @@ EXPERIENCE_SHORT_LABELS = {
     "11-15 years": "11-15",
     "16+ years": "16+",
 }
+DEFAULT_LABELS = {
+    "respondent_count_axis": "Respondent count",
+    "share_respondents_axis": "Share of respondents (%)",
+    "country": "Country",
+    "count": "Count",
+    "share_filtered_respondents": "Share of filtered respondents",
+    "share_filtered_country": "Share of filtered country respondents",
+    "current": "Current",
+    "future": "Future",
+    "current_count": "Current count",
+    "future_count": "Future count",
+    "current_share": "Current share of filtered respondents",
+    "future_share": "Future share of filtered respondents",
+    "delta_share": "Delta share of filtered respondents",
+    "age_group": "Age group",
+    "education_level": "Education level",
+    "share_within_age": "Share within age",
+    "share_within_age_axis": "Share within age group (%)",
+    "years_experience": "Years of experience",
+    "converted_compensation": "Converted annual compensation",
+    "work_style": "Work style",
+    "experience_band": "Experience band",
+    "median": "Median",
+    "mean": "Mean",
+}
+DEFAULT_THEME = {
+    "chart_bg": "#ffffff",
+    "chart_grid": "#edf2f7",
+    "chart_border": "#d9e2ec",
+    "text": "#102a43",
+    "muted": "#627d98",
+    "map_tile": "light",
+}
+
+
+def _labels(labels: dict | None) -> dict:
+    merged = DEFAULT_LABELS.copy()
+    if labels:
+        merged.update(labels)
+    return merged
+
+
+def _chart_theme(theme: dict | None) -> dict:
+    merged = DEFAULT_THEME.copy()
+    if theme:
+        merged.update(theme)
+    return merged
+
+
+def _metric_axis_label(metric_mode: str, labels: dict) -> str:
+    return labels["share_respondents_axis"] if metric_mode == "Share of respondents" else labels["respondent_count_axis"]
 
 
 def _format_axis(plot: figure, metric_mode: str) -> None:
@@ -48,18 +99,38 @@ def _format_axis(plot: figure, metric_mode: str) -> None:
         plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
 
 
-def _apply_readability_theme(plot: figure) -> None:
+def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
+    colors = _chart_theme(theme)
     plot.title.text_font_size = "15pt"
     plot.title.text_font_style = "bold"
+    plot.title.text_color = colors["text"]
+    plot.background_fill_color = colors["chart_bg"]
+    plot.border_fill_color = colors["chart_bg"]
+    plot.outline_line_color = colors["chart_border"]
+    plot.xgrid.grid_line_color = colors["chart_grid"]
+    plot.ygrid.grid_line_color = colors["chart_grid"]
     plot.xaxis.axis_label_text_font_size = "11pt"
     plot.yaxis.axis_label_text_font_size = "11pt"
     plot.xaxis.axis_label_text_font_style = "normal"
     plot.yaxis.axis_label_text_font_style = "normal"
+    plot.xaxis.axis_label_text_color = colors["text"]
+    plot.yaxis.axis_label_text_color = colors["text"]
     plot.xaxis.major_label_text_font_size = "10pt"
     plot.yaxis.major_label_text_font_size = "10pt"
+    plot.xaxis.major_label_text_color = colors["text"]
+    plot.yaxis.major_label_text_color = colors["text"]
+    plot.xaxis.axis_line_color = colors["chart_border"]
+    plot.yaxis.axis_line_color = colors["chart_border"]
+    plot.xaxis.major_tick_line_color = colors["chart_border"]
+    plot.yaxis.major_tick_line_color = colors["chart_border"]
+    plot.xaxis.minor_tick_line_color = colors["chart_border"]
+    plot.yaxis.minor_tick_line_color = colors["chart_border"]
     plot.toolbar.logo = None
     if plot.legend:
         plot.legend.label_text_font_size = "10pt"
+        plot.legend.label_text_color = colors["text"]
+        plot.legend.background_fill_color = colors["chart_bg"]
+        plot.legend.border_line_color = colors["chart_border"]
 
 
 def _place_legend_below(plot: figure) -> None:
@@ -83,7 +154,10 @@ def make_horizontal_bar_chart(
     title: str,
     metric_mode: str,
     color: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
 ) -> figure:
+    labels = _labels(labels)
     chart_data = data.sort_values(value_col, ascending=True).copy()
     source = ColumnDataSource(chart_data)
 
@@ -99,19 +173,19 @@ def make_horizontal_bar_chart(
     )
     plot.hbar(y=category_col, right=value_col, height=0.7, color=color, source=source)
     plot.ygrid.grid_line_color = None
-    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
+    plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = ""
     plot.add_tools(
         HoverTool(
             tooltips=[
-                (category_col.replace("_", " ").title(), "@{" + category_col + "}"),
-                ("Count", "@count{0,0}"),
-                ("Share of filtered respondents", "@share_pct{0.0}%"),
+                (labels.get(category_col, category_col.replace("_", " ").title()), "@{" + category_col + "}"),
+                (labels["count"], "@count{0,0}"),
+                (labels["share_filtered_respondents"], "@share_pct{0.0}%"),
             ]
         )
     )
     _format_axis(plot, metric_mode)
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
@@ -130,7 +204,11 @@ def make_country_bubble_map(
     title: str,
     metric_mode: str,
     height: int = 480,
+    labels: dict | None = None,
+    theme: dict | None = None,
 ) -> figure:
+    labels = _labels(labels)
+    colors = _chart_theme(theme)
     chart_data = data.copy()
     value_col = "share_pct" if metric_mode == "Share of respondents" else "count"
 
@@ -163,7 +241,8 @@ def make_country_bubble_map(
         active_scroll="wheel_zoom",
         sizing_mode="stretch_width",
     )
-    tile_renderer = plot.add_tile(xyz.CartoDB.PositronNoLabels)
+    tile_provider = xyz.CartoDB.DarkMatterNoLabels if colors["map_tile"] == "dark" else xyz.CartoDB.PositronNoLabels
+    tile_renderer = plot.add_tile(tile_provider)
     tile_renderer.tile_source.wrap_around = False
     plot.x_range.bounds = WORLD_X_RANGE
     plot.y_range.bounds = WORLD_Y_RANGE
@@ -183,22 +262,24 @@ def make_country_bubble_map(
         HoverTool(
             renderers=[renderer],
             tooltips=[
-                ("Country", "@country"),
-                ("Count", "@count{0,0}"),
-                ("Share of filtered country respondents", "@share_pct{0.0}%"),
+                (labels["country"], "@country"),
+                (labels["count"], "@count{0,0}"),
+                (labels["share_filtered_country"], "@share_pct{0.0}%"),
             ],
         )
     )
-    color_bar = ColorBar(color_mapper=mapper, title="Share of filtered country respondents", location=(0, 0))
+    color_bar = ColorBar(color_mapper=mapper, title=labels["share_filtered_country"], location=(0, 0))
     color_bar.title_text_font_style = "normal"
     color_bar.major_label_text_font_style = "normal"
+    color_bar.title_text_color = colors["text"]
+    color_bar.major_label_text_color = colors["text"]
     plot.add_layout(color_bar, "right")
     plot.xaxis.visible = False
     plot.yaxis.visible = False
     plot.xgrid.visible = False
     plot.ygrid.visible = False
-    plot.outline_line_color = "#d9e2ec"
-    _apply_readability_theme(plot)
+    plot.outline_line_color = colors["chart_border"]
+    _apply_readability_theme(plot, theme)
     return plot
 
 
@@ -209,7 +290,10 @@ def make_dumbbell_chart(
     future_col: str,
     title: str,
     metric_mode: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
 ) -> figure:
+    labels = _labels(labels)
     chart_data = data.sort_values(future_col, ascending=False).reset_index(drop=True).copy()
 
     source = ColumnDataSource(chart_data)
@@ -243,7 +327,7 @@ def make_dumbbell_chart(
         line_color="white",
         line_width=1,
         source=source,
-        legend_label="Current",
+        legend_label=labels["current"],
     )
     future_renderer = plot.scatter(
         x=future_col,
@@ -253,10 +337,10 @@ def make_dumbbell_chart(
         line_color="white",
         line_width=1,
         source=source,
-        legend_label="Future",
+        legend_label=labels["future"],
     )
     plot.ygrid.grid_line_color = None
-    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
+    plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = ""
     plot.legend.location = "top_left"
     plot.legend.orientation = "horizontal"
@@ -264,21 +348,27 @@ def make_dumbbell_chart(
         HoverTool(
             renderers=[current_renderer, future_renderer],
             tooltips=[
-                (label_col.replace("_", " ").title(), "@{" + label_col + "}"),
-                ("Current count", "@count_current{0,0}"),
-                ("Future count", "@count_future{0,0}"),
-                ("Current share of filtered respondents", "@share_pct_current{0.0}%"),
-                ("Future share of filtered respondents", "@share_pct_future{0.0}%"),
-                ("Delta share of filtered respondents", "@delta_share_pct{0.0}%"),
+                (labels.get(label_col, label_col.replace("_", " ").title()), "@{" + label_col + "}"),
+                (labels["current_count"], "@count_current{0,0}"),
+                (labels["future_count"], "@count_future{0,0}"),
+                (labels["current_share"], "@share_pct_current{0.0}%"),
+                (labels["future_share"], "@share_pct_future{0.0}%"),
+                (labels["delta_share"], "@delta_share_pct{0.0}%"),
             ],
         )
     )
     _format_axis(plot, metric_mode)
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
-def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
+def make_stacked_bar_chart(
+    data: pd.DataFrame,
+    title: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
+) -> figure:
+    labels = _labels(labels)
     chart_data = data.copy()
     chart_data["AgeLabel"] = chart_data["Age"].map(AGE_SHORT_LABELS).fillna(chart_data["Age"])
     categories = chart_data["AgeLabel"].tolist()
@@ -297,19 +387,26 @@ def make_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     renderers = plot.vbar_stack(stacks, x="AgeLabel", width=0.8, color=colors[: len(stacks)], source=source, legend_label=stacks)
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.major_label_standoff = 8
-    plot.yaxis.axis_label = "Respondent count"
+    plot.yaxis.axis_label = labels["respondent_count_axis"]
     _place_legend_below(plot)
     plot.add_tools(
         HoverTool(
             renderers=renderers,
-            tooltips=[("Age group", "@Age"), ("Count", "$y{0,0}")]
+            tooltips=[(labels["age_group"], "@Age"), (labels["count"], "$y{0,0}")]
         )
     )
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
-def make_age_percent_bar_chart(data: pd.DataFrame, title: str, metric_mode: str) -> figure:
+def make_age_percent_bar_chart(
+    data: pd.DataFrame,
+    title: str,
+    metric_mode: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
+) -> figure:
+    labels = _labels(labels)
     chart_data = data.copy()
     chart_data = chart_data[chart_data["count"] > 0].iloc[::-1].reset_index(drop=True)
     chart_data["age_label"] = chart_data["age"].map(AGE_SHORT_LABELS).fillna(chart_data["age"])
@@ -327,23 +424,29 @@ def make_age_percent_bar_chart(data: pd.DataFrame, title: str, metric_mode: str)
     )
     plot.hbar(y="age_label", right=value_col, height=0.72, color="#2f6690", source=source)
     plot.ygrid.grid_line_color = None
-    plot.xaxis.axis_label = "Share of respondents (%)" if metric_mode == "Share of respondents" else "Respondent count"
-    plot.yaxis.axis_label = "Age group"
+    plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
+    plot.yaxis.axis_label = labels["age_group"]
     _format_axis(plot, metric_mode)
     plot.add_tools(
         HoverTool(
             tooltips=[
-                ("Age group", "@age"),
-                ("Count", "@count{0,0}"),
-                ("Share of filtered respondents", "@share_pct{0.0}%"),
+                (labels["age_group"], "@age"),
+                (labels["count"], "@count{0,0}"),
+                (labels["share_filtered_respondents"], "@share_pct{0.0}%"),
             ]
         )
     )
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
-def make_percent_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
+def make_percent_stacked_bar_chart(
+    data: pd.DataFrame,
+    title: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
+) -> figure:
+    labels = _labels(labels)
     source_data = data.copy()
     stacks: List[str] = [column for column in source_data.columns if column != "Age"]
     colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
@@ -395,26 +498,32 @@ def make_percent_stacked_bar_chart(data: pd.DataFrame, title: str) -> figure:
     )
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.major_label_standoff = 8
-    plot.yaxis.axis_label = "Share within age group (%)"
-    plot.xaxis.axis_label = "Age group"
+    plot.yaxis.axis_label = labels["share_within_age_axis"]
+    plot.xaxis.axis_label = labels["age_group"]
     plot.yaxis.formatter = NumeralTickFormatter(format="0")
     _place_legend_below(plot)
     plot.add_tools(
         HoverTool(
             renderers=[bars],
             tooltips=[
-                ("Age group", "@Age"),
-                ("Education level", "@education_level"),
-                ("Count", "@count{0,0}"),
-                ("Share within age", "@share_pct{0.0}%"),
+                (labels["age_group"], "@Age"),
+                (labels["education_level"], "@education_level"),
+                (labels["count"], "@count{0,0}"),
+                (labels["share_within_age"], "@share_pct{0.0}%"),
             ]
         )
     )
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
-def make_grouped_box_plot(data: pd.DataFrame, title: str) -> figure:
+def make_grouped_box_plot(
+    data: pd.DataFrame,
+    title: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
+) -> figure:
+    labels = _labels(labels)
     chart_data = data.copy()
     chart_data["box_color"] = chart_data["remote_label"].map(REMOTE_COLORS).fillna("#2f6690")
     source = ColumnDataSource(chart_data)
@@ -455,23 +564,23 @@ def make_grouped_box_plot(data: pd.DataFrame, title: str) -> figure:
     plot.rect("factor", "lower", 0.25, 0.01, source=source, line_color="#243b53")
     plot.rect("factor", "upper", 0.25, 0.01, source=source, line_color="#243b53")
     plot.xaxis.major_label_orientation = 1.0
-    plot.yaxis.axis_label = "Converted annual compensation"
+    plot.yaxis.axis_label = labels["converted_compensation"]
     plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
     plot.add_tools(
         HoverTool(
             renderers=[upper_boxes, lower_boxes],
             tooltips=[
-                ("Work style", "@remote_label"),
-                ("Experience band", "@experience_band"),
-                ("Median", "@q2{0,0}"),
-                ("Mean", "@mean{0,0}"),
-                ("Count", "@count{0,0}"),
+                (labels["work_style"], "@remote_label"),
+                (labels["experience_band"], "@experience_band"),
+                (labels["median"], "@q2{0,0}"),
+                (labels["mean"], "@mean{0,0}"),
+                (labels["count"], "@count{0,0}"),
             ]
         )
     )
     plot.x_range.group_padding = 0.15
     plot.xaxis.separator_line_color = "#bcccdc"
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
 
 
@@ -480,7 +589,10 @@ def make_compensation_experience_box_plot(
     title: str,
     y_max: float,
     color: str,
+    labels: dict | None = None,
+    theme: dict | None = None,
 ) -> figure:
+    labels = _labels(labels)
     chart_data = data.copy()
     chart_data["factor"] = chart_data["experience_band"].astype(str).map(EXPERIENCE_SHORT_LABELS).fillna(
         chart_data["experience_band"].astype(str)
@@ -522,19 +634,19 @@ def make_compensation_experience_box_plot(
     plot.rect("factor", "lower", 0.24, 0.01, source=source, line_color="#243b53")
     plot.rect("factor", "upper", 0.24, 0.01, source=source, line_color="#243b53")
     plot.xaxis.major_label_orientation = 0
-    plot.xaxis.axis_label = "Years of experience"
-    plot.yaxis.axis_label = "Converted annual compensation"
+    plot.xaxis.axis_label = labels["years_experience"]
+    plot.yaxis.axis_label = labels["converted_compensation"]
     plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
     plot.add_tools(
         HoverTool(
             renderers=[upper_boxes, lower_boxes],
             tooltips=[
-                ("Experience band", "@experience_band"),
-                ("Median", "@q2{0,0}"),
-                ("Mean", "@mean{0,0}"),
-                ("Count", "@count{0,0}"),
+                (labels["experience_band"], "@experience_band"),
+                (labels["median"], "@q2{0,0}"),
+                (labels["mean"], "@mean{0,0}"),
+                (labels["count"], "@count{0,0}"),
             ]
         )
     )
-    _apply_readability_theme(plot)
+    _apply_readability_theme(plot, theme)
     return plot
