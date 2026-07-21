@@ -68,12 +68,35 @@ pn.extension(
           font-size: 14px;
           padding: 10px 16px;
         }
+        .filter-sidebar {
+          background: #ffffff;
+          border: 1px solid #d9e2ec;
+          border-radius: 10px;
+          padding: 12px;
+        }
+        .filter-rail {
+          background: #ffffff;
+          border: 1px solid #d9e2ec;
+          border-radius: 10px;
+          padding: 10px 8px;
+        }
+        .filter-rail-label {
+          writing-mode: vertical-rl;
+          transform: rotate(180deg);
+          color: #486581;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-top: 8px;
+        }
         """
     ],
 )
 
 DATASET_PATH = PROJECT_ROOT / "data" / "survey_data_cleaned_reduced.csv"
 BASE_DF = load_dataset(DATASET_PATH)
+TOTAL_KPIS = build_kpis(BASE_DF)
 REMOTE_OPTIONS = BASE_DF["RemoteWork"].value_counts().index.tolist()
 METRIC_MODE = "Respondent count"
 MOMENTUM_OPTIONS = {
@@ -135,7 +158,20 @@ top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False)
 top_n_10_checkbox = pn.widgets.Checkbox(name="Top 10", value=True)
 top_n_12_checkbox = pn.widgets.Checkbox(name="Top 12", value=False)
 top_n_reset_button = pn.widgets.Button(name="Reset", width=58)
-reset_button = pn.widgets.Button(name="Reset filters", button_type="primary")
+reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=104)
+filter_panel_open = pn.widgets.Toggle(value=True, visible=False)
+filter_panel_collapse_button = pn.widgets.ButtonIcon(
+    icon="chevrons-left",
+    description="Collapse filters",
+    width=34,
+    height=34,
+)
+filter_panel_expand_button = pn.widgets.ButtonIcon(
+    icon="filter",
+    description="Open filters",
+    width=38,
+    height=38,
+)
 
 
 _syncing_top_n = False
@@ -280,6 +316,18 @@ def reset_filters(event) -> None:
 reset_button.on_click(reset_filters)
 
 
+def _collapse_filter_panel(event=None) -> None:
+    filter_panel_open.value = False
+
+
+def _expand_filter_panel(event=None) -> None:
+    filter_panel_open.value = True
+
+
+filter_panel_collapse_button.on_click(_collapse_filter_panel)
+filter_panel_expand_button.on_click(_expand_filter_panel)
+
+
 def _effective_top_n(selected_top_n):
     return int(selected_top_n)
 
@@ -380,12 +428,17 @@ def _cached_salary_remote_experience_box_summary(filter_key):
     return salary_remote_experience_box_summary(_cached_filtered_df(*filter_key))
 
 
-def _kpi_card(title: str, value: str, subtitle: str) -> pn.pane.HTML:
+def _kpi_card(title: str, value: str, subtitle: str, secondary: str | None = None) -> pn.pane.HTML:
+    secondary_html = ""
+    if secondary:
+        secondary_html = f'<div style="font-size:13px;color:#829ab1;line-height:1.35;margin-top:4px;">{secondary}</div>'
+
     html = f"""
     <div style="background:#f5f7fb;border:1px solid #d9e2ec;border-radius:8px;padding:16px 18px;height:126px;">
       <div style="font-size:13px;color:#486581;text-transform:uppercase;letter-spacing:0.06em;">{title}</div>
       <div style="font-size:30px;font-weight:700;color:#102a43;margin:8px 0 6px 0;">{value}</div>
       <div style="font-size:14px;color:#627d98;line-height:1.4;">{subtitle}</div>
+      {secondary_html}
     </div>
     """
     return pn.pane.HTML(html, sizing_mode="stretch_width")
@@ -495,8 +548,18 @@ def momentum_kpis(
     )
     kpis = _cached_kpis(filter_key)
     return _grid_box(
-        _kpi_card("Respondents", f"{kpis['respondents']:,}", "Rows in the current filtered view"),
-        _kpi_card("Countries", f"{kpis['countries']:,}", "Distinct countries represented, excluding Nomadic"),
+        _kpi_card(
+            "Respondents",
+            f"{TOTAL_KPIS['respondents']:,}",
+            "Total rows in the dataset",
+            f"Filtered view: {kpis['respondents']:,} respondents",
+        ),
+        _kpi_card(
+            "Countries",
+            f"{TOTAL_KPIS['countries']:,}",
+            "Total countries, excluding Nomadic",
+            f"Filtered view: {kpis['countries']:,} countries",
+        ),
         _kpi_card("Median compensation", f"${kpis['median_salary']:,.0f}", "Converted annual compensation"),
         ncols=3,
     )
@@ -838,22 +901,6 @@ def create_dashboard():
         active=[0, 1, 2, 3],
         sizing_mode="stretch_width",
     )
-    sidebar = pn.Card(
-        pn.pane.Markdown(
-            """
-            Use each category to refine the dashboard. Reset buttons restore category defaults where available.
-            The dashboard uses respondent counts as its fixed metric.
-            """
-        ),
-        filter_accordion,
-        reset_button,
-        title="Filters",
-        collapsible=True,
-        collapsed=False,
-        width=280,
-        sizing_mode="fixed",
-    )
-
     tabs = pn.Tabs(
         ("Momentum and Comparison", momentum_comparison()),
         ("Respondent Context", detailed_views()),
@@ -874,8 +921,45 @@ def create_dashboard():
         sizing_mode="stretch_width",
     )
 
+    def _open_filter_sidebar() -> pn.Column:
+        return pn.Column(
+            pn.Row(
+                pn.pane.Markdown("### Filters", margin=(2, 8, 0, 0)),
+                reset_button,
+                pn.Spacer(sizing_mode="stretch_width"),
+                filter_panel_collapse_button,
+                sizing_mode="stretch_width",
+                margin=(0, 0, 8, 0),
+            ),
+            pn.pane.Markdown(
+                """
+                Use each category to refine the dashboard. Reset buttons restore category defaults where available.
+                The dashboard uses respondent counts as its fixed metric.
+                """,
+                margin=(0, 0, 10, 0),
+            ),
+            filter_accordion,
+            css_classes=["filter-sidebar"],
+            width=310,
+            sizing_mode="fixed",
+        )
+
+    def _collapsed_filter_rail() -> pn.Column:
+        return pn.Column(
+            filter_panel_expand_button,
+            pn.pane.HTML('<div class="filter-rail-label">Filters</div>', width=34),
+            css_classes=["filter-rail"],
+            width=56,
+            sizing_mode="fixed",
+            align="start",
+        )
+
+    @pn.depends(filter_panel_open.param.value)
+    def filter_sidebar(is_open: bool):
+        return _open_filter_sidebar() if is_open else _collapsed_filter_rail()
+
     body = pn.Row(
-        sidebar,
+        filter_sidebar,
         tabs,
         sizing_mode="stretch_width",
     )
