@@ -154,6 +154,8 @@ button,
 """
 INFO_MARKDOWN_STYLESHEET = """
 :host {
+  color: #102a43;
+  font-family: inherit;
   font-size: 18px;
   line-height: 1.62;
 }
@@ -166,6 +168,8 @@ p {
   line-height: 1.62;
 }
 code {
+  color: inherit;
+  font-family: inherit;
   font-size: 16px;
 }
 """
@@ -238,6 +242,12 @@ MOMENTUM_OPTIONS = {
         "future_title": "Top Future Web Frameworks",
     },
 }
+TECHNOLOGY_CONTEXT = {
+    "Languages": "Programming, scripting, and markup languages developers use to build software.",
+    "Databases": "Data storage and query technologies that support application and analytics work.",
+    "Platforms": "Cloud, hosting, and deployment platforms shaping where software runs.",
+    "Frameworks": "Web frameworks and libraries developers use to build user-facing applications.",
+}
 
 
 age_check_all = pn.widgets.Checkbox(name="Check All", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
@@ -275,7 +285,7 @@ reset_button = pn.widgets.Button(
     width=120,
     stylesheets=[FILTER_WIDGET_STYLESHEET],
 )
-filter_panel_open = pn.widgets.Toggle(value=True, visible=False)
+filter_panel_open = pn.widgets.Toggle(value=False, visible=False)
 filter_panel_collapse_button = pn.widgets.ButtonIcon(
     icon="chevrons-left",
     description="Collapse filters",
@@ -590,6 +600,7 @@ def _technology_momentum_view(filter_key, top_n, selected_family):
         top_n,
     )
     color = TECH_COLORS[config["color_key"]]
+    context = TECHNOLOGY_CONTEXT.get(selected_family, "")
 
     rankings_grid = _grid_box(
         make_horizontal_bar_chart(
@@ -612,6 +623,7 @@ def _technology_momentum_view(filter_key, top_n, selected_family):
     )
 
     return pn.Column(
+        _info_markdown(f"{context}", margin=(0, 0, 8, 0)),
         rankings_grid,
         make_dumbbell_chart(
             comparison,
@@ -742,9 +754,8 @@ def momentum_comparison():
             """
             ### Momentum and Comparison
 
-            This tab separates the technology comparison into four subtabs. Each subtab shows the
-            `current ranking`, the `future ranking`, and the direct `current vs future` dumbbell chart
-            for one technology family. The left filter panel controls respondent slice, metric, and ranking depth.
+            Explore which technologies developers rely on today and which ones are gaining future interest.
+            Use this view to spot momentum, maturity, and possible shifts in demand.
             """
     )
     technology_tabs = pn.Tabs(
@@ -839,7 +850,7 @@ def detailed_age_education(
             """
             ### Age Profile and Education Composition
 
-            This view separates the respondent age distribution from the education mix within each age group.
+            Understand who is represented in the survey and how education patterns vary across career stages.
             """
         ),
         _grid_box(
@@ -896,8 +907,7 @@ def detailed_compensation_experience(
             """
             ### Compensation Distribution by Experience and Work Style
 
-            Each chart uses the same dimensions and y-axis scale so the compensation distributions can be compared
-            across `Remote`, `Hybrid`, and `In-person` work styles.
+            Compare how compensation ranges evolve with experience across remote, hybrid, and in-person work.
             """
         ),
         _grid_box(*charts, ncols=3),
@@ -923,28 +933,39 @@ def detailed_country_distribution(
         show_all_countries,
         top_n,
     )
-    filtered = _cached_filtered_df(*filter_key)
+    nomadic_context_key = _filter_key(
+        selected_ages,
+        selected_remote,
+        "All countries",
+        top_n,
+    )
+    nomadic_context = _cached_filtered_df(*nomadic_context_key)
     map_data = _cached_country_map_distribution(filter_key, None)
-    geographic_countries = set(filtered.loc[filtered["Country"] != "Nomadic", "Country"].dropna().unique())
-    total_country_values = len(geographic_countries)
-    mapped_countries = map_data["country"].nunique()
-    unmapped_countries = sorted(geographic_countries - set(map_data["country"].unique()))
-    unmapped_note = ", ".join(unmapped_countries) if unmapped_countries else "None"
+    nomadic_count = int((nomadic_context["Country"] == "Nomadic").sum())
+    nomadic_share = nomadic_count / max(len(nomadic_context), 1) * 100
+    nomadic_share_label = "<0.1%" if 0 < nomadic_share < 0.1 else f"{nomadic_share:.1f}%"
 
     return pn.Column(
         _info_markdown(
             f"""
             ### Full Country Distribution Map
 
-            This view shows the mappable countries in the current filtered dataset.
-            Countries shown: `{mapped_countries}` of `{total_country_values}` countries.
-            Unmapped countries: `{unmapped_note}`. The non-geographic value `Nomadic` is excluded from the
-            country count.
+            Locate where the respondent base is concentrated and how geography changes with the active filters.
             """
+        ),
+        pn.pane.HTML(
+            f"""
+            <div style="display:inline-flex;align-items:center;gap:10px;background:#f5f7fb;border:1px solid #d9e2ec;border-radius:8px;padding:10px 12px;color:#334e68;font-size:15px;margin:0 0 8px 0;">
+              <span style="font-weight:700;color:#102a43;">Nomadic respondents</span>
+              <span>{nomadic_share_label}</span>
+              <span style="color:#829ab1;">({nomadic_count:,} respondents, not plotted as a country)</span>
+            </div>
+            """,
+            sizing_mode="stretch_width",
         ),
         make_country_bubble_map(
             map_data,
-            "Respondent Distribution Across All Countries",
+            "Respondent Distribution by Country",
             METRIC_MODE,
             height=640,
         ),
@@ -953,11 +974,6 @@ def detailed_country_distribution(
 
 
 def detailed_views() -> pn.Column:
-    subtab_template = """
-    ### {title}
-
-    Reserved space for the next dashboard iteration.
-    """
     subtabs = pn.Tabs(
         ("Age and Education", pn.panel(detailed_age_education)),
         ("Compensation by Experience", pn.panel(detailed_compensation_experience)),
@@ -971,8 +987,7 @@ def detailed_views() -> pn.Column:
             """
             ### Respondent Context
 
-            These subtabs separate respondent context into age and education, compensation by experience,
-            and geographic distribution.
+            Interpret the technology signals through respondent profile, compensation, and geography.
             """
         ),
         subtabs,
@@ -1043,7 +1058,7 @@ def create_dashboard():
                 sizing_mode="stretch_width",
             ),
         ),
-        active=[0, 1, 2, 3],
+        active=[0],
         sizing_mode="stretch_width",
         stylesheets=[FILTER_WIDGET_STYLESHEET],
     )
@@ -1061,7 +1076,6 @@ def create_dashboard():
           <div style="font-size:28px;font-weight:700;margin-bottom:6px;">Developer Technology Trends Dashboard</div>
           <div style="font-size:15px;line-height:1.5;max-width:980px;">
             Interactive dashboard built with Panel and Bokeh from the cleaned and reduced Stack Overflow survey dataset.
-            It keeps the original project narrative while making comparison and exploration easier than the static PDF.
           </div>
         </div>
         """,
@@ -1072,12 +1086,12 @@ def create_dashboard():
         return pn.Column(
             pn.Row(
                 _filter_markdown("### Filters", margin=(2, 8, 0, 0)),
-                reset_button,
                 pn.Spacer(sizing_mode="stretch_width"),
                 filter_panel_collapse_button,
                 sizing_mode="stretch_width",
-                margin=(0, 0, 8, 0),
+                margin=(0, 0, 4, 0),
             ),
+            reset_button,
             _filter_markdown(
                 """
                 Use each category to refine the dashboard. Reset buttons restore category defaults where available.

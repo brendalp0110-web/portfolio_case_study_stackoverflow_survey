@@ -163,7 +163,12 @@ def make_country_bubble_map(
         active_scroll="wheel_zoom",
         sizing_mode="stretch_width",
     )
-    plot.add_tile(xyz.CartoDB.Positron)
+    tile_renderer = plot.add_tile(xyz.CartoDB.PositronNoLabels)
+    tile_renderer.tile_source.wrap_around = False
+    plot.x_range.bounds = WORLD_X_RANGE
+    plot.y_range.bounds = WORLD_Y_RANGE
+    plot.x_range.max_interval = WORLD_X_RANGE[1] - WORLD_X_RANGE[0]
+    plot.y_range.max_interval = WORLD_Y_RANGE[1] - WORLD_Y_RANGE[0]
     renderer = plot.scatter(
         x="mercator_x",
         y="mercator_y",
@@ -185,6 +190,8 @@ def make_country_bubble_map(
         )
     )
     color_bar = ColorBar(color_mapper=mapper, title="Share of filtered country respondents", location=(0, 0))
+    color_bar.title_text_font_style = "normal"
+    color_bar.major_label_text_font_style = "normal"
     plot.add_layout(color_bar, "right")
     plot.xaxis.visible = False
     plot.yaxis.visible = False
