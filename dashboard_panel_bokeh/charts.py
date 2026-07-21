@@ -7,7 +7,7 @@ import pandas as pd
 from bokeh.models import ColorBar, ColumnDataSource, FactorRange, HoverTool, LinearColorMapper, NumeralTickFormatter
 from bokeh.palettes import Viridis256
 from bokeh.plotting import figure
-from bokeh.tile_providers import Vendors, get_provider
+from xyzservices import providers as xyz
 
 
 PLOT_TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
@@ -130,8 +130,8 @@ def make_country_bubble_map(
         active_scroll="wheel_zoom",
         sizing_mode="stretch_width",
     )
-    plot.add_tile(get_provider(Vendors.CARTODBPOSITRON))
-    renderer = plot.circle(
+    plot.add_tile(xyz.CartoDB.Positron)
+    renderer = plot.scatter(
         x="mercator_x",
         y="mercator_y",
         size="bubble_size",
@@ -195,7 +195,7 @@ def make_dumbbell_chart(
         color="#9aa5b1",
         alpha=0.9,
     )
-    current_renderer = plot.circle(
+    current_renderer = plot.scatter(
         x=current_col,
         y=label_col,
         size=11,
@@ -205,7 +205,7 @@ def make_dumbbell_chart(
         source=source,
         legend_label="Current",
     )
-    future_renderer = plot.circle(
+    future_renderer = plot.scatter(
         x=future_col,
         y=label_col,
         size=11,

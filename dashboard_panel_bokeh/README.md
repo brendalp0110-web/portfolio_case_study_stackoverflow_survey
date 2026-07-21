@@ -1,6 +1,6 @@
 # Panel + Bokeh Dashboard Workspace
 
-This folder contains the first implementation of the Python dashboard built with `Panel` and `Bokeh`.
+This folder contains the Python dashboard built with `Panel` and `Bokeh`.
 
 ## Main files
 
@@ -12,19 +12,24 @@ This folder contains the first implementation of the Python dashboard built with
 
 From the project root:
 
-```bash
-panel serve dashboard_panel_bokeh/app.py --autoreload
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m panel serve dashboard_panel_bokeh/app.py --port 5016 --address 127.0.0.1 --allow-websocket-origin 127.0.0.1:5016
 ```
 
-Then open the local URL shown by Panel in the terminal.
+Then open `http://127.0.0.1:5016/app` in the browser.
+
+For notebooks, select the `Python 3.13 (StackOverflow Survey)` Jupyter kernel.
 
 ## Scope
 
-Version 1 includes:
+Current version includes:
 
-- a momentum and comparison tab
-- a demographics and context tab
-- a dumbbell chart for current vs future comparison
-- shared filters for age, remote work, country scope, metric mode, and top N
+- a `Momentum and Comparison` tab with subtabs for languages, databases, platforms, and frameworks
+- a `Respondent Context` tab with age/education, compensation, and country-distribution subtabs
+- a current-vs-future dumbbell comparison for each technology family
+- shared filters for top N, age groups, workstyle, and country scope
 
 See [docs/panel_bokeh_dashboard_plan.md](../docs/panel_bokeh_dashboard_plan.md), [docs/panel_bokeh_dashboard_redesign.md](../docs/panel_bokeh_dashboard_redesign.md), and [docs/panel_bokeh_dashboard_v1_spec.md](../docs/panel_bokeh_dashboard_v1_spec.md) for planning context.

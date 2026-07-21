@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.venv/
 data/cleaned_outputs/survey_data_cleaned.csv
