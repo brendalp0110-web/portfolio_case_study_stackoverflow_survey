@@ -126,12 +126,9 @@ remote_filter = pn.widgets.CheckBoxGroup(
     value=REMOTE_OPTIONS,
 )
 remote_reset_button = pn.widgets.Button(name="Reset", width=58)
-country_scope = pn.widgets.Select(
-    name="Country scope",
-    options=["All countries", "Top N countries"],
-    value="All countries",
-)
-country_filter_enabled = pn.widgets.Checkbox(name="Activate Countries filter", value=True)
+country_show_all = pn.widgets.Checkbox(name="Show all countries", value=False)
+country_apply_dashboard = pn.widgets.Checkbox(name="Apply country scope to full dashboard", value=False)
+country_reset_button = pn.widgets.Button(name="Reset", width=58)
 TOP_N_DEFAULT = 10
 top_n_value = pn.widgets.IntInput(name="Top N value", value=TOP_N_DEFAULT)
 top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False)
@@ -265,27 +262,22 @@ def reset_remote(event=None) -> None:
 remote_reset_button.on_click(reset_remote)
 
 
+def reset_country(event=None) -> None:
+    country_show_all.value = False
+    country_apply_dashboard.value = False
+
+
+country_reset_button.on_click(reset_country)
+
+
 def reset_filters(event) -> None:
-    country_filter_enabled.value = True
     reset_age()
     reset_remote()
-    country_scope.value = "All countries"
+    reset_country()
     reset_top_n()
 
 
 reset_button.on_click(reset_filters)
-
-
-def _sync_filter_control_states(event=None) -> None:
-    country_scope.disabled = not country_filter_enabled.value
-
-
-for toggle in [
-    country_filter_enabled,
-]:
-    toggle.param.watch(_sync_filter_control_states, "value")
-
-_sync_filter_control_states()
 
 
 def _effective_top_n(selected_top_n):
@@ -300,8 +292,14 @@ def _effective_remote(selected_remote):
     return list(selected_remote) or list(REMOTE_OPTIONS)
 
 
-def _effective_country_scope(selected_country_scope, use_country):
-    return selected_country_scope if use_country else "All countries"
+def _country_scope_from_options(show_all_countries: bool, apply_to_dashboard: bool) -> str:
+    if apply_to_dashboard and not show_all_countries:
+        return "Top N countries"
+    return "All countries"
+
+
+def _map_country_scope(show_all_countries: bool) -> str:
+    return "All countries" if show_all_countries else "Top N countries"
 
 
 def _filter_key(
@@ -309,13 +307,12 @@ def _filter_key(
     selected_remote,
     selected_country_scope,
     selected_top_n,
-    use_country,
 ):
     effective_top_n = _effective_top_n(selected_top_n)
     return (
         tuple(_effective_ages(selected_ages)),
         tuple(_effective_remote(selected_remote)),
-        _effective_country_scope(selected_country_scope, use_country),
+        selected_country_scope,
         effective_top_n,
     )
 
@@ -337,14 +334,12 @@ def _filtered_df(
     selected_remote,
     selected_country_scope,
     selected_top_n,
-    use_country,
 ):
     key = _filter_key(
         selected_ages,
         selected_remote,
         selected_country_scope,
         selected_top_n,
-        use_country,
     )
     filtered = _cached_filtered_df(*key)
     return filtered
@@ -449,40 +444,53 @@ def _technology_momentum_view(filter_key, top_n, selected_family):
 
 
 def _filter_key_from_filter_values(
-    use_country,
     selected_ages,
     selected_remote,
-    selected_country_scope,
+    show_all_countries,
+    apply_country_scope,
     top_n,
 ):
     return _filter_key(
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        _country_scope_from_options(show_all_countries, apply_country_scope),
         top_n,
-        use_country,
+    )
+
+
+def _map_filter_key_from_filter_values(
+    selected_ages,
+    selected_remote,
+    show_all_countries,
+    top_n,
+):
+    return _filter_key(
+        selected_ages,
+        selected_remote,
+        _map_country_scope(show_all_countries),
+        top_n,
     )
 
 
 @pn.depends(
-    country_filter_enabled.param.value,
+    country_show_all.param.value,
+    country_apply_dashboard.param.value,
     age_filter.param.value,
     remote_filter.param.value,
-    country_scope.param.value,
     top_n_value.param.value,
 )
 def momentum_kpis(
-    use_country,
+    show_all_countries,
+    apply_country_scope,
     selected_ages,
     selected_remote,
-    selected_country_scope,
     top_n,
 ):
     filter_key = _filter_key_from_filter_values(
-        use_country,
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        show_all_countries,
+        apply_country_scope,
         top_n,
     )
     kpis = _cached_kpis(filter_key)
@@ -496,25 +504,25 @@ def momentum_kpis(
 
 def _technology_momentum_panel(selected_family):
     @pn.depends(
-        country_filter_enabled.param.value,
+        country_show_all.param.value,
+        country_apply_dashboard.param.value,
         age_filter.param.value,
         remote_filter.param.value,
-        country_scope.param.value,
         top_n_value.param.value,
     )
     def technology_view(
-        use_country,
+        show_all_countries,
+        apply_country_scope,
         selected_ages,
         selected_remote,
-        selected_country_scope,
         top_n,
     ):
         effective_top_n = _effective_top_n(top_n)
         filter_key = _filter_key_from_filter_values(
-            use_country,
             selected_ages,
             selected_remote,
-            selected_country_scope,
+            show_all_countries,
+            apply_country_scope,
             top_n,
         )
         return _technology_momentum_view(filter_key, effective_top_n, selected_family)
@@ -549,25 +557,25 @@ def momentum_comparison():
 
 
 @pn.depends(
-    country_filter_enabled.param.value,
+    country_show_all.param.value,
+    country_apply_dashboard.param.value,
     age_filter.param.value,
     remote_filter.param.value,
-    country_scope.param.value,
     top_n_value.param.value,
 )
 def demographics_context(
-    use_country,
+    show_all_countries,
+    apply_country_scope,
     selected_ages,
     selected_remote,
-    selected_country_scope,
     top_n,
 ):
     effective_top_n = _effective_top_n(top_n)
     filter_key = _filter_key_from_filter_values(
-        use_country,
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        show_all_countries,
+        apply_country_scope,
         top_n,
     )
     countries_map = _cached_country_map_distribution(filter_key, effective_top_n)
@@ -596,24 +604,24 @@ def demographics_context(
 
 
 @pn.depends(
-    country_filter_enabled.param.value,
+    country_show_all.param.value,
+    country_apply_dashboard.param.value,
     age_filter.param.value,
     remote_filter.param.value,
-    country_scope.param.value,
     top_n_value.param.value,
 )
 def detailed_age_education(
-    use_country,
+    show_all_countries,
+    apply_country_scope,
     selected_ages,
     selected_remote,
-    selected_country_scope,
     top_n,
 ):
     filter_key = _filter_key_from_filter_values(
-        use_country,
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        show_all_countries,
+        apply_country_scope,
         top_n,
     )
     age_profile = _cached_age_distribution(filter_key)
@@ -637,24 +645,24 @@ def detailed_age_education(
 
 
 @pn.depends(
-    country_filter_enabled.param.value,
+    country_show_all.param.value,
+    country_apply_dashboard.param.value,
     age_filter.param.value,
     remote_filter.param.value,
-    country_scope.param.value,
     top_n_value.param.value,
 )
 def detailed_compensation_experience(
-    use_country,
+    show_all_countries,
+    apply_country_scope,
     selected_ages,
     selected_remote,
-    selected_country_scope,
     top_n,
 ):
     filter_key = _filter_key_from_filter_values(
-        use_country,
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        show_all_countries,
+        apply_country_scope,
         top_n,
     )
     salary_box = _cached_salary_remote_experience_box_summary(filter_key)
@@ -691,24 +699,21 @@ def detailed_compensation_experience(
 
 
 @pn.depends(
-    country_filter_enabled.param.value,
+    country_show_all.param.value,
     age_filter.param.value,
     remote_filter.param.value,
-    country_scope.param.value,
     top_n_value.param.value,
 )
 def detailed_country_distribution(
-    use_country,
+    show_all_countries,
     selected_ages,
     selected_remote,
-    selected_country_scope,
     top_n,
 ):
-    filter_key = _filter_key_from_filter_values(
-        use_country,
+    filter_key = _map_filter_key_from_filter_values(
         selected_ages,
         selected_remote,
-        selected_country_scope,
+        show_all_countries,
         top_n,
     )
     filtered = _cached_filtered_df(*filter_key)
@@ -818,9 +823,15 @@ def create_dashboard():
         (
             "Countries",
             pn.Column(
-                country_filter_enabled,
-                pn.pane.Markdown("Use all countries or restrict the dashboard to the selected Top N countries."),
-                country_scope,
+                pn.Row(
+                    pn.pane.Markdown("#### Countries", margin=(0, 0, 0, 0)),
+                    pn.Spacer(width=10),
+                    country_reset_button,
+                    sizing_mode="stretch_width",
+                ),
+                pn.pane.Markdown("By default, the map is limited by the selected Top N countries."),
+                country_show_all,
+                country_apply_dashboard,
                 sizing_mode="stretch_width",
             ),
         ),
