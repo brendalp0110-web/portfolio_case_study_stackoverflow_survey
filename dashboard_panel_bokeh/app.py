@@ -1502,7 +1502,7 @@ def create_dashboard():
         title_row = pn.Row(
             pn.pane.HTML(
                 f"""
-                <div style="font-size:28px;font-weight:700;line-height:1.2;">
+                <div style="font-size:28px;font-weight:700;line-height:1.2;color:{theme['header_text']};">
                   {_text('dashboard_title', lang)}
                 </div>
                 """,
@@ -1521,7 +1521,7 @@ def create_dashboard():
             title_row,
             pn.pane.HTML(
                 f"""
-                <div style="font-size:15px;line-height:1.5;max-width:980px;">
+                <div style="font-size:15px;line-height:1.5;max-width:980px;color:{theme['header_text']};">
                   {_text('dashboard_subtitle', lang)}
                 </div>
                 """,
@@ -1532,7 +1532,7 @@ def create_dashboard():
                 "background": theme["header_bg"],
                 "color": theme["header_text"],
                 "padding": "18px 22px",
-                "border-radius": "10px",
+                "border-radius": "0 0 10px 10px",
             },
             sizing_mode="stretch_width",
         )
