@@ -18,7 +18,6 @@ from dashboard_panel_bokeh.charts import (  # noqa: E402
     make_dumbbell_chart,
     make_age_percent_bar_chart,
     make_compensation_experience_box_plot,
-    make_grouped_box_plot,
     make_horizontal_bar_chart,
     make_percent_stacked_bar_chart,
     make_stacked_bar_chart,
@@ -129,6 +128,19 @@ pn.extension(
           white-space: nowrap;
           box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
         }
+        .language-menu button {
+          min-width: 118px;
+          min-height: 34px;
+          font-size: 15px;
+        }
+        .language-menu .bk-menu,
+        .language-menu .bk-menu-item,
+        .language-menu [role="menu"],
+        .language-menu [role="menuitem"] {
+          min-width: 150px;
+          font-size: 15px;
+          line-height: 1.5;
+        }
         """
     ],
 )
@@ -168,21 +180,21 @@ TEXT = {
         "show_all_countries": "Show all countries",
         "apply_country_scope": "Apply country scope to full dashboard",
         "reset": "Reset",
-        "momentum_tab": "Momentum and Comparison",
+        "momentum_tab": "Comparison and Momentum",
         "respondent_context_tab": "Respondent Context",
-        "momentum_heading": "Momentum and Comparison",
-        "momentum_text": "Explore which technologies developers rely on today and which ones are gaining future interest. Use this view to spot momentum, maturity, and possible shifts in demand.",
+        "momentum_heading": "Comparison and Momentum",
+        "momentum_text": "Explore which technologies developers rely on today and which ones are gaining future interest. Use this view to spot momentum and possible shifts in demand.",
         "respondent_context_heading": "Respondent Context",
         "respondent_context_text": "Interpret the technology signals through respondent profile, compensation, and geography.",
         "age_education_tab": "Age and Education",
         "age_education_heading": "Age Profile and Education Composition",
-        "age_education_text": "Understand who is represented in the survey and how education patterns vary across career stages.",
+        "age_education_text": "Understand who is represented in the survey and how education patterns vary.",
         "compensation_tab": "Compensation by Experience",
         "compensation_heading": "Compensation Distribution by Experience and Work Style",
         "compensation_text": "Compare how compensation ranges evolve with experience across remote, hybrid, and in-person work.",
         "country_tab": "Country Distribution",
         "country_heading": "Full Country Distribution Map",
-        "country_text": "Locate where the respondent base is concentrated and how geography changes with the active filters.",
+        "country_text": "Locate where the respondent base is concentrated and how geographic distribution changes with the active filters.",
         "nomadic_respondents": "Nomadic respondents",
         "not_plotted_country": "respondents, not plotted as a country",
         "languages_context": "Programming, scripting, and markup languages developers use to build software.",
@@ -206,15 +218,15 @@ TEXT = {
         "share_respondents_axis": "Share of respondents (%)",
         "country": "Country",
         "count": "Count",
-        "share_filtered_respondents": "Share of filtered respondents",
-        "share_filtered_country": "Share of filtered country respondents",
+        "share_filtered_respondents": "Share of respondents",
+        "share_filtered_country": "Share of respondents",
         "current": "Current",
         "future": "Future",
         "current_count": "Current count",
         "future_count": "Future count",
-        "current_share": "Current share of filtered respondents",
-        "future_share": "Future share of filtered respondents",
-        "delta_share": "Delta share of filtered respondents",
+        "current_share": "Current share of respondents",
+        "future_share": "Future share of respondents",
+        "delta_share": "Delta share of respondents",
         "age_group": "Age group",
         "education_level": "Education level",
         "share_within_age": "Share within age",
@@ -229,89 +241,101 @@ TEXT = {
         "database_label": "Database",
         "platform_label": "Platform",
         "framework_label": "Web framework",
+        "languages_family": "Languages",
+        "databases_family": "Databases",
+        "platforms_family": "Platforms",
+        "frameworks_family": "Frameworks",
+        "remote_label": "Remote",
+        "hybrid_label": "Hybrid",
+        "in_person_label": "In-person",
+        "education_bachelors": "Bachelors degree",
+        "education_masters": "Masters degree",
+        "education_other": "Other",
+        "education_secondary": "Secondary school",
+        "education_some_college": "Some college/university study",
     },
     "ES": {
         "language": "Idioma",
         "dark_mode": "Modo oscuro",
-        "dashboard_title": "Dashboard de Tendencias Tecnologicas",
+        "dashboard_title": "Dashboard de Tendencias Tecnológicas",
         "dashboard_subtitle": "Dashboard interactivo creado con Panel y Bokeh a partir del dataset limpio y reducido de la encuesta de Stack Overflow.",
-        "respondents": "Respondientes",
-        "countries": "Paises",
-        "average_compensation": "Compensacion promedio",
+        "respondents": "Encuestados",
+        "countries": "Países",
+        "average_compensation": "Compensación promedio",
         "total_dataset": "Dataset total",
         "filtered_view": "Vista filtrada",
-        "total_excluding_nomadic": "Total, excluye Nomadic",
+        "total_excluding_nomadic": "Total, excluye Nómada",
         "shown_on_map": "Mostrados en mapa",
         "filters": "Filtros",
         "reset_filters": "Reiniciar filtros",
-        "filters_help": "Usa cada categoria para refinar el dashboard. Los botones de reset restauran los valores por defecto. La metrica fija es conteo de respondientes.",
+        "filters_help": "Usa cada categoría para refinar el dashboard. Los botones de reset restauran los valores por defecto. La métrica fija es conteo de encuestados.",
         "top_n": "Top N",
-        "top_n_help": "Define la profundidad del ranking para tecnologias y para el filtro Top N de paises.",
+        "top_n_help": "Define la profundidad del ranking para tecnologías y para el filtro Top N de países.",
         "top_5": "Top 5",
         "top_10": "Top 10",
         "top_12": "Top 12",
         "age": "Edad",
-        "age_help": "Limita el dashboard a los grupos etareos seleccionados.",
+        "age_help": "Limita el dashboard a los grupos etarios seleccionados.",
         "workstyle": "Modalidad",
-        "workstyle_help": "Incluye una o mas modalidades de trabajo.",
-        "countries_help": "Por defecto, el mapa se limita a los paises del Top N seleccionado.",
+        "workstyle_help": "Incluye una o más modalidades de trabajo.",
+        "countries_help": "Por defecto, el mapa se limita a los países del Top N seleccionado.",
         "check_all": "Seleccionar todo",
-        "show_all_countries": "Mostrar todos los paises",
-        "apply_country_scope": "Aplicar alcance de paises a todo el dashboard",
+        "show_all_countries": "Mostrar todos los países",
+        "apply_country_scope": "Aplicar alcance de países a todo el dashboard",
         "reset": "Reset",
-        "momentum_tab": "Momentum y Comparacion",
-        "respondent_context_tab": "Contexto de Respondientes",
-        "momentum_heading": "Momentum y Comparacion",
-        "momentum_text": "Explora que tecnologias usan hoy los desarrolladores y cuales ganan interes futuro. Esta vista ayuda a detectar momentum, madurez y posibles cambios de demanda.",
-        "respondent_context_heading": "Contexto de Respondientes",
-        "respondent_context_text": "Interpreta las senales tecnologicas a traves del perfil, la compensacion y la geografia de los respondientes.",
-        "age_education_tab": "Edad y Educacion",
-        "age_education_heading": "Perfil Etareo y Composicion Educativa",
-        "age_education_text": "Entiende quien esta representado en la encuesta y como cambian los patrones educativos a traves de etapas de carrera.",
-        "compensation_tab": "Compensacion por Experiencia",
-        "compensation_heading": "Distribucion de Compensacion por Experiencia y Modalidad",
-        "compensation_text": "Compara como evolucionan los rangos de compensacion con la experiencia en trabajo remoto, hibrido y presencial.",
-        "country_tab": "Distribucion por Pais",
-        "country_heading": "Mapa de Distribucion por Pais",
-        "country_text": "Ubica donde se concentra la base de respondientes y como cambia la geografia con los filtros activos.",
-        "nomadic_respondents": "Respondientes nomadicos",
-        "not_plotted_country": "respondientes, no graficados como pais",
-        "languages_context": "Lenguajes de programacion, scripting y marcado usados para construir software.",
-        "databases_context": "Tecnologias de almacenamiento y consulta que sostienen aplicaciones y analitica.",
-        "platforms_context": "Plataformas cloud, hosting y despliegue que definen donde corre el software.",
-        "frameworks_context": "Frameworks y librerias web usados para construir aplicaciones orientadas al usuario.",
-        "top_current_languages": "Lenguajes Mas Usados Actualmente",
-        "top_future_languages": "Lenguajes con Mayor Interes Futuro",
-        "top_current_databases": "Bases de Datos Mas Usadas Actualmente",
-        "top_future_databases": "Bases de Datos con Mayor Interes Futuro",
-        "top_current_platforms": "Plataformas Mas Usadas Actualmente",
-        "top_future_platforms": "Plataformas con Mayor Interes Futuro",
-        "top_current_frameworks": "Frameworks Web Mas Usados Actualmente",
-        "top_future_frameworks": "Frameworks Web con Mayor Interes Futuro",
-        "current_future_momentum": "Momentum Actual vs Futuro en {family}",
-        "respondent_map": "Distribucion de Respondientes por Pais",
-        "age_distribution_chart": "Distribucion Etarea de Respondientes",
-        "education_age_chart": "Composicion Educativa por Grupo Etareo",
-        "compensation_experience_chart": "Compensacion {workstyle} por Experiencia",
-        "respondent_count_axis": "Conteo de respondientes",
-        "share_respondents_axis": "Porcentaje de respondientes (%)",
-        "country": "Pais",
+        "momentum_tab": "Comparación y momentum",
+        "respondent_context_tab": "Contexto de encuestados",
+        "momentum_heading": "Comparación y momentum",
+        "momentum_text": "Explora qué tecnologías usan hoy los desarrolladores y cuáles ganan interés futuro. Esta vista ayuda a detectar momentum y posibles cambios de demanda.",
+        "respondent_context_heading": "Contexto de encuestados",
+        "respondent_context_text": "Interpreta las señales tecnológicas a través del perfil, la compensación y la distribución geográfica de los encuestados.",
+        "age_education_tab": "Edad y educación",
+        "age_education_heading": "Perfil etario y composición educativa",
+        "age_education_text": "Entiende quién está representado en la encuesta y cómo cambian los patrones educativos.",
+        "compensation_tab": "Compensación por experiencia",
+        "compensation_heading": "Distribución de compensación por experiencia y modalidad",
+        "compensation_text": "Compara cómo evolucionan los rangos de compensación con la experiencia en trabajo remoto, híbrido y presencial.",
+        "country_tab": "Distribución por país",
+        "country_heading": "Mapa de distribución por país",
+        "country_text": "Ubica dónde se concentra la base de encuestados y cómo cambia la distribución geográfica con los filtros activos.",
+        "nomadic_respondents": "Encuestados nómadas",
+        "not_plotted_country": "encuestados, no graficados como país",
+        "languages_context": "Lenguajes de programación, scripting y markup usados para construir software.",
+        "databases_context": "Tecnologías de almacenamiento y consulta que sostienen aplicaciones y analítica.",
+        "platforms_context": "Plataformas cloud, hosting y despliegue que definen dónde corre el software.",
+        "frameworks_context": "Frameworks y librerías web usados para construir aplicaciones orientadas al usuario.",
+        "top_current_languages": "Lenguajes más usados actualmente",
+        "top_future_languages": "Lenguajes con mayor interés futuro",
+        "top_current_databases": "Bases de datos más usadas actualmente",
+        "top_future_databases": "Bases de datos con mayor interés futuro",
+        "top_current_platforms": "Plataformas más usadas actualmente",
+        "top_future_platforms": "Plataformas con mayor interés futuro",
+        "top_current_frameworks": "Frameworks web más usados actualmente",
+        "top_future_frameworks": "Frameworks web con mayor interés futuro",
+        "current_future_momentum": "Momentum actual vs futuro en {family}",
+        "respondent_map": "Distribución de encuestados por país",
+        "age_distribution_chart": "Distribución etaria de encuestados",
+        "education_age_chart": "Composición educativa por grupo etario",
+        "compensation_experience_chart": "Compensación {workstyle} por experiencia",
+        "respondent_count_axis": "Conteo de encuestados",
+        "share_respondents_axis": "Porcentaje de encuestados (%)",
+        "country": "País",
         "count": "Conteo",
-        "share_filtered_respondents": "Porcentaje de respondientes filtrados",
-        "share_filtered_country": "Porcentaje de respondientes filtrados por pais",
+        "share_filtered_respondents": "Porcentaje de encuestados",
+        "share_filtered_country": "Porcentaje de encuestados",
         "current": "Actual",
         "future": "Futuro",
         "current_count": "Conteo actual",
         "future_count": "Conteo futuro",
-        "current_share": "Porcentaje actual de respondientes filtrados",
-        "future_share": "Porcentaje futuro de respondientes filtrados",
-        "delta_share": "Diferencia porcentual de respondientes filtrados",
-        "age_group": "Grupo etareo",
+        "current_share": "Porcentaje actual de encuestados",
+        "future_share": "Porcentaje futuro de encuestados",
+        "delta_share": "Diferencia porcentual de encuestados",
+        "age_group": "Grupo etario",
         "education_level": "Nivel educativo",
-        "share_within_age": "Porcentaje dentro del grupo etareo",
-        "share_within_age_axis": "Porcentaje dentro del grupo etareo (%)",
-        "years_experience": "Anos de experiencia",
-        "converted_compensation": "Compensacion anual convertida",
+        "share_within_age": "Porcentaje dentro del grupo etario",
+        "share_within_age_axis": "Porcentaje dentro del grupo etario (%)",
+        "years_experience": "Años de experiencia",
+        "converted_compensation": "Compensación anual convertida",
         "work_style": "Modalidad",
         "experience_band": "Rango de experiencia",
         "median": "Mediana",
@@ -320,6 +344,18 @@ TEXT = {
         "database_label": "Base de datos",
         "platform_label": "Plataforma",
         "framework_label": "Framework web",
+        "languages_family": "Lenguajes",
+        "databases_family": "Bases de datos",
+        "platforms_family": "Plataformas",
+        "frameworks_family": "Frameworks",
+        "remote_label": "remota",
+        "hybrid_label": "híbrida",
+        "in_person_label": "presencial",
+        "education_bachelors": "Licenciatura/grado universitario",
+        "education_masters": "Maestría",
+        "education_other": "Otro",
+        "education_secondary": "Educación secundaria",
+        "education_some_college": "Estudios universitarios incompletos",
     },
 }
 THEMES = {
@@ -437,6 +473,12 @@ TECHNOLOGY_CONTEXT_KEYS = {
     "Platforms": "platforms_context",
     "Frameworks": "frameworks_context",
 }
+TECHNOLOGY_FAMILY_LABEL_KEYS = {
+    "Languages": "languages_family",
+    "Databases": "databases_family",
+    "Platforms": "platforms_family",
+    "Frameworks": "frameworks_family",
+}
 
 
 age_check_all = pn.widgets.Checkbox(name="Check All", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
@@ -468,18 +510,21 @@ top_n_5_checkbox = pn.widgets.Checkbox(name="Top 5", value=False, stylesheets=[F
 top_n_10_checkbox = pn.widgets.Checkbox(name="Top 10", value=True, stylesheets=[FILTER_WIDGET_STYLESHEET])
 top_n_12_checkbox = pn.widgets.Checkbox(name="Top 12", value=False, stylesheets=[FILTER_WIDGET_STYLESHEET])
 top_n_reset_button = pn.widgets.Button(name="Reset", width=64, stylesheets=[FILTER_WIDGET_STYLESHEET])
-language_selector = pn.widgets.RadioButtonGroup(
-    name="Language",
-    options=["EN", "ES"],
+language_selector = pn.widgets.MenuButton(
+    name="EN",
+    icon="language",
+    icon_size="1.4em",
+    items=[("English ✓", "EN"), ("Español", "ES")],
     value="EN",
     button_type="primary",
-    width=112,
+    width=118,
+    css_classes=["language-menu"],
 )
 theme_toggle = pn.widgets.Toggle(
     name="Dark mode",
     value=False,
     button_type="default",
-    width=120,
+    width=112,
 )
 reset_button = pn.widgets.Button(
     name="Reset filters",
@@ -517,7 +562,7 @@ _TOP_N_CHECKBOXES = {
 
 
 def _lang() -> str:
-    return language_selector.value
+    return language_selector.value or "EN"
 
 
 def _text(key: str, lang: str | None = None) -> str:
@@ -561,9 +606,29 @@ def _chart_labels(lang: str, extra: dict | None = None) -> dict:
         "mean",
     ]
     labels = {key: _text(key, lang) for key in keys}
+    labels["education_levels"] = {
+        "Bachelors degree": _text("education_bachelors", lang),
+        "Masters degree": _text("education_masters", lang),
+        "Other": _text("education_other", lang),
+        "Secondary school": _text("education_secondary", lang),
+        "Some college/university study": _text("education_some_college", lang),
+    }
     if extra:
         labels.update(extra)
     return labels
+
+
+def _technology_family_label(family: str, lang: str) -> str:
+    return _text(TECHNOLOGY_FAMILY_LABEL_KEYS[family], lang)
+
+
+def _workstyle_label(workstyle: str, lang: str) -> str:
+    labels = {
+        "Remote": _text("remote_label", lang),
+        "Hybrid": _text("hybrid_label", lang),
+        "In-person": _text("in_person_label", lang),
+    }
+    return labels.get(workstyle, workstyle)
 
 
 def _update_control_labels(event=None) -> None:
@@ -578,11 +643,21 @@ def _update_control_labels(event=None) -> None:
     for button in [age_reset_button, remote_reset_button, country_reset_button, top_n_reset_button]:
         button.name = _text("reset", lang)
     reset_button.name = _text("reset_filters", lang)
-    language_selector.name = _text("language", lang)
+    language_selector.name = lang
+    language_selector.items = [
+        ("English ✓" if lang == "EN" else "English", "EN"),
+        ("Español ✓" if lang == "ES" else "Español", "ES"),
+    ]
     theme_toggle.name = _text("dark_mode", lang)
     filter_panel_collapse_button.description = "Collapse filters" if lang == "EN" else "Cerrar filtros"
 
 
+def _language_menu_clicked(event) -> None:
+    if event.new in TEXT and language_selector.value != event.new:
+        language_selector.value = event.new
+
+
+language_selector.param.watch(_language_menu_clicked, "clicked")
 language_selector.param.watch(_update_control_labels, "value")
 _update_control_labels()
 
@@ -960,7 +1035,7 @@ def _technology_momentum_view(filter_key, top_n, selected_family, lang: str, the
             config["label"],
             "count_current",
             "count_future",
-            _text("current_future_momentum", lang).format(family=selected_family),
+            _text("current_future_momentum", lang).format(family=_technology_family_label(selected_family, lang)),
             METRIC_MODE,
             labels=chart_labels,
             theme=theme,
@@ -1106,7 +1181,7 @@ def momentum_comparison():
     )
     technology_tabs = pn.Tabs(
         *[
-            (family, _technology_momentum_panel(family))
+            (_technology_family_label(family, lang), _technology_momentum_panel(family))
             for family in MOMENTUM_OPTIONS
         ],
         sizing_mode="stretch_width",
@@ -1116,53 +1191,6 @@ def momentum_comparison():
     return pn.Column(
         heading,
         technology_tabs,
-        sizing_mode="stretch_width",
-    )
-
-
-@pn.depends(
-    country_show_all.param.value,
-    country_apply_dashboard.param.value,
-    age_filter.param.value,
-    remote_filter.param.value,
-    top_n_value.param.value,
-)
-def demographics_context(
-    show_all_countries,
-    apply_country_scope,
-    selected_ages,
-    selected_remote,
-    top_n,
-):
-    effective_top_n = _effective_top_n(top_n)
-    filter_key = _filter_key_from_filter_values(
-        selected_ages,
-        selected_remote,
-        show_all_countries,
-        apply_country_scope,
-        top_n,
-    )
-    countries_map = _cached_country_map_distribution(filter_key, effective_top_n)
-    age_education = _cached_age_education_distribution(filter_key)
-    salary_box = _cached_salary_remote_experience_box_summary(filter_key)
-
-    heading = _info_markdown(
-            """
-            ### Demographics and Context
-
-            These views focus on respondent context through geography, age-by-education composition,
-            and compensation distribution by work style and experience band.
-            """
-    )
-    top_grid = _grid_box(
-        make_country_bubble_map(countries_map, "Respondent Map by Country", METRIC_MODE),
-        make_grouped_box_plot(salary_box, "Compensation Distribution by Work Style and Experience"),
-        ncols=2,
-    )
-    return pn.Column(
-        heading,
-        top_grid,
-        make_stacked_bar_chart(age_education, "Education Level Composition by Age Group"),
         sizing_mode="stretch_width",
     )
 
@@ -1260,7 +1288,7 @@ def detailed_compensation_experience(
         charts.append(
             make_compensation_experience_box_plot(
                 chart_data,
-                _text("compensation_experience_chart", lang).format(workstyle=remote_label),
+                _text("compensation_experience_chart", lang).format(workstyle=_workstyle_label(remote_label, lang)),
                 y_max,
                 REMOTE_COLORS.get(remote_label, "#2f6690"),
                 labels=chart_labels,
@@ -1471,26 +1499,34 @@ def create_dashboard():
     @pn.depends(language_selector.param.value, theme_toggle.param.value)
     def header(lang: str, is_dark: bool):
         theme = _theme(is_dark)
-        return pn.Row(
+        title_row = pn.Row(
             pn.pane.HTML(
                 f"""
-                <div>
-                  <div style="font-size:28px;font-weight:700;margin-bottom:6px;">{_text('dashboard_title', lang)}</div>
-                  <div style="font-size:15px;line-height:1.5;max-width:980px;">{_text('dashboard_subtitle', lang)}</div>
+                <div style="font-size:28px;font-weight:700;line-height:1.2;">
+                  {_text('dashboard_title', lang)}
                 </div>
                 """,
                 sizing_mode="stretch_width",
             ),
             pn.Row(
-                pn.pane.HTML(
-                    '<div style="font-size:24px;line-height:1;">&#127760;</div>',
-                    width=28,
-                    align="center",
-                ),
                 language_selector,
                 theme_toggle,
                 align="center",
-                width=290,
+                width=252,
+                margin=(0, 10, 0, 16),
+            ),
+            sizing_mode="stretch_width",
+        )
+        return pn.Column(
+            title_row,
+            pn.pane.HTML(
+                f"""
+                <div style="font-size:15px;line-height:1.5;max-width:980px;">
+                  {_text('dashboard_subtitle', lang)}
+                </div>
+                """,
+                sizing_mode="stretch_width",
+                margin=(0, 0, 0, 0),
             ),
             styles={
                 "background": theme["header_bg"],

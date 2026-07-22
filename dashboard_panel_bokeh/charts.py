@@ -46,15 +46,15 @@ DEFAULT_LABELS = {
     "share_respondents_axis": "Share of respondents (%)",
     "country": "Country",
     "count": "Count",
-    "share_filtered_respondents": "Share of filtered respondents",
-    "share_filtered_country": "Share of filtered country respondents",
+    "share_filtered_respondents": "Share of respondents",
+    "share_filtered_country": "Share of respondents",
     "current": "Current",
     "future": "Future",
     "current_count": "Current count",
     "future_count": "Future count",
-    "current_share": "Current share of filtered respondents",
-    "future_share": "Future share of filtered respondents",
-    "delta_share": "Delta share of filtered respondents",
+    "current_share": "Current share of respondents",
+    "future_share": "Future share of respondents",
+    "delta_share": "Delta share of respondents",
     "age_group": "Age group",
     "education_level": "Education level",
     "share_within_age": "Share within age",
@@ -92,6 +92,10 @@ def _chart_theme(theme: dict | None) -> dict:
 
 def _metric_axis_label(metric_mode: str, labels: dict) -> str:
     return labels["share_respondents_axis"] if metric_mode == "Share of respondents" else labels["respondent_count_axis"]
+
+
+def _education_label(value: str, labels: dict) -> str:
+    return labels.get("education_levels", {}).get(value, value)
 
 
 def _format_axis(plot: figure, metric_mode: str) -> None:
@@ -373,6 +377,7 @@ def make_stacked_bar_chart(
     chart_data["AgeLabel"] = chart_data["Age"].map(AGE_SHORT_LABELS).fillna(chart_data["Age"])
     categories = chart_data["AgeLabel"].tolist()
     stacks: List[str] = [column for column in chart_data.columns if column not in ["Age", "AgeLabel"]]
+    legend_labels = [_education_label(stack, labels) for stack in stacks]
     colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
 
     source = ColumnDataSource(chart_data)
@@ -384,7 +389,14 @@ def make_stacked_bar_chart(
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    renderers = plot.vbar_stack(stacks, x="AgeLabel", width=0.8, color=colors[: len(stacks)], source=source, legend_label=stacks)
+    renderers = plot.vbar_stack(
+        stacks,
+        x="AgeLabel",
+        width=0.8,
+        color=colors[: len(stacks)],
+        source=source,
+        legend_label=legend_labels,
+    )
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.major_label_standoff = 8
     plot.yaxis.axis_label = labels["respondent_count_axis"]
@@ -464,6 +476,7 @@ def make_percent_stacked_bar_chart(
                     "Age": row["Age"],
                     "AgeLabel": AGE_SHORT_LABELS.get(row["Age"], row["Age"]),
                     "education_level": stack,
+                    "education_label": _education_label(stack, labels),
                     "count": count,
                     "share_pct": share,
                     "bottom": bottom,
@@ -494,7 +507,7 @@ def make_percent_stacked_bar_chart(
         fill_color="color",
         line_color="white",
         source=source,
-        legend_field="education_level",
+        legend_field="education_label",
     )
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.major_label_standoff = 8
@@ -507,7 +520,7 @@ def make_percent_stacked_bar_chart(
             renderers=[bars],
             tooltips=[
                 (labels["age_group"], "@Age"),
-                (labels["education_level"], "@education_level"),
+                (labels["education_level"], "@education_label"),
                 (labels["count"], "@count{0,0}"),
                 (labels["share_within_age"], "@share_pct{0.0}%"),
             ]
