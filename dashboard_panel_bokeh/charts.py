@@ -5,24 +5,23 @@ from typing import List
 
 import pandas as pd
 from bokeh.models import ColorBar, ColumnDataSource, FactorRange, HoverTool, LinearColorMapper, NumeralTickFormatter
-from bokeh.palettes import Viridis256
 from bokeh.plotting import figure
 from xyzservices import providers as xyz
 
 
 PLOT_TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
 TECH_COLORS = {
-    "languages": "#2f6690",
-    "databases": "#f28e2b",
-    "platforms": "#59a14f",
-    "frameworks": "#e15759",
+    "languages": "#2f6f73",
+    "databases": "#d99058",
+    "platforms": "#7a8f5a",
+    "frameworks": "#c66b4e",
 }
 WORLD_X_RANGE = (-20_000_000, 20_000_000)
 WORLD_Y_RANGE = (-7_000_000, 18_500_000)
 REMOTE_COLORS = {
-    "Remote": "#2f6690",
-    "Hybrid": "#59a14f",
-    "In-person": "#e15759",
+    "Remote": "#2f6f73",
+    "Hybrid": "#7a8f5a",
+    "In-person": "#c66b4e",
 }
 AGE_SHORT_LABELS = {
     "Under 18 years old": "<18",
@@ -68,10 +67,20 @@ DEFAULT_LABELS = {
 }
 DEFAULT_THEME = {
     "chart_bg": "#ffffff",
-    "chart_grid": "#edf2f7",
-    "chart_border": "#d9e2ec",
-    "text": "#102a43",
-    "muted": "#627d98",
+    "chart_grid": "#e6eae4",
+    "chart_border": "#d7ddd6",
+    "text": "#1f2933",
+    "muted": "#64748b",
+    "primary": "#2f6f73",
+    "accent": "#d99058",
+    "positive": "#7a8f5a",
+    "danger": "#c66b4e",
+    "purple": "#8b6f9e",
+    "connector": "#9aa6a1",
+    "marker_line": "#ffffff",
+    "map_palette": ["#efe6d6", "#dfb778", "#d99058", "#8a6964", "#2f6f73"],
+    "education_colors": ["#2f6f73", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"],
+    "remote_colors": REMOTE_COLORS,
     "map_tile": "light",
 }
 
@@ -227,7 +236,7 @@ def make_country_bubble_map(
         chart_data["bubble_size"] = 14 + scaled * 26
 
     mapper = LinearColorMapper(
-        palette=Viridis256,
+        palette=colors["map_palette"],
         low=float(chart_data["share_pct"].min()),
         high=float(chart_data["share_pct"].max()),
     )
@@ -258,7 +267,7 @@ def make_country_bubble_map(
         size="bubble_size",
         source=source,
         fill_color={"field": "share_pct", "transform": mapper},
-        line_color="white",
+        line_color=colors["marker_line"],
         line_width=1.2,
         fill_alpha=0.85,
     )
@@ -298,6 +307,7 @@ def make_dumbbell_chart(
     theme: dict | None = None,
 ) -> figure:
     labels = _labels(labels)
+    colors = _chart_theme(theme)
     chart_data = data.sort_values(future_col, ascending=False).reset_index(drop=True).copy()
 
     source = ColumnDataSource(chart_data)
@@ -320,15 +330,15 @@ def make_dumbbell_chart(
         y1=label_col,
         source=source,
         line_width=3,
-        color="#9aa5b1",
+        color=colors["connector"],
         alpha=0.9,
     )
     current_renderer = plot.scatter(
         x=current_col,
         y=label_col,
         size=11,
-        color="#2f6690",
-        line_color="white",
+        color=colors["primary"],
+        line_color=colors["marker_line"],
         line_width=1,
         source=source,
         legend_label=labels["current"],
@@ -337,8 +347,8 @@ def make_dumbbell_chart(
         x=future_col,
         y=label_col,
         size=11,
-        color="#f28e2b",
-        line_color="white",
+        color=colors["accent"],
+        line_color=colors["marker_line"],
         line_width=1,
         source=source,
         legend_label=labels["future"],
@@ -378,7 +388,8 @@ def make_stacked_bar_chart(
     categories = chart_data["AgeLabel"].tolist()
     stacks: List[str] = [column for column in chart_data.columns if column not in ["Age", "AgeLabel"]]
     legend_labels = [_education_label(stack, labels) for stack in stacks]
-    colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
+    theme_colors = _chart_theme(theme)
+    stack_colors = theme_colors["education_colors"]
 
     source = ColumnDataSource(chart_data)
     plot = figure(
@@ -393,7 +404,7 @@ def make_stacked_bar_chart(
         stacks,
         x="AgeLabel",
         width=0.8,
-        color=colors[: len(stacks)],
+        color=stack_colors[: len(stacks)],
         source=source,
         legend_label=legend_labels,
     )
@@ -434,7 +445,8 @@ def make_age_percent_bar_chart(
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    plot.hbar(y="age_label", right=value_col, height=0.72, color="#2f6690", source=source)
+    colors = _chart_theme(theme)
+    plot.hbar(y="age_label", right=value_col, height=0.72, color=colors["primary"], source=source)
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = labels["age_group"]
@@ -459,9 +471,10 @@ def make_percent_stacked_bar_chart(
     theme: dict | None = None,
 ) -> figure:
     labels = _labels(labels)
+    colors = _chart_theme(theme)
     source_data = data.copy()
     stacks: List[str] = [column for column in source_data.columns if column != "Age"]
-    colors = ["#2f6690", "#59a14f", "#f28e2b", "#e15759", "#76b7b2"]
+    stack_colors = colors["education_colors"]
 
     long_rows = []
     for _, row in source_data.iterrows():
@@ -481,7 +494,7 @@ def make_percent_stacked_bar_chart(
                     "share_pct": share,
                     "bottom": bottom,
                     "top": top,
-                    "color": colors[stacks.index(stack) % len(colors)],
+                    "color": stack_colors[stacks.index(stack) % len(stack_colors)],
                 }
             )
             bottom = top
@@ -505,7 +518,7 @@ def make_percent_stacked_bar_chart(
         bottom="bottom",
         top="top",
         fill_color="color",
-        line_color="white",
+        line_color=colors["marker_line"],
         source=source,
         legend_field="education_label",
     )
@@ -537,8 +550,9 @@ def make_grouped_box_plot(
     theme: dict | None = None,
 ) -> figure:
     labels = _labels(labels)
+    colors = _chart_theme(theme)
     chart_data = data.copy()
-    chart_data["box_color"] = chart_data["remote_label"].map(REMOTE_COLORS).fillna("#2f6690")
+    chart_data["box_color"] = chart_data["remote_label"].map(colors["remote_colors"]).fillna(colors["primary"])
     source = ColumnDataSource(chart_data)
     categories = chart_data["factor"].tolist()
     y_max = max(chart_data["upper"].max() * 1.1, 1)
@@ -552,8 +566,8 @@ def make_grouped_box_plot(
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    plot.segment("factor", "upper", "factor", "q3", source=source, line_color="#334e68")
-    plot.segment("factor", "lower", "factor", "q1", source=source, line_color="#334e68")
+    plot.segment("factor", "upper", "factor", "q3", source=source, line_color=colors["connector"])
+    plot.segment("factor", "lower", "factor", "q1", source=source, line_color=colors["connector"])
     upper_boxes = plot.vbar(
         "factor",
         0.75,
@@ -562,7 +576,7 @@ def make_grouped_box_plot(
         source=source,
         fill_color="box_color",
         fill_alpha=0.8,
-        line_color="#243b53",
+        line_color=colors["marker_line"],
     )
     lower_boxes = plot.vbar(
         "factor",
@@ -572,10 +586,10 @@ def make_grouped_box_plot(
         source=source,
         fill_color="box_color",
         fill_alpha=0.45,
-        line_color="#243b53",
+        line_color=colors["marker_line"],
     )
-    plot.rect("factor", "lower", 0.25, 0.01, source=source, line_color="#243b53")
-    plot.rect("factor", "upper", 0.25, 0.01, source=source, line_color="#243b53")
+    plot.rect("factor", "lower", 0.25, 0.01, source=source, line_color=colors["marker_line"])
+    plot.rect("factor", "upper", 0.25, 0.01, source=source, line_color=colors["marker_line"])
     plot.xaxis.major_label_orientation = 1.0
     plot.yaxis.axis_label = labels["converted_compensation"]
     plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
@@ -592,7 +606,7 @@ def make_grouped_box_plot(
         )
     )
     plot.x_range.group_padding = 0.15
-    plot.xaxis.separator_line_color = "#bcccdc"
+    plot.xaxis.separator_line_color = colors["chart_border"]
     _apply_readability_theme(plot, theme)
     return plot
 
@@ -606,6 +620,7 @@ def make_compensation_experience_box_plot(
     theme: dict | None = None,
 ) -> figure:
     labels = _labels(labels)
+    colors = _chart_theme(theme)
     chart_data = data.copy()
     chart_data["factor"] = chart_data["experience_band"].astype(str).map(EXPERIENCE_SHORT_LABELS).fillna(
         chart_data["experience_band"].astype(str)
@@ -622,8 +637,8 @@ def make_compensation_experience_box_plot(
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    plot.segment("factor", "upper", "factor", "q3", source=source, line_color="#334e68")
-    plot.segment("factor", "lower", "factor", "q1", source=source, line_color="#334e68")
+    plot.segment("factor", "upper", "factor", "q3", source=source, line_color=colors["connector"])
+    plot.segment("factor", "lower", "factor", "q1", source=source, line_color=colors["connector"])
     upper_boxes = plot.vbar(
         "factor",
         0.68,
@@ -632,7 +647,7 @@ def make_compensation_experience_box_plot(
         source=source,
         fill_color=color,
         fill_alpha=0.85,
-        line_color="#243b53",
+        line_color=colors["marker_line"],
     )
     lower_boxes = plot.vbar(
         "factor",
@@ -642,10 +657,10 @@ def make_compensation_experience_box_plot(
         source=source,
         fill_color=color,
         fill_alpha=0.45,
-        line_color="#243b53",
+        line_color=colors["marker_line"],
     )
-    plot.rect("factor", "lower", 0.24, 0.01, source=source, line_color="#243b53")
-    plot.rect("factor", "upper", 0.24, 0.01, source=source, line_color="#243b53")
+    plot.rect("factor", "lower", 0.24, 0.01, source=source, line_color=colors["marker_line"])
+    plot.rect("factor", "upper", 0.24, 0.01, source=source, line_color=colors["marker_line"])
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.axis_label = labels["years_experience"]
     plot.yaxis.axis_label = labels["converted_compensation"]

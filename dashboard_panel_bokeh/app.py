@@ -12,9 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from dashboard_panel_bokeh.charts import (  # noqa: E402
-    TECH_COLORS,
     make_country_bubble_map,
-    REMOTE_COLORS,
     make_dumbbell_chart,
     make_age_percent_bar_chart,
     make_compensation_experience_box_plot,
@@ -77,8 +75,6 @@ pn.extension(
           font-size: 16px;
         }
         .filter-sidebar {
-          background: #ffffff;
-          border: 1px solid #d9e2ec;
           border-radius: 10px;
           padding: 14px;
           font-size: 16px;
@@ -103,8 +99,6 @@ pn.extension(
           line-height: 1.5;
         }
         .filter-rail {
-          background: #ffffff;
-          border: 1px solid #d9e2ec;
           border-radius: 10px;
           padding: 8px;
           position: relative;
@@ -119,7 +113,7 @@ pn.extension(
           left: 58px;
           top: 8px;
           z-index: 1000;
-          background: #102a43;
+          background: #18324a;
           color: #ffffff;
           border-radius: 6px;
           padding: 8px 10px;
@@ -129,6 +123,9 @@ pn.extension(
           box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
         }
         .language-menu button {
+          background: #2f6f73 !important;
+          border-color: #24575a !important;
+          color: #ffffff !important;
           min-width: 118px;
           min-height: 34px;
           font-size: 15px;
@@ -140,6 +137,22 @@ pn.extension(
           min-width: 150px;
           font-size: 15px;
           line-height: 1.5;
+        }
+        .theme-toggle button {
+          min-width: 46px;
+          min-height: 34px;
+          padding-left: 10px;
+          padding-right: 10px;
+          font-size: 15px;
+        }
+        .theme-toggle .bk-btn-primary,
+        .filter-sidebar .bk-btn-primary {
+          background: #2f6f73 !important;
+          border-color: #24575a !important;
+          color: #ffffff !important;
+        }
+        .filter-rail button {
+          color: #2f6f73 !important;
         }
         """
     ],
@@ -360,40 +373,82 @@ TEXT = {
 }
 THEMES = {
     "light": {
-        "page_bg": "#ffffff",
-        "header_bg": "#102a43",
+        "page_bg": "#f3f4f1",
+        "header_bg": "#18324a",
         "header_text": "#ffffff",
-        "surface": "#f5f7fb",
+        "surface": "#ffffff",
         "panel": "#ffffff",
-        "border": "#d9e2ec",
-        "text": "#102a43",
-        "muted": "#627d98",
-        "muted_soft": "#829ab1",
-        "filtered_value": "#334e68",
+        "border": "#d7ddd6",
+        "text": "#1f2933",
+        "muted": "#64748b",
+        "muted_soft": "#7b8794",
+        "filtered_value": "#2f6f73",
+        "primary": "#2f6f73",
+        "primary_dark": "#24575a",
+        "accent": "#d99058",
+        "positive": "#7a8f5a",
+        "danger": "#c66b4e",
+        "purple": "#8b6f9e",
+        "connector": "#9aa6a1",
+        "marker_line": "#ffffff",
         "rail_bg": "#ffffff",
-        "tooltip_bg": "#102a43",
+        "tooltip_bg": "#18324a",
         "chart_bg": "#ffffff",
-        "chart_grid": "#edf2f7",
-        "chart_border": "#d9e2ec",
+        "chart_grid": "#e6eae4",
+        "chart_border": "#d7ddd6",
+        "map_palette": ["#efe6d6", "#dfb778", "#d99058", "#8a6964", "#2f6f73"],
         "map_tile": "light",
+        "tech_colors": {
+            "languages": "#2f6f73",
+            "databases": "#d99058",
+            "platforms": "#7a8f5a",
+            "frameworks": "#c66b4e",
+        },
+        "remote_colors": {
+            "Remote": "#2f6f73",
+            "Hybrid": "#7a8f5a",
+            "In-person": "#c66b4e",
+        },
+        "education_colors": ["#2f6f73", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"],
     },
     "dark": {
-        "page_bg": "#07111f",
-        "header_bg": "#0f2a3f",
-        "header_text": "#f7fbff",
-        "surface": "#111d2e",
-        "panel": "#0f1726",
-        "border": "#2a3a50",
-        "text": "#e5edf7",
-        "muted": "#a8b6c8",
-        "muted_soft": "#7f8da1",
-        "filtered_value": "#d7e3f2",
-        "rail_bg": "#101827",
-        "tooltip_bg": "#d7e3f2",
-        "chart_bg": "#0f1726",
-        "chart_grid": "#223148",
-        "chart_border": "#2a3a50",
+        "page_bg": "#151a1e",
+        "header_bg": "#0f2535",
+        "header_text": "#f8fafc",
+        "surface": "#252d34",
+        "panel": "#1e252b",
+        "border": "#3a444d",
+        "text": "#e5e7eb",
+        "muted": "#a7b0ba",
+        "muted_soft": "#929ca8",
+        "filtered_value": "#5ba6a6",
+        "primary": "#5ba6a6",
+        "primary_dark": "#7cc0c0",
+        "accent": "#e5a66b",
+        "positive": "#92b77a",
+        "danger": "#df876d",
+        "purple": "#b59bd1",
+        "connector": "#71808d",
+        "marker_line": "#111820",
+        "rail_bg": "#252d34",
+        "tooltip_bg": "#e5e7eb",
+        "chart_bg": "#1e252b",
+        "chart_grid": "#343d45",
+        "chart_border": "#3a444d",
+        "map_palette": ["#2c3439", "#546c6c", "#5ba6a6", "#e5a66b", "#ffd08f"],
         "map_tile": "dark",
+        "tech_colors": {
+            "languages": "#5ba6a6",
+            "databases": "#e5a66b",
+            "platforms": "#92b77a",
+            "frameworks": "#df876d",
+        },
+        "remote_colors": {
+            "Remote": "#5ba6a6",
+            "Hybrid": "#92b77a",
+            "In-person": "#df876d",
+        },
+        "education_colors": ["#5ba6a6", "#e5a66b", "#92b77a", "#b59bd1", "#df876d"],
     },
 }
 TAB_STYLESHEET = """
@@ -410,6 +465,35 @@ button,
   padding: 12px 18px !important;
 }
 """
+
+
+def _tab_stylesheet(theme: dict) -> str:
+    return f"""
+    :host {{
+      font-size: 18px;
+      background: {theme['page_bg']};
+      color: {theme['text']};
+    }}
+    .bk-tab,
+    .bk-tab button,
+    .bk-tab div,
+    button,
+    [role="tab"] {{
+      background: {theme['surface']} !important;
+      border-color: {theme['border']} !important;
+      color: {theme['text']} !important;
+      font-size: 18px !important;
+      line-height: 1.35 !important;
+      padding: 12px 18px !important;
+    }}
+    .bk-tab.bk-active,
+    .bk-tab.bk-active button,
+    [aria-selected="true"] {{
+      background: {theme['primary']} !important;
+      border-color: {theme['primary_dark']} !important;
+      color: #ffffff !important;
+    }}
+    """
 FILTER_WIDGET_STYLESHEET = """
 :host {
   font-size: 16px;
@@ -521,10 +605,13 @@ language_selector = pn.widgets.MenuButton(
     css_classes=["language-menu"],
 )
 theme_toggle = pn.widgets.Toggle(
-    name="Dark mode",
+    name="",
+    icon="sun",
+    icon_size="1.35em",
     value=False,
     button_type="default",
-    width=112,
+    width=46,
+    css_classes=["theme-toggle"],
 )
 reset_button = pn.widgets.Button(
     name="Reset filters",
@@ -648,8 +735,14 @@ def _update_control_labels(event=None) -> None:
         ("English ✓" if lang == "EN" else "English", "EN"),
         ("Español ✓" if lang == "ES" else "Español", "ES"),
     ]
-    theme_toggle.name = _text("dark_mode", lang)
+    _update_theme_toggle()
     filter_panel_collapse_button.description = "Collapse filters" if lang == "EN" else "Cerrar filtros"
+
+
+def _update_theme_toggle(event=None) -> None:
+    theme_toggle.name = ""
+    theme_toggle.icon = "moon" if theme_toggle.value else "sun"
+    theme_toggle.button_type = "primary" if theme_toggle.value else "default"
 
 
 def _language_menu_clicked(event) -> None:
@@ -657,6 +750,7 @@ def _language_menu_clicked(event) -> None:
         language_selector.value = event.new
 
 
+theme_toggle.param.watch(_update_theme_toggle, "value")
 language_selector.param.watch(_language_menu_clicked, "clicked")
 language_selector.param.watch(_update_control_labels, "value")
 _update_control_labels()
@@ -934,6 +1028,25 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
 
 
+def _page_background_style(theme: dict) -> pn.pane.HTML:
+    return pn.pane.HTML(
+        f"""
+        <style>
+          html,
+          body,
+          body .bk-root {{
+            background: {theme['page_bg']} !important;
+          }}
+          body {{
+            min-height: 100vh;
+          }}
+        </style>
+        """,
+        height=0,
+        margin=0,
+    )
+
+
 def _info_markdown(text: str, theme: dict | None = None, **kwargs) -> pn.pane.Markdown:
     colors = theme or _theme()
     stylesheet = f"""
@@ -1000,7 +1113,7 @@ def _technology_momentum_view(filter_key, top_n, selected_family, lang: str, the
         config["label"],
         top_n,
     )
-    color = TECH_COLORS[config["color_key"]]
+    color = theme["tech_colors"][config["color_key"]]
     context = _text(TECHNOLOGY_CONTEXT_KEYS[selected_family], lang)
 
     rankings_grid = _grid_box(
@@ -1186,7 +1299,7 @@ def momentum_comparison():
         ],
         sizing_mode="stretch_width",
         dynamic=True,
-        stylesheets=[TAB_STYLESHEET],
+        stylesheets=[_tab_stylesheet(theme)],
     )
     return pn.Column(
         heading,
@@ -1290,7 +1403,7 @@ def detailed_compensation_experience(
                 chart_data,
                 _text("compensation_experience_chart", lang).format(workstyle=_workstyle_label(remote_label, lang)),
                 y_max,
-                REMOTE_COLORS.get(remote_label, "#2f6690"),
+                theme["remote_colors"].get(remote_label, theme["primary"]),
                 labels=chart_labels,
                 theme=theme,
             )
@@ -1383,7 +1496,7 @@ def detailed_views() -> pn.Column:
         (_text("country_tab", lang), pn.panel(detailed_country_distribution)),
         sizing_mode="stretch_width",
         dynamic=True,
-        stylesheets=[TAB_STYLESHEET],
+        stylesheets=[_tab_stylesheet(theme)],
     )
     return pn.Column(
         _info_markdown(
@@ -1490,6 +1603,7 @@ def create_dashboard():
             styles={
                 "background": theme["rail_bg"],
                 "border": f"1px solid {theme['border']}",
+                "color": theme["primary"],
             },
             width=56,
             sizing_mode="fixed",
@@ -1512,7 +1626,7 @@ def create_dashboard():
                 language_selector,
                 theme_toggle,
                 align="center",
-                width=252,
+                width=186,
                 margin=(0, 10, 0, 16),
             ),
             sizing_mode="stretch_width",
@@ -1550,7 +1664,7 @@ def create_dashboard():
             (_text("respondent_context_tab", lang), detailed_views()),
             sizing_mode="stretch_width",
             dynamic=True,
-            stylesheets=[TAB_STYLESHEET],
+            stylesheets=[_tab_stylesheet(theme)],
         )
         body = pn.Row(
             filter_sidebar,
@@ -1558,12 +1672,14 @@ def create_dashboard():
             sizing_mode="stretch_width",
         )
         return pn.Column(
+            _page_background_style(theme),
             pn.panel(dashboard_kpis),
             body,
             styles={
                 "background": theme["page_bg"],
                 "color": theme["text"],
                 "padding": "0 0 16px 0",
+                "min-height": "100vh",
             },
             sizing_mode="stretch_width",
         )
