@@ -138,14 +138,6 @@ pn.extension(
           font-size: 15px;
           line-height: 1.5;
         }
-        .theme-toggle button {
-          min-width: 46px;
-          min-height: 34px;
-          padding-left: 10px;
-          padding-right: 10px;
-          font-size: 15px;
-        }
-        .theme-toggle .bk-btn-primary,
         .filter-sidebar .bk-btn-primary {
           background: #2f6f73 !important;
           border-color: #24575a !important;
@@ -166,7 +158,6 @@ METRIC_MODE = "Respondent count"
 TEXT = {
     "EN": {
         "language": "Language",
-        "dark_mode": "Dark mode",
         "dashboard_title": "Developer Technology Trends Dashboard",
         "dashboard_subtitle": "Interactive dashboard built with Panel and Bokeh from the cleaned and reduced Stack Overflow survey dataset.",
         "respondents": "Respondents",
@@ -269,7 +260,6 @@ TEXT = {
     },
     "ES": {
         "language": "Idioma",
-        "dark_mode": "Modo oscuro",
         "dashboard_title": "Dashboard de Tendencias Tecnológicas",
         "dashboard_subtitle": "Dashboard interactivo creado con Panel y Bokeh a partir del dataset limpio y reducido de la encuesta de Stack Overflow.",
         "respondents": "Encuestados",
@@ -371,100 +361,44 @@ TEXT = {
         "education_some_college": "Estudios universitarios incompletos",
     },
 }
-THEMES = {
-    "light": {
-        "page_bg": "#f3f4f1",
-        "header_bg": "#18324a",
-        "header_text": "#ffffff",
-        "surface": "#ffffff",
-        "panel": "#ffffff",
-        "border": "#d7ddd6",
-        "text": "#1f2933",
-        "muted": "#64748b",
-        "muted_soft": "#7b8794",
-        "filtered_value": "#2f6f73",
-        "primary": "#2f6f73",
-        "primary_dark": "#24575a",
-        "accent": "#d99058",
-        "positive": "#7a8f5a",
-        "danger": "#c66b4e",
-        "purple": "#8b6f9e",
-        "connector": "#9aa6a1",
-        "marker_line": "#ffffff",
-        "rail_bg": "#ffffff",
-        "tooltip_bg": "#18324a",
-        "chart_bg": "#ffffff",
-        "chart_grid": "#e6eae4",
-        "chart_border": "#d7ddd6",
-        "map_palette": ["#efe6d6", "#dfb778", "#d99058", "#8a6964", "#2f6f73"],
-        "map_tile": "light",
-        "tech_colors": {
-            "languages": "#2f6f73",
-            "databases": "#d99058",
-            "platforms": "#7a8f5a",
-            "frameworks": "#c66b4e",
-        },
-        "remote_colors": {
-            "Remote": "#2f6f73",
-            "Hybrid": "#7a8f5a",
-            "In-person": "#c66b4e",
-        },
-        "education_colors": ["#2f6f73", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"],
+THEME = {
+    "page_bg": "#f3f4f1",
+    "header_bg": "#18324a",
+    "header_text": "#ffffff",
+    "surface": "#ffffff",
+    "panel": "#ffffff",
+    "border": "#d7ddd6",
+    "text": "#1f2933",
+    "muted": "#64748b",
+    "muted_soft": "#7b8794",
+    "filtered_value": "#2f6f73",
+    "primary": "#2f6f73",
+    "primary_dark": "#24575a",
+    "accent": "#d99058",
+    "positive": "#7a8f5a",
+    "danger": "#c66b4e",
+    "purple": "#8b6f9e",
+    "connector": "#9aa6a1",
+    "marker_line": "#ffffff",
+    "rail_bg": "#ffffff",
+    "tooltip_bg": "#18324a",
+    "chart_bg": "#ffffff",
+    "chart_grid": "#e6eae4",
+    "chart_border": "#d7ddd6",
+    "map_palette": ["#efe6d6", "#dfb778", "#d99058", "#8a6964", "#2f6f73"],
+    "tech_colors": {
+        "languages": "#2f6f73",
+        "databases": "#d99058",
+        "platforms": "#7a8f5a",
+        "frameworks": "#c66b4e",
     },
-    "dark": {
-        "page_bg": "#151a1e",
-        "header_bg": "#0f2535",
-        "header_text": "#f8fafc",
-        "surface": "#252d34",
-        "panel": "#1e252b",
-        "border": "#3a444d",
-        "text": "#e5e7eb",
-        "muted": "#a7b0ba",
-        "muted_soft": "#929ca8",
-        "filtered_value": "#5ba6a6",
-        "primary": "#5ba6a6",
-        "primary_dark": "#7cc0c0",
-        "accent": "#e5a66b",
-        "positive": "#92b77a",
-        "danger": "#df876d",
-        "purple": "#b59bd1",
-        "connector": "#71808d",
-        "marker_line": "#111820",
-        "rail_bg": "#252d34",
-        "tooltip_bg": "#e5e7eb",
-        "chart_bg": "#1e252b",
-        "chart_grid": "#343d45",
-        "chart_border": "#3a444d",
-        "map_palette": ["#2c3439", "#546c6c", "#5ba6a6", "#e5a66b", "#ffd08f"],
-        "map_tile": "dark",
-        "tech_colors": {
-            "languages": "#5ba6a6",
-            "databases": "#e5a66b",
-            "platforms": "#92b77a",
-            "frameworks": "#df876d",
-        },
-        "remote_colors": {
-            "Remote": "#5ba6a6",
-            "Hybrid": "#92b77a",
-            "In-person": "#df876d",
-        },
-        "education_colors": ["#5ba6a6", "#e5a66b", "#92b77a", "#b59bd1", "#df876d"],
+    "remote_colors": {
+        "Remote": "#2f6f73",
+        "Hybrid": "#7a8f5a",
+        "In-person": "#c66b4e",
     },
+    "education_colors": ["#2f6f73", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"],
 }
-TAB_STYLESHEET = """
-:host {
-  font-size: 18px;
-}
-.bk-tab,
-.bk-tab button,
-.bk-tab div,
-button,
-[role="tab"] {
-  font-size: 18px !important;
-  line-height: 1.35 !important;
-  padding: 12px 18px !important;
-}
-"""
 
 
 def _tab_stylesheet(theme: dict) -> str:
@@ -604,15 +538,6 @@ language_selector = pn.widgets.MenuButton(
     width=118,
     css_classes=["language-menu"],
 )
-theme_toggle = pn.widgets.Toggle(
-    name="",
-    icon="sun",
-    icon_size="1.35em",
-    value=False,
-    button_type="default",
-    width=46,
-    css_classes=["theme-toggle"],
-)
 reset_button = pn.widgets.Button(
     name="Reset filters",
     button_type="primary",
@@ -657,13 +582,8 @@ def _text(key: str, lang: str | None = None) -> str:
     return TEXT[selected_lang][key]
 
 
-def _theme_name(is_dark: bool | None = None) -> str:
-    dark = theme_toggle.value if is_dark is None else is_dark
-    return "dark" if dark else "light"
-
-
-def _theme(is_dark: bool | None = None) -> dict:
-    return THEMES[_theme_name(is_dark)]
+def _theme() -> dict:
+    return THEME
 
 
 def _chart_labels(lang: str, extra: dict | None = None) -> dict:
@@ -735,14 +655,7 @@ def _update_control_labels(event=None) -> None:
         ("English ✓" if lang == "EN" else "English", "EN"),
         ("Español ✓" if lang == "ES" else "Español", "ES"),
     ]
-    _update_theme_toggle()
     filter_panel_collapse_button.description = "Collapse filters" if lang == "EN" else "Cerrar filtros"
-
-
-def _update_theme_toggle(event=None) -> None:
-    theme_toggle.name = ""
-    theme_toggle.icon = "moon" if theme_toggle.value else "sun"
-    theme_toggle.button_type = "primary" if theme_toggle.value else "default"
 
 
 def _language_menu_clicked(event) -> None:
@@ -750,7 +663,6 @@ def _language_menu_clicked(event) -> None:
         language_selector.value = event.new
 
 
-theme_toggle.param.watch(_update_theme_toggle, "value")
 language_selector.param.watch(_language_menu_clicked, "clicked")
 language_selector.param.watch(_update_control_labels, "value")
 _update_control_labels()
@@ -1193,7 +1105,6 @@ def _map_filter_key_from_filter_values(
     remote_filter.param.value,
     top_n_value.param.value,
     language_selector.param.value,
-    theme_toggle.param.value,
 )
 def dashboard_kpis(
     show_all_countries,
@@ -1202,7 +1113,6 @@ def dashboard_kpis(
     selected_remote,
     top_n,
     lang,
-    is_dark,
 ):
     filter_key = _filter_key_from_filter_values(
         selected_ages,
@@ -1219,7 +1129,7 @@ def dashboard_kpis(
     )
     kpis = _cached_kpis(filter_key)
     countries_shown_on_map = _cached_country_map_distribution(map_filter_key, None)["country"].nunique()
-    theme = _theme(is_dark)
+    theme = _theme()
     return _grid_box(
         _kpi_card(
             _text("respondents", lang),
@@ -1257,7 +1167,6 @@ def _technology_momentum_panel(selected_family):
         remote_filter.param.value,
         top_n_value.param.value,
         language_selector.param.value,
-        theme_toggle.param.value,
     )
     def technology_view(
         show_all_countries,
@@ -1266,7 +1175,6 @@ def _technology_momentum_panel(selected_family):
         selected_remote,
         top_n,
         lang,
-        is_dark,
     ):
         effective_top_n = _effective_top_n(top_n)
         filter_key = _filter_key_from_filter_values(
@@ -1276,7 +1184,7 @@ def _technology_momentum_panel(selected_family):
             apply_country_scope,
             top_n,
         )
-        return _technology_momentum_view(filter_key, effective_top_n, selected_family, lang, _theme(is_dark))
+        return _technology_momentum_view(filter_key, effective_top_n, selected_family, lang, _theme())
 
     return pn.panel(technology_view, sizing_mode="stretch_width")
 
@@ -1610,9 +1518,9 @@ def create_dashboard():
             align="start",
         )
 
-    @pn.depends(language_selector.param.value, theme_toggle.param.value)
-    def header(lang: str, is_dark: bool):
-        theme = _theme(is_dark)
+    @pn.depends(language_selector.param.value)
+    def header(lang: str):
+        theme = _theme()
         title_row = pn.Row(
             pn.pane.HTML(
                 f"""
@@ -1624,9 +1532,8 @@ def create_dashboard():
             ),
             pn.Row(
                 language_selector,
-                theme_toggle,
                 align="center",
-                width=186,
+                width=128,
                 margin=(0, 10, 0, 16),
             ),
             sizing_mode="stretch_width",
@@ -1651,14 +1558,14 @@ def create_dashboard():
             sizing_mode="stretch_width",
         )
 
-    @pn.depends(filter_panel_open.param.value, language_selector.param.value, theme_toggle.param.value)
-    def filter_sidebar(is_open: bool, lang: str, is_dark: bool):
-        theme = _theme(is_dark)
+    @pn.depends(filter_panel_open.param.value, language_selector.param.value)
+    def filter_sidebar(is_open: bool, lang: str):
+        theme = _theme()
         return _open_filter_sidebar(lang, theme) if is_open else _collapsed_filter_rail(theme)
 
-    @pn.depends(language_selector.param.value, theme_toggle.param.value)
-    def dashboard_content(lang: str, is_dark: bool):
-        theme = _theme(is_dark)
+    @pn.depends(language_selector.param.value)
+    def dashboard_content(lang: str):
+        theme = _theme()
         tabs = pn.Tabs(
             (_text("momentum_tab", lang), momentum_comparison()),
             (_text("respondent_context_tab", lang), detailed_views()),

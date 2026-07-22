@@ -81,7 +81,6 @@ DEFAULT_THEME = {
     "map_palette": ["#efe6d6", "#dfb778", "#d99058", "#8a6964", "#2f6f73"],
     "education_colors": ["#2f6f73", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"],
     "remote_colors": REMOTE_COLORS,
-    "map_tile": "light",
 }
 
 
@@ -254,8 +253,7 @@ def make_country_bubble_map(
         active_scroll="wheel_zoom",
         sizing_mode="stretch_width",
     )
-    tile_provider = xyz.CartoDB.DarkMatterNoLabels if colors["map_tile"] == "dark" else xyz.CartoDB.PositronNoLabels
-    tile_renderer = plot.add_tile(tile_provider)
+    tile_renderer = plot.add_tile(xyz.CartoDB.PositronNoLabels)
     tile_renderer.tile_source.wrap_around = False
     plot.x_range.bounds = WORLD_X_RANGE
     plot.y_range.bounds = WORLD_Y_RANGE
