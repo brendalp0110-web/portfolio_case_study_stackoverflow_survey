@@ -4,18 +4,20 @@ import math
 from typing import List
 
 import pandas as pd
-from bokeh.models import ColorBar, ColumnDataSource, FactorRange, HoverTool, LinearColorMapper, NumeralTickFormatter
+from bokeh.models import (
+    ColorBar,
+    ColumnDataSource,
+    FixedTicker,
+    HoverTool,
+    LabelSet,
+    LinearColorMapper,
+    NumeralTickFormatter,
+)
 from bokeh.plotting import figure
 from xyzservices import providers as xyz
 
 
 PLOT_TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
-TECH_COLORS = {
-    "languages": "#2f6f73",
-    "databases": "#d99058",
-    "platforms": "#7a8f5a",
-    "frameworks": "#c66b4e",
-}
 WORLD_X_RANGE = (-20_000_000, 20_000_000)
 WORLD_Y_RANGE = (-7_000_000, 18_500_000)
 REMOTE_COLORS = {
@@ -111,11 +113,42 @@ def _format_axis(plot: figure, metric_mode: str) -> None:
         plot.xaxis.formatter = NumeralTickFormatter(format="0.0")
 
 
+def _value_labels(values: pd.Series, metric_mode: str) -> pd.Series:
+    if metric_mode == "Share of respondents":
+        return values.astype(float).map(lambda value: f"{value:.1f}%")
+    return values.astype(float).map(lambda value: f"{value:,.0f}")
+
+
+def _add_horizontal_value_labels(
+    plot: figure,
+    source: ColumnDataSource,
+    x_field: str,
+    y_field: str,
+    theme: dict | None = None,
+) -> None:
+    colors = _chart_theme(theme)
+    labels = LabelSet(
+        x=x_field,
+        y=y_field,
+        text="value_label",
+        source=source,
+        x_offset=8,
+        y_offset=-6,
+        text_font_size="9pt",
+        text_color=colors["muted"],
+        text_baseline="middle",
+    )
+    plot.add_layout(labels)
+
+
 def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
     colors = _chart_theme(theme)
-    plot.title.text_font_size = "15pt"
-    plot.title.text_font_style = "bold"
-    plot.title.text_color = colors["text"]
+    if plot.title.text:
+        plot.title.text_font_size = "15pt"
+        plot.title.text_font_style = "bold"
+        plot.title.text_color = colors["text"]
+    else:
+        plot.title.visible = False
     plot.background_fill_color = colors["chart_bg"]
     plot.border_fill_color = colors["chart_bg"]
     plot.outline_line_color = colors["chart_border"]
@@ -138,6 +171,11 @@ def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
     plot.xaxis.minor_tick_line_color = colors["chart_border"]
     plot.yaxis.minor_tick_line_color = colors["chart_border"]
     plot.toolbar.logo = None
+    plot.toolbar.autohide = True
+    plot.min_border_left = 8
+    plot.min_border_right = 12
+    plot.min_border_top = 10
+    plot.min_border_bottom = 8
     if plot.legend:
         plot.legend.label_text_font_size = "10pt"
         plot.legend.label_text_color = colors["text"]
@@ -171,12 +209,13 @@ def make_horizontal_bar_chart(
 ) -> figure:
     labels = _labels(labels)
     chart_data = data.sort_values(value_col, ascending=True).copy()
+    chart_data["value_label"] = _value_labels(chart_data[value_col], metric_mode)
     source = ColumnDataSource(chart_data)
 
     height = max(430, 44 * len(chart_data) + 100)
     plot = figure(
         y_range=chart_data[category_col].tolist(),
-        x_range=(0, max(chart_data[value_col].max() * 1.15, 1)),
+        x_range=(0, max(chart_data[value_col].max() * 1.26, 1)),
         height=height,
         title=title,
         tools=PLOT_TOOLS,
@@ -184,6 +223,7 @@ def make_horizontal_bar_chart(
         sizing_mode="stretch_width",
     )
     plot.hbar(y=category_col, right=value_col, height=0.7, color=color, source=source)
+    _add_horizontal_value_labels(plot, source, value_col, category_col, theme)
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = ""
@@ -374,52 +414,6 @@ def make_dumbbell_chart(
     return plot
 
 
-def make_stacked_bar_chart(
-    data: pd.DataFrame,
-    title: str,
-    labels: dict | None = None,
-    theme: dict | None = None,
-) -> figure:
-    labels = _labels(labels)
-    chart_data = data.copy()
-    chart_data["AgeLabel"] = chart_data["Age"].map(AGE_SHORT_LABELS).fillna(chart_data["Age"])
-    categories = chart_data["AgeLabel"].tolist()
-    stacks: List[str] = [column for column in chart_data.columns if column not in ["Age", "AgeLabel"]]
-    legend_labels = [_education_label(stack, labels) for stack in stacks]
-    theme_colors = _chart_theme(theme)
-    stack_colors = theme_colors["education_colors"]
-
-    source = ColumnDataSource(chart_data)
-    plot = figure(
-        x_range=categories,
-        height=500,
-        title=title,
-        tools=PLOT_TOOLS,
-        toolbar_location="right",
-        sizing_mode="stretch_width",
-    )
-    renderers = plot.vbar_stack(
-        stacks,
-        x="AgeLabel",
-        width=0.8,
-        color=stack_colors[: len(stacks)],
-        source=source,
-        legend_label=legend_labels,
-    )
-    plot.xaxis.major_label_orientation = 0
-    plot.xaxis.major_label_standoff = 8
-    plot.yaxis.axis_label = labels["respondent_count_axis"]
-    _place_legend_below(plot)
-    plot.add_tools(
-        HoverTool(
-            renderers=renderers,
-            tooltips=[(labels["age_group"], "@Age"), (labels["count"], "$y{0,0}")]
-        )
-    )
-    _apply_readability_theme(plot, theme)
-    return plot
-
-
 def make_age_percent_bar_chart(
     data: pd.DataFrame,
     title: str,
@@ -432,11 +426,12 @@ def make_age_percent_bar_chart(
     chart_data = chart_data[chart_data["count"] > 0].iloc[::-1].reset_index(drop=True)
     chart_data["age_label"] = chart_data["age"].map(AGE_SHORT_LABELS).fillna(chart_data["age"])
     value_col = "share_pct" if metric_mode == "Share of respondents" else "count"
+    chart_data["value_label"] = _value_labels(chart_data[value_col], metric_mode)
     source = ColumnDataSource(chart_data)
 
     plot = figure(
         y_range=chart_data["age_label"].tolist(),
-        x_range=(0, max(chart_data[value_col].max() * 1.15, 1)),
+        x_range=(0, max(chart_data[value_col].max() * 1.24, 1)),
         height=500,
         title=title,
         tools=PLOT_TOOLS,
@@ -445,6 +440,7 @@ def make_age_percent_bar_chart(
     )
     colors = _chart_theme(theme)
     plot.hbar(y="age_label", right=value_col, height=0.72, color=colors["primary"], source=source)
+    _add_horizontal_value_labels(plot, source, value_col, "age_label", theme)
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = labels["age_group"]
@@ -473,6 +469,9 @@ def make_percent_stacked_bar_chart(
     source_data = data.copy()
     stacks: List[str] = [column for column in source_data.columns if column != "Age"]
     stack_colors = colors["education_colors"]
+    age_order = source_data["Age"].tolist()
+    categories = [AGE_SHORT_LABELS.get(age, age) for age in age_order]
+    age_positions = {age: index + 0.5 for index, age in enumerate(age_order)}
 
     long_rows = []
     for _, row in source_data.iterrows():
@@ -486,6 +485,7 @@ def make_percent_stacked_bar_chart(
                 {
                     "Age": row["Age"],
                     "AgeLabel": AGE_SHORT_LABELS.get(row["Age"], row["Age"]),
+                    "x_position": age_positions[row["Age"]],
                     "education_level": stack,
                     "education_label": _education_label(stack, labels),
                     "count": count,
@@ -498,12 +498,21 @@ def make_percent_stacked_bar_chart(
             bottom = top
 
     chart_data = pd.DataFrame(long_rows)
-    categories = [AGE_SHORT_LABELS.get(age, age) for age in source_data["Age"].tolist()]
     source = ColumnDataSource(chart_data)
+    x_positions = [index + 0.5 for index in range(len(categories))]
+    label_source = ColumnDataSource(
+        pd.DataFrame(
+            {
+                "x_position": x_positions,
+                "axis_label": categories,
+                "label_y": [-5.0] * len(categories),
+            }
+        )
+    )
 
     plot = figure(
-        x_range=categories,
-        y_range=(0, 100),
+        x_range=(0, max(len(categories), 1)),
+        y_range=(-8, 100),
         height=500,
         title=title,
         tools=PLOT_TOOLS,
@@ -511,8 +520,8 @@ def make_percent_stacked_bar_chart(
         sizing_mode="stretch_width",
     )
     bars = plot.vbar(
-        x="AgeLabel",
-        width=0.8,
+        x="x_position",
+        width=0.74,
         bottom="bottom",
         top="top",
         fill_color="color",
@@ -522,9 +531,13 @@ def make_percent_stacked_bar_chart(
     )
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.major_label_standoff = 8
+    plot.xaxis.ticker = FixedTicker(ticks=x_positions)
+    plot.xaxis.major_label_overrides = {position: label for position, label in zip(x_positions, categories)}
     plot.yaxis.axis_label = labels["share_within_age_axis"]
     plot.xaxis.axis_label = labels["age_group"]
+    plot.xaxis.axis_label_standoff = 24
     plot.yaxis.formatter = NumeralTickFormatter(format="0")
+    plot.yaxis.ticker = FixedTicker(ticks=[0, 20, 40, 60, 80, 100])
     _place_legend_below(plot)
     plot.add_tools(
         HoverTool(
@@ -538,74 +551,21 @@ def make_percent_stacked_bar_chart(
         )
     )
     _apply_readability_theme(plot, theme)
-    return plot
-
-
-def make_grouped_box_plot(
-    data: pd.DataFrame,
-    title: str,
-    labels: dict | None = None,
-    theme: dict | None = None,
-) -> figure:
-    labels = _labels(labels)
-    colors = _chart_theme(theme)
-    chart_data = data.copy()
-    chart_data["box_color"] = chart_data["remote_label"].map(colors["remote_colors"]).fillna(colors["primary"])
-    source = ColumnDataSource(chart_data)
-    categories = chart_data["factor"].tolist()
-    y_max = max(chart_data["upper"].max() * 1.1, 1)
-
-    plot = figure(
-        x_range=FactorRange(*categories),
-        y_range=(0, y_max),
-        height=500,
-        title=title,
-        tools=PLOT_TOOLS,
-        toolbar_location="right",
-        sizing_mode="stretch_width",
-    )
-    plot.segment("factor", "upper", "factor", "q3", source=source, line_color=colors["connector"])
-    plot.segment("factor", "lower", "factor", "q1", source=source, line_color=colors["connector"])
-    upper_boxes = plot.vbar(
-        "factor",
-        0.75,
-        "q2",
-        "q3",
-        source=source,
-        fill_color="box_color",
-        fill_alpha=0.8,
-        line_color=colors["marker_line"],
-    )
-    lower_boxes = plot.vbar(
-        "factor",
-        0.75,
-        "q1",
-        "q2",
-        source=source,
-        fill_color="box_color",
-        fill_alpha=0.45,
-        line_color=colors["marker_line"],
-    )
-    plot.rect("factor", "lower", 0.25, 0.01, source=source, line_color=colors["marker_line"])
-    plot.rect("factor", "upper", 0.25, 0.01, source=source, line_color=colors["marker_line"])
-    plot.xaxis.major_label_orientation = 1.0
-    plot.yaxis.axis_label = labels["converted_compensation"]
-    plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
-    plot.add_tools(
-        HoverTool(
-            renderers=[upper_boxes, lower_boxes],
-            tooltips=[
-                (labels["work_style"], "@remote_label"),
-                (labels["experience_band"], "@experience_band"),
-                (labels["median"], "@q2{0,0}"),
-                (labels["mean"], "@mean{0,0}"),
-                (labels["count"], "@count{0,0}"),
-            ]
+    plot.xaxis.major_label_text_font_size = "0pt"
+    plot.xaxis.major_tick_line_color = None
+    plot.xaxis.minor_tick_line_color = None
+    plot.add_layout(
+        LabelSet(
+            x="x_position",
+            y="label_y",
+            text="axis_label",
+            source=label_source,
+            text_align="center",
+            text_baseline="middle",
+            text_font_size="10pt",
+            text_color=colors["text"],
         )
     )
-    plot.x_range.group_padding = 0.15
-    plot.xaxis.separator_line_color = colors["chart_border"]
-    _apply_readability_theme(plot, theme)
     return plot
 
 

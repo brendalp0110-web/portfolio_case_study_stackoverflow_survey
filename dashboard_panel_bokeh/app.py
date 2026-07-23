@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from html import escape
 import sys
 from pathlib import Path
 
@@ -18,7 +19,6 @@ from dashboard_panel_bokeh.charts import (  # noqa: E402
     make_compensation_experience_box_plot,
     make_horizontal_bar_chart,
     make_percent_stacked_bar_chart,
-    make_stacked_bar_chart,
 )
 from dashboard_panel_bokeh.data_utils import (  # noqa: E402
     AGE_ORDER,
@@ -218,6 +218,13 @@ TEXT = {
         "age_distribution_chart": "Respondent Age Distribution",
         "education_age_chart": "Education Level Composition by Age Group",
         "compensation_experience_chart": "{workstyle} Compensation by Experience",
+        "current_ranking_subtitle": "Technologies developers report using in the current filtered view.",
+        "future_ranking_subtitle": "Technologies developers want to work with next, ranked by respondent count.",
+        "momentum_chart_subtitle": "Direct comparison between current use and future interest for the selected family.",
+        "age_distribution_subtitle": "Respondent mix by age group under the active filters.",
+        "education_age_subtitle": "Education composition within each age group, normalized to 100%.",
+        "compensation_experience_subtitle": "Compensation spread by experience band for this work style.",
+        "country_map_subtitle": "Geographic concentration of respondents shown by bubble size and share.",
         "respondent_count_axis": "Respondent count",
         "share_respondents_axis": "Share of respondents (%)",
         "country": "Country",
@@ -320,6 +327,13 @@ TEXT = {
         "age_distribution_chart": "Distribución etaria de encuestados",
         "education_age_chart": "Composición educativa por grupo etario",
         "compensation_experience_chart": "Compensación {workstyle} por experiencia",
+        "current_ranking_subtitle": "Tecnologías que los desarrolladores reportan usar en la vista filtrada actual.",
+        "future_ranking_subtitle": "Tecnologías que los desarrolladores quieren usar próximamente, ordenadas por conteo.",
+        "momentum_chart_subtitle": "Comparación directa entre uso actual e interés futuro para la familia seleccionada.",
+        "age_distribution_subtitle": "Composición de encuestados por grupo etario bajo los filtros activos.",
+        "education_age_subtitle": "Composición educativa dentro de cada grupo etario, normalizada al 100%.",
+        "compensation_experience_subtitle": "Dispersión de compensación por rango de experiencia para esta modalidad.",
+        "country_map_subtitle": "Concentración geográfica de encuestados según tamaño de burbuja y porcentaje.",
         "respondent_count_axis": "Conteo de encuestados",
         "share_respondents_axis": "Porcentaje de encuestados (%)",
         "country": "País",
@@ -940,6 +954,49 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
 
 
+def _chart_card(item, theme: dict, title: str = "", subtitle: str = "") -> pn.Column:
+    header = pn.pane.HTML(
+        f"""
+        <div style="padding:2px 2px 10px 2px;">
+          <div style="font-size:18px;font-weight:750;letter-spacing:-0.01em;color:{theme['text']};line-height:1.25;">
+            {escape(title)}
+          </div>
+          <div style="font-size:13px;color:{theme['muted']};line-height:1.45;margin-top:4px;">
+            {escape(subtitle)}
+          </div>
+        </div>
+        """,
+        sizing_mode="stretch_width",
+        margin=(0, 0, 2, 0),
+    )
+    children = [header, item] if title or subtitle else [item]
+    return pn.Column(
+        *children,
+        sizing_mode="stretch_width",
+        styles={
+            "background": theme["surface"],
+            "border": f"1px solid {theme['border']}",
+            "border-radius": "14px",
+            "box-shadow": "0 10px 24px rgba(31, 41, 51, 0.07)",
+            "padding": "14px 16px 10px 16px",
+            "overflow": "hidden",
+        },
+    )
+
+
+def _chart_grid_box(*items, ncols: int, theme: dict) -> pn.GridBox:
+    cards = [
+        _chart_card(item[0], theme, item[1], item[2]) if isinstance(item, tuple) else _chart_card(item, theme)
+        for item in items
+    ]
+    return pn.GridBox(
+        *cards,
+        ncols=ncols,
+        sizing_mode="stretch_width",
+        styles={"gap": "18px"},
+    )
+
+
 def _page_background_style(theme: dict) -> pn.pane.HTML:
     return pn.pane.HTML(
         f"""
@@ -1028,42 +1085,56 @@ def _technology_momentum_view(filter_key, top_n, selected_family, lang: str, the
     color = theme["tech_colors"][config["color_key"]]
     context = _text(TECHNOLOGY_CONTEXT_KEYS[selected_family], lang)
 
-    rankings_grid = _grid_box(
-        make_horizontal_bar_chart(
-            current_ranking,
-            config["label"],
-            value_col,
+    rankings_grid = _chart_grid_box(
+        (
+            make_horizontal_bar_chart(
+                current_ranking,
+                config["label"],
+                value_col,
+                "",
+                METRIC_MODE,
+                color,
+                labels=chart_labels,
+                theme=theme,
+            ),
             _text(config["current_title_key"], lang),
-            METRIC_MODE,
-            color,
-            labels=chart_labels,
-            theme=theme,
+            _text("current_ranking_subtitle", lang),
         ),
-        make_horizontal_bar_chart(
-            future_ranking,
-            config["label"],
-            value_col,
+        (
+            make_horizontal_bar_chart(
+                future_ranking,
+                config["label"],
+                value_col,
+                "",
+                METRIC_MODE,
+                color,
+                labels=chart_labels,
+                theme=theme,
+            ),
             _text(config["future_title_key"], lang),
-            METRIC_MODE,
-            color,
-            labels=chart_labels,
-            theme=theme,
+            _text("future_ranking_subtitle", lang),
         ),
         ncols=2,
+        theme=theme,
     )
 
     return pn.Column(
         _info_markdown(f"{context}", theme=theme, margin=(0, 0, 8, 0)),
         rankings_grid,
-        make_dumbbell_chart(
-            comparison,
-            config["label"],
-            "count_current",
-            "count_future",
+        _chart_card(
+            make_dumbbell_chart(
+                comparison,
+                config["label"],
+                "count_current",
+                "count_future",
+                "",
+                METRIC_MODE,
+                labels=chart_labels,
+                theme=theme,
+            ),
+            theme,
             _text("current_future_momentum", lang).format(family=_technology_family_label(selected_family, lang)),
-            METRIC_MODE,
-            labels=chart_labels,
-            theme=theme,
+            _text("momentum_chart_subtitle", lang),
         ),
         sizing_mode="stretch_width",
     )
@@ -1252,21 +1323,30 @@ def detailed_age_education(
             """,
             theme=theme,
         ),
-        _grid_box(
-            make_age_percent_bar_chart(
-                age_profile,
+        _chart_grid_box(
+            (
+                make_age_percent_bar_chart(
+                    age_profile,
+                    "",
+                    METRIC_MODE,
+                    labels=chart_labels,
+                    theme=theme,
+                ),
                 _text("age_distribution_chart", lang),
-                METRIC_MODE,
-                labels=chart_labels,
-                theme=theme,
+                _text("age_distribution_subtitle", lang),
             ),
-            make_percent_stacked_bar_chart(
-                age_education,
+            (
+                make_percent_stacked_bar_chart(
+                    age_education,
+                    "",
+                    labels=chart_labels,
+                    theme=theme,
+                ),
                 _text("education_age_chart", lang),
-                labels=chart_labels,
-                theme=theme,
+                _text("education_age_subtitle", lang),
             ),
             ncols=2,
+            theme=theme,
         ),
         sizing_mode="stretch_width",
     )
@@ -1306,14 +1386,21 @@ def detailed_compensation_experience(
         if chart_data.empty:
             continue
 
+        chart_title = _text("compensation_experience_chart", lang).format(
+            workstyle=_workstyle_label(remote_label, lang)
+        )
         charts.append(
-            make_compensation_experience_box_plot(
-                chart_data,
-                _text("compensation_experience_chart", lang).format(workstyle=_workstyle_label(remote_label, lang)),
-                y_max,
-                theme["remote_colors"].get(remote_label, theme["primary"]),
-                labels=chart_labels,
-                theme=theme,
+            (
+                make_compensation_experience_box_plot(
+                    chart_data,
+                    "",
+                    y_max,
+                    theme["remote_colors"].get(remote_label, theme["primary"]),
+                    labels=chart_labels,
+                    theme=theme,
+                ),
+                chart_title,
+                _text("compensation_experience_subtitle", lang),
             )
         )
 
@@ -1326,7 +1413,7 @@ def detailed_compensation_experience(
             """,
             theme=theme,
         ),
-        _grid_box(*charts, ncols=3),
+        _chart_grid_box(*charts, ncols=3, theme=theme),
         sizing_mode="stretch_width",
     )
 
@@ -1383,13 +1470,18 @@ def detailed_country_distribution(
             """,
             sizing_mode="stretch_width",
         ),
-        make_country_bubble_map(
-            map_data,
+        _chart_card(
+            make_country_bubble_map(
+                map_data,
+                "",
+                METRIC_MODE,
+                height=640,
+                labels=chart_labels,
+                theme=theme,
+            ),
+            theme,
             _text("respondent_map", lang),
-            METRIC_MODE,
-            height=640,
-            labels=chart_labels,
-            theme=theme,
+            _text("country_map_subtitle", lang),
         ),
         sizing_mode="stretch_width",
     )
@@ -1501,7 +1593,6 @@ def create_dashboard():
                 "color": theme["text"],
             },
             width=310,
-            sizing_mode="fixed",
         )
 
     def _collapsed_filter_rail(theme: dict) -> pn.Column:
@@ -1514,7 +1605,6 @@ def create_dashboard():
                 "color": theme["primary"],
             },
             width=56,
-            sizing_mode="fixed",
             align="start",
         )
 
