@@ -191,9 +191,9 @@ def _place_legend_below(plot: figure) -> None:
     legend.orientation = "horizontal"
     legend.location = "center"
     legend.click_policy = "hide"
-    legend.label_text_font_size = "9pt"
-    legend.spacing = 12
-    legend.margin = 8
+    legend.label_text_font_size = "8pt"
+    legend.spacing = 8
+    legend.margin = 6
     plot.add_layout(legend, "below")
 
 
@@ -511,7 +511,7 @@ def make_percent_stacked_bar_chart(
     )
 
     plot = figure(
-        x_range=(0, max(len(categories), 1)),
+        x_range=(-0.15, max(len(categories) + 0.15, 1)),
         y_range=(-8, 100),
         height=500,
         title=title,

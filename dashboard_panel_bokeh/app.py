@@ -264,7 +264,7 @@ TEXT = {
         "education_masters": "Masters degree",
         "education_other": "Other",
         "education_secondary": "Secondary school",
-        "education_some_college": "Some college/university study",
+        "education_some_college": "Some university study",
     },
     "ES": {
         "language": "Idioma",
