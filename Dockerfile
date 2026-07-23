@@ -15,4 +15,4 @@ COPY data/survey_data_cleaned_reduced.csv ./data/survey_data_cleaned_reduced.csv
 
 EXPOSE 7860
 
-CMD ["sh", "-c", "panel serve dashboard_panel_bokeh/app.py --address 0.0.0.0 --port ${PORT:-7860} --allow-websocket-origin='*'"]
+CMD ["sh", "-c", "panel serve dashboard_panel_bokeh/app.py --address 0.0.0.0 --port ${PORT:-7860} --allow-websocket-origin='*' --use-xheaders --global-loading-spinner"]
