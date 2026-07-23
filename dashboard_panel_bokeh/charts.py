@@ -61,7 +61,7 @@ DEFAULT_LABELS = {
     "share_within_age": "Share within age",
     "share_within_age_axis": "Share within age group (%)",
     "years_experience": "Years of experience",
-    "converted_compensation": "Converted annual compensation",
+    "converted_compensation": "Annual compensation (USD)",
     "work_style": "Work style",
     "experience_band": "Experience band",
     "median": "Median",
@@ -144,7 +144,7 @@ def _add_horizontal_value_labels(
 def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
     colors = _chart_theme(theme)
     if plot.title.text:
-        plot.title.text_font_size = "15pt"
+        plot.title.text_font_size = "14pt"
         plot.title.text_font_style = "bold"
         plot.title.text_color = colors["text"]
     else:
@@ -154,14 +154,14 @@ def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
     plot.outline_line_color = colors["chart_border"]
     plot.xgrid.grid_line_color = colors["chart_grid"]
     plot.ygrid.grid_line_color = colors["chart_grid"]
-    plot.xaxis.axis_label_text_font_size = "11pt"
-    plot.yaxis.axis_label_text_font_size = "11pt"
+    plot.xaxis.axis_label_text_font_size = "10pt"
+    plot.yaxis.axis_label_text_font_size = "10pt"
     plot.xaxis.axis_label_text_font_style = "normal"
     plot.yaxis.axis_label_text_font_style = "normal"
     plot.xaxis.axis_label_text_color = colors["text"]
     plot.yaxis.axis_label_text_color = colors["text"]
-    plot.xaxis.major_label_text_font_size = "10pt"
-    plot.yaxis.major_label_text_font_size = "10pt"
+    plot.xaxis.major_label_text_font_size = "9pt"
+    plot.yaxis.major_label_text_font_size = "9pt"
     plot.xaxis.major_label_text_color = colors["text"]
     plot.yaxis.major_label_text_color = colors["text"]
     plot.xaxis.axis_line_color = colors["chart_border"]
@@ -177,7 +177,7 @@ def _apply_readability_theme(plot: figure, theme: dict | None = None) -> None:
     plot.min_border_top = 10
     plot.min_border_bottom = 8
     if plot.legend:
-        plot.legend.label_text_font_size = "10pt"
+        plot.legend.label_text_font_size = "9pt"
         plot.legend.label_text_color = colors["text"]
         plot.legend.background_fill_color = colors["chart_bg"]
         plot.legend.border_line_color = colors["chart_border"]
@@ -580,6 +580,7 @@ def make_compensation_experience_box_plot(
     labels = _labels(labels)
     colors = _chart_theme(theme)
     chart_data = data.copy()
+    chart_data = chart_data[chart_data["count"] > 0].copy()
     chart_data["factor"] = chart_data["experience_band"].astype(str).map(EXPERIENCE_SHORT_LABELS).fillna(
         chart_data["experience_band"].astype(str)
     )
@@ -589,10 +590,10 @@ def make_compensation_experience_box_plot(
     plot = figure(
         x_range=categories,
         y_range=(0, max(y_max, 1)),
-        height=500,
+        height=440,
         title=title,
-        tools=PLOT_TOOLS,
-        toolbar_location="right",
+        tools="",
+        toolbar_location=None,
         sizing_mode="stretch_width",
     )
     plot.segment("factor", "upper", "factor", "q3", source=source, line_color=colors["connector"])
@@ -619,13 +620,22 @@ def make_compensation_experience_box_plot(
     )
     plot.rect("factor", "lower", 0.24, 0.01, source=source, line_color=colors["marker_line"])
     plot.rect("factor", "upper", 0.24, 0.01, source=source, line_color=colors["marker_line"])
+    median_points = plot.scatter(
+        "factor",
+        "q2",
+        size=7,
+        source=source,
+        fill_color=colors["chart_bg"],
+        line_color=color,
+        line_width=2,
+    )
     plot.xaxis.major_label_orientation = 0
     plot.xaxis.axis_label = labels["years_experience"]
     plot.yaxis.axis_label = labels["converted_compensation"]
     plot.yaxis.formatter = NumeralTickFormatter(format="0,0")
     plot.add_tools(
         HoverTool(
-            renderers=[upper_boxes, lower_boxes],
+            renderers=[upper_boxes, lower_boxes, median_points],
             tooltips=[
                 (labels["experience_band"], "@experience_band"),
                 (labels["median"], "@q2{0,0}"),
@@ -635,4 +645,8 @@ def make_compensation_experience_box_plot(
         )
     )
     _apply_readability_theme(plot, theme)
+    plot.min_border_left = 64
+    plot.min_border_right = 8
+    plot.min_border_bottom = 42
+    plot.yaxis.axis_label_standoff = 10
     return plot

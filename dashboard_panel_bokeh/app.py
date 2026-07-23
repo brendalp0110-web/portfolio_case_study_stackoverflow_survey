@@ -40,63 +40,63 @@ pn.extension(
     raw_css=[
         """
         .bk-root {
-          font-size: 16px;
+          font-size: 15px;
         }
         .bk-root h2 {
-          font-size: 26px;
+          font-size: 24px;
         }
         .bk-root h3 {
-          font-size: 24px;
+          font-size: 22px;
           margin: 8px 0 8px 0;
         }
         .bk-root h4 {
-          font-size: 19px;
+          font-size: 18px;
           margin: 4px 0 8px 0;
         }
         .bk-root p,
         .bk-root li {
-          font-size: 16px;
-          line-height: 1.55;
+          font-size: 15px;
+          line-height: 1.5;
         }
         .bk-root .bk-input,
         .bk-root select,
         .bk-root label {
-          font-size: 15px;
-        }
-        .bk-root .bk-btn {
           font-size: 14px;
         }
+        .bk-root .bk-btn {
+          font-size: 13px;
+        }
         .bk-root .bk-tab {
-          font-size: 16px;
-          padding: 12px 18px;
+          font-size: 15px;
+          padding: 10px 16px;
         }
         .bk-root .bk-tab button,
         .bk-root .bk-tab div {
-          font-size: 16px;
+          font-size: 15px;
         }
         .filter-sidebar {
           border-radius: 10px;
           padding: 14px;
-          font-size: 16px;
+          font-size: 15px;
         }
         .filter-sidebar .bk-input,
         .filter-sidebar select,
         .filter-sidebar label {
-          font-size: 15px;
-        }
-        .filter-sidebar .bk-btn {
           font-size: 14px;
         }
+        .filter-sidebar .bk-btn {
+          font-size: 13px;
+        }
         .filter-sidebar h3 {
-          font-size: 23px;
+          font-size: 21px;
         }
         .filter-sidebar h4 {
-          font-size: 19px;
+          font-size: 18px;
         }
         .filter-sidebar p,
         .filter-sidebar li {
-          font-size: 15px;
-          line-height: 1.5;
+          font-size: 14px;
+          line-height: 1.45;
         }
         .filter-rail {
           border-radius: 10px;
@@ -117,7 +117,7 @@ pn.extension(
           color: #ffffff;
           border-radius: 6px;
           padding: 8px 10px;
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 700;
           white-space: nowrap;
           box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
@@ -128,14 +128,14 @@ pn.extension(
           color: #ffffff !important;
           min-width: 118px;
           min-height: 34px;
-          font-size: 15px;
+          font-size: 14px;
         }
         .language-menu .bk-menu,
         .language-menu .bk-menu-item,
         .language-menu [role="menu"],
         .language-menu [role="menuitem"] {
           min-width: 150px;
-          font-size: 15px;
+          font-size: 14px;
           line-height: 1.5;
         }
         .filter-sidebar .bk-btn-primary {
@@ -217,13 +217,13 @@ TEXT = {
         "respondent_map": "Respondent Distribution by Country",
         "age_distribution_chart": "Respondent Age Distribution",
         "education_age_chart": "Education Level Composition by Age Group",
-        "compensation_experience_chart": "{workstyle} Compensation by Experience",
+        "compensation_experience_chart": "{workstyle}",
         "current_ranking_subtitle": "Technologies developers report using in the current filtered view.",
         "future_ranking_subtitle": "Technologies developers want to work with next, ranked by respondent count.",
         "momentum_chart_subtitle": "Direct comparison between current use and future interest for the selected family.",
         "age_distribution_subtitle": "Respondent mix by age group under the active filters.",
         "education_age_subtitle": "Education composition within each age group, normalized to 100%.",
-        "compensation_experience_subtitle": "Compensation spread by experience band for this work style.",
+        "compensation_experience_subtitle": "Distribution by experience band.",
         "country_map_subtitle": "Geographic concentration of respondents shown by bubble size and share.",
         "respondent_count_axis": "Respondent count",
         "share_respondents_axis": "Share of respondents (%)",
@@ -243,7 +243,7 @@ TEXT = {
         "share_within_age": "Share within age",
         "share_within_age_axis": "Share within age group (%)",
         "years_experience": "Years of experience",
-        "converted_compensation": "Converted annual compensation",
+        "converted_compensation": "Annual compensation (USD)",
         "work_style": "Work style",
         "experience_band": "Experience band",
         "median": "Median",
@@ -326,13 +326,13 @@ TEXT = {
         "respondent_map": "Distribución de encuestados por país",
         "age_distribution_chart": "Distribución etaria de encuestados",
         "education_age_chart": "Composición educativa por grupo etario",
-        "compensation_experience_chart": "Compensación {workstyle} por experiencia",
+        "compensation_experience_chart": "{workstyle}",
         "current_ranking_subtitle": "Tecnologías que los desarrolladores reportan usar en la vista filtrada actual.",
         "future_ranking_subtitle": "Tecnologías que los desarrolladores quieren usar próximamente, ordenadas por conteo.",
         "momentum_chart_subtitle": "Comparación directa entre uso actual e interés futuro para la familia seleccionada.",
         "age_distribution_subtitle": "Composición de encuestados por grupo etario bajo los filtros activos.",
         "education_age_subtitle": "Composición educativa dentro de cada grupo etario, normalizada al 100%.",
-        "compensation_experience_subtitle": "Dispersión de compensación por rango de experiencia para esta modalidad.",
+        "compensation_experience_subtitle": "Distribución por rango de experiencia.",
         "country_map_subtitle": "Concentración geográfica de encuestados según tamaño de burbuja y porcentaje.",
         "respondent_count_axis": "Conteo de encuestados",
         "share_respondents_axis": "Porcentaje de encuestados (%)",
@@ -352,7 +352,7 @@ TEXT = {
         "share_within_age": "Porcentaje dentro del grupo etario",
         "share_within_age_axis": "Porcentaje dentro del grupo etario (%)",
         "years_experience": "Años de experiencia",
-        "converted_compensation": "Compensación anual convertida",
+        "converted_compensation": "Compensación anual (USD)",
         "work_style": "Modalidad",
         "experience_band": "Rango de experiencia",
         "median": "Mediana",
@@ -418,7 +418,7 @@ THEME = {
 def _tab_stylesheet(theme: dict) -> str:
     return f"""
     :host {{
-      font-size: 18px;
+      font-size: 16px;
       background: {theme['page_bg']};
       color: {theme['text']};
     }}
@@ -430,7 +430,7 @@ def _tab_stylesheet(theme: dict) -> str:
       background: {theme['surface']} !important;
       border-color: {theme['border']} !important;
       color: {theme['text']} !important;
-      font-size: 18px !important;
+      font-size: 16px !important;
       line-height: 1.35 !important;
       padding: 12px 18px !important;
     }}
@@ -444,7 +444,7 @@ def _tab_stylesheet(theme: dict) -> str:
     """
 FILTER_WIDGET_STYLESHEET = """
 :host {
-  font-size: 16px;
+  font-size: 15px;
 }
 label,
 .bk-input,
@@ -453,7 +453,7 @@ label,
 .bk-label,
 select,
 button {
-  font-size: 16px !important;
+  font-size: 15px !important;
   line-height: 1.45 !important;
 }
 input[type="checkbox"] {
@@ -954,14 +954,17 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
     return pn.GridBox(*items, ncols=ncols, sizing_mode="stretch_width")
 
 
-def _chart_card(item, theme: dict, title: str = "", subtitle: str = "") -> pn.Column:
+def _chart_card(item, theme: dict, title: str = "", subtitle: str = "", compact: bool = False) -> pn.Column:
+    title_size = "16px" if compact else "17px"
+    subtitle_size = "12px" if compact else "13px"
+    padding = "12px 14px 8px 14px" if compact else "14px 16px 10px 16px"
     header = pn.pane.HTML(
         f"""
         <div style="padding:2px 2px 10px 2px;">
-          <div style="font-size:18px;font-weight:750;letter-spacing:-0.01em;color:{theme['text']};line-height:1.25;">
+          <div style="font-size:{title_size};font-weight:750;letter-spacing:-0.01em;color:{theme['text']};line-height:1.25;">
             {escape(title)}
           </div>
-          <div style="font-size:13px;color:{theme['muted']};line-height:1.45;margin-top:4px;">
+          <div style="font-size:{subtitle_size};color:{theme['muted']};line-height:1.4;margin-top:4px;">
             {escape(subtitle)}
           </div>
         </div>
@@ -978,15 +981,17 @@ def _chart_card(item, theme: dict, title: str = "", subtitle: str = "") -> pn.Co
             "border": f"1px solid {theme['border']}",
             "border-radius": "14px",
             "box-shadow": "0 10px 24px rgba(31, 41, 51, 0.07)",
-            "padding": "14px 16px 10px 16px",
+            "padding": padding,
             "overflow": "hidden",
         },
     )
 
 
-def _chart_grid_box(*items, ncols: int, theme: dict) -> pn.GridBox:
+def _chart_grid_box(*items, ncols: int, theme: dict, compact: bool = False) -> pn.GridBox:
     cards = [
-        _chart_card(item[0], theme, item[1], item[2]) if isinstance(item, tuple) else _chart_card(item, theme)
+        _chart_card(item[0], theme, item[1], item[2], compact=compact)
+        if isinstance(item, tuple)
+        else _chart_card(item, theme, compact=compact)
         for item in items
     ]
     return pn.GridBox(
@@ -1022,23 +1027,23 @@ def _info_markdown(text: str, theme: dict | None = None, **kwargs) -> pn.pane.Ma
     :host {{
       color: {colors['text']};
       font-family: inherit;
-      font-size: 18px;
-      line-height: 1.62;
+      font-size: 16px;
+      line-height: 1.55;
     }}
     h3 {{
       color: {colors['text']};
-      font-size: 25px;
+      font-size: 23px;
       margin: 10px 0 8px 0;
     }}
     p {{
       color: {colors['text']};
-      font-size: 18px;
-      line-height: 1.62;
+      font-size: 16px;
+      line-height: 1.55;
     }}
     code {{
       color: inherit;
       font-family: inherit;
-      font-size: 16px;
+      font-size: 15px;
     }}
     """
     return pn.pane.Markdown(text, stylesheets=[stylesheet], **kwargs)
@@ -1049,21 +1054,21 @@ def _filter_markdown(text: str, theme: dict | None = None, **kwargs) -> pn.pane.
     stylesheet = f"""
     :host {{
       color: {colors['text']};
-      font-size: 16px;
-      line-height: 1.55;
+      font-size: 15px;
+      line-height: 1.5;
     }}
     h3 {{
       color: {colors['text']};
-      font-size: 24px;
+      font-size: 22px;
     }}
     h4 {{
       color: {colors['text']};
-      font-size: 20px;
+      font-size: 18px;
     }}
     p {{
       color: {colors['text']};
-      font-size: 16px;
-      line-height: 1.55;
+      font-size: 15px;
+      line-height: 1.5;
     }}
     """
     return pn.pane.Markdown(text, stylesheets=[stylesheet], **kwargs)
@@ -1386,8 +1391,9 @@ def detailed_compensation_experience(
         if chart_data.empty:
             continue
 
+        workstyle_title = _workstyle_label(remote_label, lang)
         chart_title = _text("compensation_experience_chart", lang).format(
-            workstyle=_workstyle_label(remote_label, lang)
+            workstyle=workstyle_title[:1].upper() + workstyle_title[1:]
         )
         charts.append(
             (
@@ -1413,7 +1419,7 @@ def detailed_compensation_experience(
             """,
             theme=theme,
         ),
-        _chart_grid_box(*charts, ncols=3, theme=theme),
+        _chart_grid_box(*charts, ncols=3, theme=theme, compact=True),
         sizing_mode="stretch_width",
     )
 
@@ -1614,7 +1620,7 @@ def create_dashboard():
         title_row = pn.Row(
             pn.pane.HTML(
                 f"""
-                <div style="font-size:28px;font-weight:700;line-height:1.2;color:{theme['header_text']};">
+                <div style="font-size:26px;font-weight:700;line-height:1.2;color:{theme['header_text']};">
                   {_text('dashboard_title', lang)}
                 </div>
                 """,
@@ -1632,7 +1638,7 @@ def create_dashboard():
             title_row,
             pn.pane.HTML(
                 f"""
-                <div style="font-size:15px;line-height:1.5;max-width:980px;color:{theme['header_text']};">
+                <div style="font-size:14px;line-height:1.45;max-width:980px;color:{theme['header_text']};">
                   {_text('dashboard_subtitle', lang)}
                 </div>
                 """,
