@@ -100,24 +100,24 @@ pn.extension(
         }
         .filter-rail {
           border-radius: 10px;
-          padding: 8px;
+          padding: 4px 8px;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 58px;
+          min-height: 46px;
         }
         .filter-rail:hover::after {
           content: "Open filters";
           position: absolute;
-          left: 58px;
-          top: 8px;
+          left: 54px;
+          top: 4px;
           z-index: 1000;
           background: #18324a;
           color: #ffffff;
           border-radius: 6px;
           padding: 8px 10px;
-          font-size: 15px;
+          font-size: 14px;
           font-weight: 700;
           white-space: nowrap;
           box-shadow: 0 6px 14px rgba(16, 42, 67, 0.18);
@@ -572,8 +572,8 @@ filter_panel_collapse_button = pn.widgets.ButtonIcon(
 filter_panel_expand_button = pn.widgets.ButtonIcon(
     icon="filter",
     description="",
-    width=42,
-    height=42,
+    width=36,
+    height=36,
     margin=0,
     align="center",
 )
@@ -937,16 +937,16 @@ def _kpi_card(
     theme: dict,
 ) -> pn.pane.HTML:
     html = f"""
-    <div style="background:{theme['surface']};border:1px solid {theme['border']};border-radius:8px;padding:14px 18px;height:112px;">
-      <div style="font-size:13px;color:{theme['muted']};text-transform:uppercase;letter-spacing:0.06em;">{title}</div>
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px;margin-top:8px;">
+    <div style="background:{theme['surface']};border:1px solid {theme['border']};border-radius:8px;padding:12px 16px;height:104px;">
+      <div style="font-size:12px;color:{theme['muted']};text-transform:uppercase;letter-spacing:0.06em;">{title}</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;margin-top:7px;">
         <div style="min-width:0;">
-          <div style="font-size:29px;font-weight:700;color:{theme['text']};line-height:1.05;">{total_value}</div>
-          <div style="font-size:13px;color:{theme['muted']};line-height:1.35;margin-top:6px;">{total_label}</div>
+          <div style="font-size:25px;font-weight:700;color:{theme['text']};line-height:1.05;">{total_value}</div>
+          <div style="font-size:12px;color:{theme['muted']};line-height:1.3;margin-top:5px;">{total_label}</div>
         </div>
-        <div style="min-width:0;border-left:2px solid {theme['border']};padding-left:18px;">
-          <div style="font-size:23px;font-weight:700;color:{theme['filtered_value']};line-height:1.15;">{filtered_value}</div>
-          <div style="font-size:13px;color:{theme['muted_soft']};line-height:1.35;margin-top:6px;">{filtered_label}</div>
+        <div style="min-width:0;border-left:2px solid {theme['border']};padding-left:16px;">
+          <div style="font-size:21px;font-weight:700;color:{theme['filtered_value']};line-height:1.1;">{filtered_value}</div>
+          <div style="font-size:12px;color:{theme['muted_soft']};line-height:1.3;margin-top:5px;">{filtered_label}</div>
         </div>
       </div>
     </div>
@@ -1614,7 +1614,7 @@ def create_dashboard():
                 "border": f"1px solid {theme['border']}",
                 "color": theme["primary"],
             },
-            width=56,
+            width=48,
             align="start",
         )
 
