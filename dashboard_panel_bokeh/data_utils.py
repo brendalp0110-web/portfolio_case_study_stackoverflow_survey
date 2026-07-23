@@ -40,6 +40,8 @@ REMOTE_WORK_LABELS = {
     "Hybrid (some remote, some in-person)": "Hybrid",
     "In-person": "In-person",
 }
+DOMINANT_IMPUTED_SALARY_SHARE = 0.15
+DOMINANT_IMPUTED_SALARY_MIN_COUNT = 25
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 COUNTRY_CENTROIDS_PATH = PROJECT_ROOT / "dashboard_panel_bokeh" / "assets" / "country_centroids.csv"
@@ -204,9 +206,38 @@ def _experience_band_series(work_exp: pd.Series) -> pd.Series:
     )
 
 
+def _observed_compensation_series(df: pd.DataFrame) -> pd.Series:
+    """Remove the dominant median-imputed compensation spike from salary views."""
+    salary = pd.to_numeric(df["ConvertedCompYearly"], errors="coerce").dropna()
+    if salary.empty:
+        return salary
+
+    counts = salary.value_counts()
+    dominant_value = counts.index[0]
+    dominant_count = int(counts.iloc[0])
+    dominant_share = dominant_count / len(salary)
+    median_value = salary.median()
+    looks_imputed = (
+        dominant_count >= DOMINANT_IMPUTED_SALARY_MIN_COUNT
+        and dominant_share >= DOMINANT_IMPUTED_SALARY_SHARE
+        and abs(float(dominant_value) - float(median_value)) < 0.01
+    )
+    if not looks_imputed:
+        return salary
+
+    return salary[salary != dominant_value]
+
+
+def _observed_compensation_df(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    observed_salary = _observed_compensation_series(df)
+    result = df.loc[observed_salary.index, columns].copy()
+    result["ConvertedCompYearly"] = observed_salary
+    return result
+
+
 def salary_remote_experience_box_summary(df: pd.DataFrame) -> pd.DataFrame:
     base = (
-        df[["RemoteWork", "WorkExp_num", "ConvertedCompYearly"]]
+        _observed_compensation_df(df, ["RemoteWork", "WorkExp_num", "ConvertedCompYearly"])
         .dropna(subset=["RemoteWork", "WorkExp_num", "ConvertedCompYearly"])
         .copy()
     )
@@ -327,8 +358,9 @@ def age_workexp_sample(df: pd.DataFrame, sample_size: int = 3000) -> pd.DataFram
 
 
 def build_kpis(df: pd.DataFrame) -> dict:
-    median_salary = float(df["ConvertedCompYearly"].median()) if not df.empty else 0.0
-    average_salary = float(df["ConvertedCompYearly"].mean()) if not df.empty else 0.0
+    observed_salary = _observed_compensation_series(df) if not df.empty else pd.Series(dtype="float64")
+    median_salary = float(observed_salary.median()) if not observed_salary.empty else 0.0
+    average_salary = float(observed_salary.mean()) if not observed_salary.empty else 0.0
     countries = df.loc[df["Country"] != "Nomadic", "Country"].nunique()
     return {
         "respondents": int(len(df)),
