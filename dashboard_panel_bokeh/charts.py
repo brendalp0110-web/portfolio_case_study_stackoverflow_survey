@@ -305,8 +305,8 @@ def make_country_bubble_map(
         size="bubble_size",
         source=source,
         fill_color={"field": "share_pct", "transform": mapper},
-        line_color=colors["marker_line"],
-        line_width=1.2,
+        line_color="#1f2933",
+        line_width=1.4,
         fill_alpha=0.85,
     )
     plot.add_tools(
