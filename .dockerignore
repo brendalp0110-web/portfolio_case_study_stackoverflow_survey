@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__/
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints/
+notebooks/
+docs/
+assets/
+Capstone Project Dashboard.pdf
+data/survey_data_updated.csv
+data/job_postings_summary.csv

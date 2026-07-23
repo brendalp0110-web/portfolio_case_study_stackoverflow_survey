@@ -23,6 +23,16 @@ Then open `http://127.0.0.1:5016/app` in the browser.
 
 For notebooks, select the `Python 3.13 (StackOverflow Survey)` Jupyter kernel.
 
+## Deploy
+
+The dashboard is prepared for an official Docker-based deployment on Render:
+
+- `Dockerfile`: builds a Python 3.13 runtime image for the Panel app.
+- `requirements-dashboard.txt`: installs only the dashboard runtime dependencies.
+- `render.yaml`: defines the Render web service as infrastructure-as-code.
+
+After pushing the repository to GitHub, create a new Render Blueprint from the repository root. Render will build the Docker image and expose a public `onrender.com` URL.
+
 ## Scope
 
 Current version includes:
