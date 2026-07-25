@@ -24,23 +24,72 @@ country_count_slider = pn.widgets.IntSlider(
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
 global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112)
+AGE_CHIP_LABELS = {
+    "Under 18 years old": "<18",
+    "18-24 years old": "18-24",
+    "25-34 years old": "25-34",
+    "35-44 years old": "35-44",
+    "45-54 years old": "45-54",
+    "55-64 years old": "55-64",
+    "65 years or older": "65+",
+    "Prefer not to say": "Undeclared",
+}
+WORKSTYLE_CHIP_LABELS = {
+    "Remote": "Remote",
+    "Hybrid (some remote, some in-person)": "Hybrid",
+    "In-person": "In-person",
+}
+CHIP_SELECTOR_STYLESHEET = """
+:host {
+  background: #ffffff;
+}
+.choices,
+.choices__inner,
+.choices__input {
+  background: #ffffff !important;
+}
+.choices__inner {
+  border-color: #d7ddd6 !important;
+  min-height: 42px !important;
+}
+.choices__list--multiple {
+  overflow: visible !important;
+}
+.choices__list--multiple:not(:empty) ~ .choices__input::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
+}
+.choices__list--multiple:not(:empty) ~ .choices__input {
+  min-width: 1ch !important;
+  width: 1ch !important;
+}
+.choices__list--multiple .choices__item {
+  margin-bottom: 3px !important;
+}
+.choices__list--dropdown {
+  background: #ffffff !important;
+  z-index: 1000 !important;
+}
+"""
 redesign_age_selector = pn.widgets.MultiChoice(
     name="",
-    options=base.AGE_ORDER,
+    options={label: value for value, label in AGE_CHIP_LABELS.items()},
     value=[],
     placeholder="All age groups",
-    solid=False,
-    width=440,
-    max_height=48,
+    solid=True,
+    width=520,
+    styles={"background": "#ffffff"},
+    stylesheets=[CHIP_SELECTOR_STYLESHEET],
 )
 redesign_remote_selector = pn.widgets.MultiChoice(
     name="",
-    options=base.REMOTE_OPTIONS,
+    options={label: value for value, label in WORKSTYLE_CHIP_LABELS.items()},
     value=[],
     placeholder="All workstyles",
-    solid=False,
-    width=440,
-    max_height=48,
+    solid=True,
+    width=360,
+    styles={"background": "#ffffff"},
+    stylesheets=[CHIP_SELECTOR_STYLESHEET],
 )
 
 NAV_GROUPS = {
@@ -65,40 +114,76 @@ _syncing_redesign_filters = False
 def _reset_global_filters(event=None) -> None:
     base.reset_age()
     base.reset_remote()
-    _sync_redesign_filter_selectors(clear_all=True)
+    _clear_redesign_filter_selectors()
 
 
-def _selector_value(current, all_options) -> list:
-    selected = list(current)
-    return [] if set(selected) == set(all_options) else selected
+def _clear_redesign_filter_selectors() -> None:
+    _clear_redesign_age_selector()
+    _clear_redesign_remote_selector()
+    _update_selector_placeholders()
 
 
-def _sync_redesign_filter_selectors(clear_all: bool = False) -> None:
+def _clear_redesign_age_selector() -> None:
     global _syncing_redesign_filters
     _syncing_redesign_filters = True
-    redesign_age_selector.value = [] if clear_all else _selector_value(base.age_filter.value, base.AGE_ORDER)
-    redesign_remote_selector.value = [] if clear_all else _selector_value(base.remote_filter.value, base.REMOTE_OPTIONS)
+    redesign_age_selector.value = []
     _syncing_redesign_filters = False
+
+
+def _clear_redesign_remote_selector() -> None:
+    global _syncing_redesign_filters
+    _syncing_redesign_filters = True
+    redesign_remote_selector.value = []
+    _syncing_redesign_filters = False
+
+
+def _update_selector_placeholders(lang: str | None = None) -> None:
+    selected_lang = lang or base._lang()
+    redesign_age_selector.placeholder = (
+        "" if redesign_age_selector.value else ("All age groups" if selected_lang == "EN" else "Todos los grupos de edad")
+    )
+    redesign_remote_selector.placeholder = (
+        "" if redesign_remote_selector.value else ("All workstyles" if selected_lang == "EN" else "Todas las modalidades")
+    )
 
 
 def _redesign_age_changed(event) -> None:
     if _syncing_redesign_filters:
         return
-    if event.new:
-        base._set_age_values(event.new)
+    selected = list(event.new)
+    if selected:
+        base._set_age_values(selected)
     else:
         base._set_age_values(base.AGE_ORDER)
-    _sync_redesign_filter_selectors(clear_all=not event.new)
+    _update_selector_placeholders()
 
 
 def _redesign_remote_changed(event) -> None:
     if _syncing_redesign_filters:
         return
-    if event.new:
-        base._set_remote_values(event.new)
+    selected = list(event.new)
+    if selected:
+        base._set_remote_values(selected)
     else:
         base._set_remote_values(base.REMOTE_OPTIONS)
-    _sync_redesign_filter_selectors(clear_all=not event.new)
+    _update_selector_placeholders()
+
+
+def _selected_redesign_ages(selected_ages) -> list[str]:
+    return list(selected_ages) if selected_ages else list(base.AGE_ORDER)
+
+
+def _selected_redesign_remote(selected_remote) -> list[str]:
+    return list(selected_remote) if selected_remote else list(base.REMOTE_OPTIONS)
+
+
+def _redesign_filter_key(selected_ages, selected_remote):
+    return base._filter_key(
+        _selected_redesign_ages(selected_ages),
+        _selected_redesign_remote(selected_remote),
+        "All countries",
+        TECH_TOP_N,
+    )
 
 
 age_select_all_button.on_click(base.reset_age)
@@ -117,7 +202,7 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             background: {theme['page_bg']} !important;
           }}
           .redesign-fixed-header-spacer {{
-            height: 236px;
+            height: 254px;
           }}
           .redesign-filter-bar {{
             background: {theme['page_bg']};
@@ -128,9 +213,9 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             border: 1px solid {theme['border']};
             border-radius: 12px;
             box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
-            height: 108px;
+            min-height: 126px;
             padding: 10px 14px;
-            overflow: hidden;
+            overflow: visible;
           }}
           .redesign-filter-title {{
             color: {theme['text']};
@@ -155,12 +240,9 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             background: #ffffff !important;
             border-color: {theme['border']} !important;
             min-height: 38px !important;
-            max-height: 48px !important;
           }}
           .redesign-filter-panel .choices__list--multiple {{
-            max-height: 42px !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
+            overflow: visible !important;
           }}
           .redesign-filter-panel .choices__list--dropdown {{
             background: #ffffff !important;
@@ -290,8 +372,7 @@ def header(lang: str) -> pn.Column:
 @pn.depends(base.language_selector.param.value)
 def filter_bar(lang: str) -> pn.Column:
     global_reset_button.name = base._text("reset_filters", lang)
-    redesign_age_selector.placeholder = "All age groups" if lang == "EN" else "Todos los grupos de edad"
-    redesign_remote_selector.placeholder = "All workstyles" if lang == "EN" else "Todas las modalidades"
+    _update_selector_placeholders(lang)
     title = "Global filters" if lang == "EN" else "Filtros globales"
     subtitle = (
         "Age and workstyle control the dashboard data."
@@ -335,7 +416,6 @@ def filter_bar(lang: str) -> pn.Column:
                 pn.Spacer(sizing_mode="stretch_width"),
                 sizing_mode="stretch_width",
                 align="center",
-                height=48,
             ),
             css_classes=["redesign-filter-panel"],
             sizing_mode="stretch_width",
@@ -365,7 +445,7 @@ def sticky_header() -> pn.Column:
 
 
 def fixed_header_spacer() -> pn.Spacer:
-    return pn.Spacer(height=236, css_classes=["redesign-fixed-header-spacer"])
+    return pn.Spacer(height=254, css_classes=["redesign-fixed-header-spacer"])
 
 
 @pn.depends(active_view.param.value, base.language_selector.param.value)
@@ -396,24 +476,24 @@ def navigation(selected: str, lang: str) -> pn.Column:
 
 def _technology_view(view_name: str):
     @pn.depends(
-        base.age_filter.param.value,
-        base.remote_filter.param.value,
+        redesign_age_selector.param.value,
+        redesign_remote_selector.param.value,
         base.language_selector.param.value,
     )
     def view(selected_ages, selected_remote, lang):
-        filter_key = base._filter_key(selected_ages, selected_remote, "All countries", TECH_TOP_N)
+        filter_key = _redesign_filter_key(selected_ages, selected_remote)
         return base._technology_momentum_view(filter_key, TECH_TOP_N, view_name, lang, base._theme())
 
     return pn.panel(view, sizing_mode="stretch_width")
 
 
 @pn.depends(
-    base.age_filter.param.value,
-    base.remote_filter.param.value,
+    redesign_age_selector.param.value,
+    redesign_remote_selector.param.value,
     base.language_selector.param.value,
 )
 def redesign_kpis(selected_ages, selected_remote, lang):
-    filter_key = base._filter_key(selected_ages, selected_remote, "All countries", TECH_TOP_N)
+    filter_key = _redesign_filter_key(selected_ages, selected_remote)
     kpis = base._cached_kpis(filter_key)
     theme = base._theme()
     return base._grid_box(
@@ -446,14 +526,116 @@ def redesign_kpis(selected_ages, selected_remote, lang):
 
 
 @pn.depends(
-    base.age_filter.param.value,
-    base.remote_filter.param.value,
+    redesign_age_selector.param.value,
+    redesign_remote_selector.param.value,
+    base.language_selector.param.value,
+)
+def redesign_age_education(selected_ages, selected_remote, lang):
+    theme = base._theme()
+    filter_key = _redesign_filter_key(selected_ages, selected_remote)
+    age_profile = base._cached_age_distribution(filter_key)
+    age_education = base._cached_age_education_distribution(filter_key)
+    chart_labels = base._chart_labels(lang)
+
+    return pn.Column(
+        base._info_markdown(
+            f"""
+            ### {base._text("age_education_heading", lang)}
+
+            {base._text("age_education_text", lang)}
+            """,
+            theme=theme,
+        ),
+        base._chart_grid_box(
+            (
+                base.make_age_percent_bar_chart(
+                    age_profile,
+                    "",
+                    base.METRIC_MODE,
+                    labels=chart_labels,
+                    theme=theme,
+                ),
+                base._text("age_distribution_chart", lang),
+                base._text("age_distribution_subtitle", lang),
+            ),
+            (
+                base.make_percent_stacked_bar_chart(
+                    age_education,
+                    "",
+                    labels=chart_labels,
+                    theme=theme,
+                ),
+                base._text("education_age_chart", lang),
+                base._text("education_age_subtitle", lang),
+            ),
+            ncols=2,
+            theme=theme,
+        ),
+        sizing_mode="stretch_width",
+    )
+
+
+@pn.depends(
+    redesign_age_selector.param.value,
+    redesign_remote_selector.param.value,
+    base.language_selector.param.value,
+)
+def redesign_compensation_experience(selected_ages, selected_remote, lang):
+    theme = base._theme()
+    filter_key = _redesign_filter_key(selected_ages, selected_remote)
+    salary_box = base._cached_salary_remote_experience_box_summary(filter_key)
+    y_max = float(salary_box["upper"].max() * 1.1) if not salary_box.empty else 1.0
+    remote_labels = [base.REMOTE_WORK_LABELS[option] for option in base.REMOTE_OPTIONS if option in base.REMOTE_WORK_LABELS]
+    chart_labels = base._chart_labels(lang)
+
+    charts = []
+    for remote_label in remote_labels:
+        chart_data = salary_box[salary_box["remote_label"] == remote_label]
+        if chart_data.empty:
+            continue
+
+        workstyle_title = base._workstyle_label(remote_label, lang)
+        chart_title = base._text("compensation_experience_chart", lang).format(
+            workstyle=workstyle_title[:1].upper() + workstyle_title[1:]
+        )
+        charts.append(
+            (
+                base.make_compensation_experience_box_plot(
+                    chart_data,
+                    "",
+                    y_max,
+                    theme["remote_colors"].get(remote_label, theme["primary"]),
+                    labels=chart_labels,
+                    theme=theme,
+                ),
+                chart_title,
+                base._text("compensation_experience_subtitle", lang),
+            )
+        )
+
+    return pn.Column(
+        base._info_markdown(
+            f"""
+            ### {base._text("compensation_heading", lang)}
+
+            {base._text("compensation_text", lang)}
+            """,
+            theme=theme,
+        ),
+        base._chart_grid_box(*charts, ncols=3, theme=theme, compact=True),
+        sizing_mode="stretch_width",
+    )
+
+
+@pn.depends(
+    redesign_age_selector.param.value,
+    redesign_remote_selector.param.value,
     country_count_slider.param.value,
     base.language_selector.param.value,
 )
 def redesign_country_distribution(selected_ages, selected_remote, country_count, lang):
     theme = base._theme()
-    filter_key = base._filter_key(selected_ages, selected_remote, "All countries", TECH_TOP_N)
+    filter_key = _redesign_filter_key(selected_ages, selected_remote)
     nomadic_context = base._cached_filtered_df(*filter_key)
     available_countries = base._cached_country_map_distribution(filter_key, None)
     selected_count = min(int(country_count), max(len(available_countries), 1))
@@ -516,9 +698,9 @@ def content(selected: str, lang: str) -> pn.Column:
     if selected in base.MOMENTUM_OPTIONS:
         view = _technology_view(selected)
     elif selected == "Age and Education":
-        view = pn.panel(base.detailed_age_education, sizing_mode="stretch_width")
+        view = pn.panel(redesign_age_education, sizing_mode="stretch_width")
     elif selected == "Compensation":
-        view = pn.panel(base.detailed_compensation_experience, sizing_mode="stretch_width")
+        view = pn.panel(redesign_compensation_experience, sizing_mode="stretch_width")
     else:
         view = pn.panel(redesign_country_distribution, sizing_mode="stretch_width")
 
