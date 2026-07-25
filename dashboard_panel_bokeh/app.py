@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from html import escape
+import os
 import sys
 from pathlib import Path
 
@@ -1700,4 +1701,5 @@ def create_dashboard():
 
 
 dashboard = create_dashboard()
-dashboard.servable(title="Stack Overflow Developer Survey Dashboard v1")
+if not os.environ.get("PANEL_BOKEH_IMPORT_ONLY"):
+    dashboard.servable(title="Stack Overflow Developer Survey Dashboard v1")
