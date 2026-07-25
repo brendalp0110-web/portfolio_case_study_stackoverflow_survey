@@ -24,6 +24,24 @@ country_count_slider = pn.widgets.IntSlider(
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
 global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112)
+redesign_age_selector = pn.widgets.MultiChoice(
+    name="",
+    options=base.AGE_ORDER,
+    value=[],
+    placeholder="All age groups",
+    solid=False,
+    width=440,
+    max_height=48,
+)
+redesign_remote_selector = pn.widgets.MultiChoice(
+    name="",
+    options=base.REMOTE_OPTIONS,
+    value=[],
+    placeholder="All workstyles",
+    solid=False,
+    width=440,
+    max_height=48,
+)
 
 NAV_GROUPS = {
     "Comparison and Momentum": ["Languages", "Databases", "Platforms", "Frameworks"],
@@ -41,15 +59,52 @@ VIEW_LABEL_KEYS = {
 }
 
 NAV_BUTTONS: dict[str, pn.widgets.Button] = {}
+_syncing_redesign_filters = False
 
 
 def _reset_global_filters(event=None) -> None:
     base.reset_age()
     base.reset_remote()
+    _sync_redesign_filter_selectors(clear_all=True)
+
+
+def _selector_value(current, all_options) -> list:
+    selected = list(current)
+    return [] if set(selected) == set(all_options) else selected
+
+
+def _sync_redesign_filter_selectors(clear_all: bool = False) -> None:
+    global _syncing_redesign_filters
+    _syncing_redesign_filters = True
+    redesign_age_selector.value = [] if clear_all else _selector_value(base.age_filter.value, base.AGE_ORDER)
+    redesign_remote_selector.value = [] if clear_all else _selector_value(base.remote_filter.value, base.REMOTE_OPTIONS)
+    _syncing_redesign_filters = False
+
+
+def _redesign_age_changed(event) -> None:
+    if _syncing_redesign_filters:
+        return
+    if event.new:
+        base._set_age_values(event.new)
+    else:
+        base._set_age_values(base.AGE_ORDER)
+    _sync_redesign_filter_selectors(clear_all=not event.new)
+
+
+def _redesign_remote_changed(event) -> None:
+    if _syncing_redesign_filters:
+        return
+    if event.new:
+        base._set_remote_values(event.new)
+    else:
+        base._set_remote_values(base.REMOTE_OPTIONS)
+    _sync_redesign_filter_selectors(clear_all=not event.new)
 
 
 age_select_all_button.on_click(base.reset_age)
 global_reset_button.on_click(_reset_global_filters)
+redesign_age_selector.param.watch(_redesign_age_changed, "value")
+redesign_remote_selector.param.watch(_redesign_remote_changed, "value")
 
 
 def _redesign_css(theme: dict) -> pn.pane.HTML:
@@ -61,12 +116,55 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
           body .bk-root {{
             background: {theme['page_bg']} !important;
           }}
+          .redesign-fixed-header-spacer {{
+            height: 236px;
+          }}
           .redesign-filter-bar {{
-            position: sticky;
-            top: 0;
-            z-index: 20;
             background: {theme['page_bg']};
-            padding: 8px 0 10px 0;
+            padding: 8px 0 0 0;
+          }}
+          .redesign-filter-panel {{
+            background: {theme['surface']};
+            border: 1px solid {theme['border']};
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
+            height: 108px;
+            padding: 10px 14px;
+            overflow: hidden;
+          }}
+          .redesign-filter-title {{
+            color: {theme['text']};
+            font-size: 14px;
+            font-weight: 750;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }}
+          .redesign-filter-label {{
+            color: {theme['muted']};
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+          }}
+          .redesign-filter-panel .bk-input,
+          .redesign-filter-panel input,
+          .redesign-filter-panel select {{
+            background: #ffffff !important;
+          }}
+          .redesign-filter-panel .choices,
+          .redesign-filter-panel .choices__inner {{
+            background: #ffffff !important;
+            border-color: {theme['border']} !important;
+            min-height: 38px !important;
+            max-height: 48px !important;
+          }}
+          .redesign-filter-panel .choices__list--multiple {{
+            max-height: 42px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }}
+          .redesign-filter-panel .choices__list--dropdown {{
+            background: #ffffff !important;
+            z-index: 1000 !important;
           }}
           .redesign-filter-card {{
             background: {theme['surface']};
@@ -191,55 +289,83 @@ def header(lang: str) -> pn.Column:
 
 @pn.depends(base.language_selector.param.value)
 def filter_bar(lang: str) -> pn.Column:
-    age_select_all_button.name = base._text("check_all", lang)
     global_reset_button.name = base._text("reset_filters", lang)
-    filters = pn.GridBox(
-        _filter_card(
-            base._text("age", lang),
-            age_select_all_button,
-            base._text("age_help", lang),
-            base.age_filter,
-        ),
-        _filter_card(
-            base._text("workstyle", lang),
-            base.remote_reset_button,
-            base._text("workstyle_help", lang),
-            base.remote_filter,
-        ),
-        ncols=2,
-        sizing_mode="stretch_width",
-        styles={"gap": "14px"},
+    redesign_age_selector.placeholder = "All age groups" if lang == "EN" else "Todos los grupos de edad"
+    redesign_remote_selector.placeholder = "All workstyles" if lang == "EN" else "Todas las modalidades"
+    title = "Global filters" if lang == "EN" else "Filtros globales"
+    subtitle = (
+        "Age and workstyle control the dashboard data."
+        if lang == "EN"
+        else "Edad y modalidad controlan la data del dashboard."
     )
-    dropdown_title = "Global filters" if lang == "EN" else "Filtros globales"
-    dropdown = pn.Accordion(
-        (
-            dropdown_title,
-            pn.Column(
-                pn.Row(
-                    base._filter_markdown(
-                        "Age and workstyle are the only global filters." if lang == "EN"
-                        else "Edad y modalidad son los unicos filtros globales.",
-                        margin=(0, 0, 0, 0),
-                    ),
-                    pn.Spacer(sizing_mode="stretch_width"),
-                    global_reset_button,
-                    sizing_mode="stretch_width",
-                    align="center",
-                    margin=(0, 0, 8, 0),
-                ),
-                filters,
-                sizing_mode="stretch_width",
-            ),
-        ),
-        active=[0],
-        sizing_mode="stretch_width",
-        css_classes=["redesign-filter-dropdown"],
-    )
+    age_label = base._text("age", lang)
+    workstyle_label = base._text("workstyle", lang)
+
     return pn.Column(
-        dropdown,
+        pn.Column(
+            pn.Row(
+                pn.pane.HTML(
+                    f"""
+                    <div style="display:flex;align-items:baseline;gap:10px;">
+                      <span class="redesign-filter-title">{title}</span>
+                      <span style="font-size:12px;color:{base._theme()['muted']};line-height:1.25;">{subtitle}</span>
+                    </div>
+                    """,
+                    sizing_mode="stretch_width",
+                ),
+                sizing_mode="stretch_width",
+                height=28,
+                align="center",
+                margin=(0, 0, 8, 0),
+            ),
+            pn.Row(
+                pn.Row(
+                    pn.pane.HTML(f'<span class="redesign-filter-label">{age_label}</span>', width=56),
+                    redesign_age_selector,
+                    align="center",
+                    margin=(0, 24, 0, 0),
+                ),
+                pn.Row(
+                    pn.pane.HTML(f'<span class="redesign-filter-label">{workstyle_label}</span>', width=82),
+                    redesign_remote_selector,
+                    align="center",
+                    margin=(0, 24, 0, 0),
+                ),
+                global_reset_button,
+                pn.Spacer(sizing_mode="stretch_width"),
+                sizing_mode="stretch_width",
+                align="center",
+                height=48,
+            ),
+            css_classes=["redesign-filter-panel"],
+            sizing_mode="stretch_width",
+        ),
         css_classes=["redesign-filter-bar"],
         sizing_mode="stretch_width",
     )
+
+
+def sticky_header() -> pn.Column:
+    theme = base._theme()
+    return pn.Column(
+        header,
+        filter_bar,
+        styles={
+            "position": "fixed",
+            "top": "0",
+            "left": "0",
+            "right": "0",
+            "z-index": "50",
+            "background": theme["page_bg"],
+            "padding": "0 10px 10px 10px",
+            "box-shadow": "0 12px 26px rgba(31, 41, 51, 0.08)",
+        },
+        sizing_mode="stretch_width",
+    )
+
+
+def fixed_header_spacer() -> pn.Spacer:
+    return pn.Spacer(height=236, css_classes=["redesign-fixed-header-spacer"])
 
 
 @pn.depends(active_view.param.value, base.language_selector.param.value)
@@ -408,8 +534,8 @@ def create_redesign_dashboard() -> pn.Column:
     theme = base._theme()
     return pn.Column(
         _redesign_css(theme),
-        header,
-        filter_bar,
+        sticky_header(),
+        fixed_header_spacer(),
         pn.panel(redesign_kpis, sizing_mode="stretch_width"),
         pn.Row(
             navigation,
