@@ -19,7 +19,7 @@ country_count_slider = pn.widgets.IntSlider(
     name="Countries shown",
     start=1,
     end=base.TOTAL_KPIS["countries"],
-    value=12,
+    value=base.TOTAL_KPIS["countries"],
     sizing_mode="stretch_width",
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
@@ -114,6 +114,8 @@ _syncing_redesign_filters = False
 def _reset_global_filters(event=None) -> None:
     base.reset_age()
     base.reset_remote()
+    country_count_slider.end = base.TOTAL_KPIS["countries"]
+    country_count_slider.value = base.TOTAL_KPIS["countries"]
     _clear_redesign_filter_selectors()
 
 
@@ -490,11 +492,14 @@ def _technology_view(view_name: str):
 @pn.depends(
     redesign_age_selector.param.value,
     redesign_remote_selector.param.value,
+    country_count_slider.param.value,
     base.language_selector.param.value,
 )
-def redesign_kpis(selected_ages, selected_remote, lang):
+def redesign_kpis(selected_ages, selected_remote, country_count, lang):
     filter_key = _redesign_filter_key(selected_ages, selected_remote)
     kpis = base._cached_kpis(filter_key)
+    available_countries = base._cached_country_map_distribution(filter_key, None)
+    countries_shown_on_map = min(int(country_count), len(available_countries))
     theme = base._theme()
     return base._grid_box(
         base._kpi_card(
@@ -509,8 +514,8 @@ def redesign_kpis(selected_ages, selected_remote, lang):
             base._text("countries", lang),
             f"{base.TOTAL_KPIS['countries']:,}",
             base._text("total_excluding_nomadic", lang),
-            f"{kpis['countries']:,}",
-            base._text("filtered_view", lang),
+            f"{countries_shown_on_map:,}",
+            base._text("shown_on_map", lang),
             theme,
         ),
         base._kpi_card(
@@ -638,7 +643,13 @@ def redesign_country_distribution(selected_ages, selected_remote, country_count,
     filter_key = _redesign_filter_key(selected_ages, selected_remote)
     nomadic_context = base._cached_filtered_df(*filter_key)
     available_countries = base._cached_country_map_distribution(filter_key, None)
-    selected_count = min(int(country_count), max(len(available_countries), 1))
+    available_count = max(len(available_countries), 1)
+    if country_count_slider.end != available_count:
+        country_count_slider.end = available_count
+    if int(country_count) > available_count:
+        country_count_slider.value = available_count
+        country_count = available_count
+    selected_count = min(int(country_count), available_count)
     map_data = base._cached_country_map_distribution(filter_key, selected_count)
     nomadic_count = int((nomadic_context["Country"] == "Nomadic").sum())
     nomadic_share = nomadic_count / max(len(nomadic_context), 1) * 100
@@ -647,7 +658,7 @@ def redesign_country_distribution(selected_ages, selected_remote, country_count,
     country_count_slider.name = (
         f"Countries shown: {selected_count} of {len(available_countries)}"
         if lang == "EN"
-        else f"Paises mostrados: {selected_count} de {len(available_countries)}"
+        else f"Países mostrados: {selected_count} de {len(available_countries)}"
     )
 
     return pn.Column(
