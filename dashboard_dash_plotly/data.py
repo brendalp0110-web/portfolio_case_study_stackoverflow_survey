@@ -9,7 +9,7 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = PROJECT_ROOT / "data" / "survey_data_cleaned_reduced.csv"
-COUNTRY_CENTROIDS_PATH = PROJECT_ROOT / "dashboard_panel_bokeh" / "assets" / "country_centroids.csv"
+COUNTRY_CENTROIDS_PATH = PROJECT_ROOT / "dashboard_dash_plotly" / "assets" / "country_centroids.csv"
 
 AGE_ORDER = [
     "Under 18 years old",

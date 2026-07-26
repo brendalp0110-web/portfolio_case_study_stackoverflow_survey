@@ -16,13 +16,13 @@ This repository keeps the artifacts that are most useful for a hiring manager, r
 
 - a step-by-step notebook flow from acquisition to dashboarding
 - compact source and final datasets
-- one final dashboard export as portfolio evidence
+- one official interactive dashboard plus a final dashboard export as portfolio evidence
 
 ## Folder Structure
 
 - `data/`: raw survey input, final reduced survey dataset, and merged job-postings summary
 - `notebooks/`: curated process notebooks from acquisition to dashboarding
-- `dashboard_panel_bokeh/`: Panel + Bokeh dashboard implementation workspace
+- `dashboard_dash_plotly/`: official Dash + Plotly dashboard implementation
 - `assets/`: supporting source tables for the acquisition stage
 - `docs/`: methodology and curation notes
 
@@ -32,7 +32,7 @@ This repository keeps the artifacts that are most useful for a hiring manager, r
 - [notebooks/02_data_cleaning.ipynb](notebooks/02_data_cleaning.ipynb)
 - [notebooks/03_eda_statistics.ipynb](notebooks/03_eda_statistics.ipynb)
 - [notebooks/05_dashboarding.ipynb](notebooks/05_dashboarding.ipynb)
-- [dashboard_panel_bokeh/app.py](dashboard_panel_bokeh/app.py)
+- [dashboard_dash_plotly/app.py](dashboard_dash_plotly/app.py)
 - [Capstone Project Dashboard.pdf](<Capstone Project Dashboard.pdf>)
 
 ## Key Findings So Far

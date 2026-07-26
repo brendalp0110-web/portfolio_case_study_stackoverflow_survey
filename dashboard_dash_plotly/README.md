@@ -1,13 +1,11 @@
-# Dash + Plotly Dashboard Mockup
+# Dash + Plotly Dashboard
 
-This folder contains an experimental Dash + Plotly recreation of the dashboard mockup.
-
-It is intentionally separate from `dashboard_panel_bokeh/` so layout and interaction ideas can be tested without affecting the Panel/Bokeh implementation.
+This folder contains the official interactive dashboard for the Stack Overflow Developer Survey case study.
 
 ## Run Locally
 
 ```powershell
-python -m pip install -r requirements-dash.txt
+python -m pip install -r requirements.txt
 python -m dashboard_dash_plotly.app
 ```
 

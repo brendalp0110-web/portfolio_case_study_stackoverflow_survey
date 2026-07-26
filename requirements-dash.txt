@@ -1,4 +1,0 @@
-dash
-plotly
-numpy==2.5.1
-pandas==3.0.3

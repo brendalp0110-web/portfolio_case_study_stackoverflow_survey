@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: stackoverflow-survey-dashboard
-    runtime: docker
-    plan: free
-    autoDeployTrigger: commit
