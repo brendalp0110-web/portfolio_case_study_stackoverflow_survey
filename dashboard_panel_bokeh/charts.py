@@ -133,7 +133,7 @@ def _add_horizontal_value_labels(
         text="value_label",
         source=source,
         x_offset=8,
-        y_offset=-6,
+        y_offset=0,
         text_font_size="9pt",
         text_color=colors["muted"],
         text_baseline="middle",
@@ -212,7 +212,7 @@ def make_horizontal_bar_chart(
     chart_data["value_label"] = _value_labels(chart_data[value_col], metric_mode)
     source = ColumnDataSource(chart_data)
 
-    height = max(430, 44 * len(chart_data) + 100)
+    height = max(360, 32 * len(chart_data) + 86)
     plot = figure(
         y_range=chart_data[category_col].tolist(),
         x_range=(0, max(chart_data[value_col].max() * 1.26, 1)),
@@ -222,7 +222,7 @@ def make_horizontal_bar_chart(
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
-    plot.hbar(y=category_col, right=value_col, height=0.7, color=color, source=source)
+    plot.hbar(y=category_col, right=value_col, height=0.58, color=color, source=source)
     _add_horizontal_value_labels(plot, source, value_col, category_col, theme)
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
@@ -231,7 +231,6 @@ def make_horizontal_bar_chart(
         HoverTool(
             tooltips=[
                 (labels.get(category_col, category_col.replace("_", " ").title()), "@{" + category_col + "}"),
-                (labels["count"], "@count{0,0}"),
                 (labels["share_filtered_respondents"], "@share_pct{0.0}%"),
             ]
         )
@@ -432,14 +431,14 @@ def make_age_percent_bar_chart(
     plot = figure(
         y_range=chart_data["age_label"].tolist(),
         x_range=(0, max(chart_data[value_col].max() * 1.24, 1)),
-        height=500,
+        height=420,
         title=title,
         tools=PLOT_TOOLS,
         toolbar_location="right",
         sizing_mode="stretch_width",
     )
     colors = _chart_theme(theme)
-    plot.hbar(y="age_label", right=value_col, height=0.72, color=colors["primary"], source=source)
+    plot.hbar(y="age_label", right=value_col, height=0.62, color=colors["primary"], source=source)
     _add_horizontal_value_labels(plot, source, value_col, "age_label", theme)
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
@@ -449,7 +448,6 @@ def make_age_percent_bar_chart(
         HoverTool(
             tooltips=[
                 (labels["age_group"], "@age"),
-                (labels["count"], "@count{0,0}"),
                 (labels["share_filtered_respondents"], "@share_pct{0.0}%"),
             ]
         )
