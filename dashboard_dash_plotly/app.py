@@ -25,6 +25,24 @@ VIEW_LABELS = {
     "compensation": "Compensation",
     "country-distribution": "Country Distribution",
 }
+TECH_COPY = {
+    "current_tooltip": "Current-use ranking for the active filters. Counts are shown on the bars; hover for share of respondents.",
+    "future_tooltip": "Future-interest ranking for the active filters. Counts are shown on the bars; hover for share of respondents.",
+    "momentum_tooltip": "Connects each technology's current use and future interest to reveal momentum within the selected family.",
+}
+SECTION_COPY = {
+    "age_context": "Profile the respondent mix by age and education under the active filters.",
+    "compensation": "Compare observed compensation ranges across experience bands and workstyles.",
+    "country": "Explore geographic concentration. The local slider controls how many ranked countries appear on the map.",
+}
+CHART_TOOLTIPS = {
+    "age_distribution": "Respondent count by age group. Hover for the share represented by each group.",
+    "education_composition": "Education mix within each age group, normalized to 100% so groups are comparable.",
+    "remote_compensation": "Observed annual compensation by experience band for remote respondents. Diamond markers show the mean.",
+    "hybrid_compensation": "Observed annual compensation by experience band for hybrid respondents. Diamond markers show the mean.",
+    "inperson_compensation": "Observed annual compensation by experience band for in-person respondents. Diamond markers show the mean.",
+    "map": "Bubble size and color represent each country's share of respondents. Respondent count is secondary and appears only in the tooltip.",
+}
 
 
 def info_icon(text: str) -> html.Span:
@@ -65,15 +83,15 @@ def technology_section(family: str) -> html.Section:
             html.Div([html.H2(family), html.P(config["description"])], className="section-heading"),
             html.Div(
                 [
-                    chart_card(f"Top Current {family}", "Technologies developers report using in the filtered view.", f"{slug}-current"),
-                    chart_card(f"Top Future {family}", "Technologies developers want to work with next.", f"{slug}-future"),
+                    chart_card(f"Top Current {family}", TECH_COPY["current_tooltip"], f"{slug}-current"),
+                    chart_card(f"Top Future {family}", TECH_COPY["future_tooltip"], f"{slug}-future"),
                 ],
                 className="chart-grid two",
             ),
             html.Div(
                 chart_card(
                     f"Current vs Future {family} Momentum",
-                    "Direct comparison between current usage and future interest.",
+                    TECH_COPY["momentum_tooltip"],
                     f"{slug}-momentum",
                 ),
                 className="dumbbell-row",
@@ -96,6 +114,13 @@ def country_slider_marks(max_countries: int) -> dict[int, str]:
     if max_value not in values:
         values.append(max_value)
     return {value: f"{value}" for value in sorted(set(values))}
+
+
+def triggered_component_id() -> str | None:
+    try:
+        return callback_context.triggered_id
+    except Exception:
+        return None
 
 
 def layout() -> html.Div:
@@ -123,7 +148,13 @@ def layout() -> html.Div:
                     ),
                     html.Div(
                         [
-                            html.Div("Global filters", className="filter-title"),
+                            html.Div(
+                                [
+                                    html.Span("Global filters", className="filter-title"),
+                                    html.Span("Age and workstyle define the active respondent view.", className="filter-help"),
+                                ],
+                                className="filter-title-row",
+                            ),
                             html.Div(
                                 [
                                     html.Label("Age"),
@@ -182,11 +213,11 @@ def layout() -> html.Div:
                     technology_section("Frameworks"),
                     html.Section(
                         [
-                            html.Div([html.H2("Age and Education"), html.P("Use demographics to understand who is represented in the filtered view.")], className="section-heading"),
+                            html.Div([html.H2("Age and Education"), html.P(SECTION_COPY["age_context"])], className="section-heading"),
                             html.Div(
                                 [
-                                    chart_card("Age Distribution", "Respondent distribution by age group.", "age-distribution"),
-                                    chart_card("Education Level Composition by Age Group", "Education composition within each age group, normalized to 100%.", "education-composition"),
+                                    chart_card("Age Distribution", CHART_TOOLTIPS["age_distribution"], "age-distribution"),
+                                    chart_card("Education Level Composition by Age Group", CHART_TOOLTIPS["education_composition"], "education-composition"),
                                 ],
                                 className="chart-grid two",
                             ),
@@ -197,12 +228,12 @@ def layout() -> html.Div:
                     ),
                     html.Section(
                         [
-                            html.Div([html.H2("Compensation by Experience"), html.P("Compare how compensation ranges evolve with experience across remote, hybrid, and in-person work.")], className="section-heading"),
+                            html.Div([html.H2("Compensation by Experience"), html.P(SECTION_COPY["compensation"])], className="section-heading"),
                             html.Div(
                                 [
-                                    chart_card("Remote Compensation", "Observed annual compensation by experience band.", "remote-compensation"),
-                                    chart_card("Hybrid Compensation", "Observed annual compensation by experience band.", "hybrid-compensation"),
-                                    chart_card("In-person Compensation", "Observed annual compensation by experience band.", "inperson-compensation"),
+                                    chart_card("Remote Compensation", CHART_TOOLTIPS["remote_compensation"], "remote-compensation"),
+                                    chart_card("Hybrid Compensation", CHART_TOOLTIPS["hybrid_compensation"], "hybrid-compensation"),
+                                    chart_card("In-person Compensation", CHART_TOOLTIPS["inperson_compensation"], "inperson-compensation"),
                                 ],
                                 className="chart-grid three",
                             ),
@@ -213,7 +244,7 @@ def layout() -> html.Div:
                     ),
                     html.Section(
                         [
-                            html.Div([html.H2("Country Distribution"), html.P("Explore where respondents are located. The slider controls how many ranked countries appear on the map.")], className="section-heading"),
+                            html.Div([html.H2("Country Distribution"), html.P(SECTION_COPY["country"])], className="section-heading"),
                             html.Div(
                                 [
                                     html.Label("Countries shown"),
@@ -227,16 +258,12 @@ def layout() -> html.Div:
                                         tooltip={"placement": "bottom", "always_visible": True},
                                     ),
                                     html.Div(id="country-note", className="subtle-note"),
-                                    html.Div(
-                                        f"Nomadic: {NOMADIC_COUNT:,} respondents ({NOMADIC_SHARE:.1f}%) are excluded from the country count and map.",
-                                        className="subtle-note nomadic-note",
-                                    ),
                                 ],
                                 className="map-control",
                             ),
                             chart_card(
                                 "Respondent Map by Country",
-                                "Bubble size and color represent each country's share of respondents. Respondent count is secondary and appears only in the tooltip.",
+                                CHART_TOOLTIPS["map"],
                                 "country-map",
                             ),
                         ],
@@ -342,14 +369,17 @@ def update_dashboard(selected_ages, selected_workstyles, country_count):
     filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
     available_countries = data.country_map_distribution(filtered, None)
     max_countries = max(len(available_countries), 1)
-    countries_to_show = min(int(country_count or max_countries), max_countries)
+    if triggered_component_id() in {"age-filter", "workstyle-filter"}:
+        countries_to_show = max_countries
+    else:
+        countries_to_show = min(int(country_count or max_countries), max_countries)
     country_df = data.country_map_distribution(filtered, countries_to_show)
     kpis = data.build_kpis(FULL_DF, filtered, len(country_df))
 
     kpi_cards = [
-        kpi_card("Respondents", f"{kpis['respondents_total']:,}", "Total dataset", f"{kpis['respondents_filtered']:,}", "Filtered view"),
-        kpi_card("Countries", f"{kpis['countries_total']:,}", "Total countries", f"{kpis['countries_on_map']:,}", "Shown on map"),
-        kpi_card("Average Compensation", f"${kpis['salary_total']:,.0f}", "Observed salary records", f"${kpis['salary_filtered']:,.0f}", "Filtered salary records"),
+        kpi_card("Respondents", f"{kpis['respondents_total']:,}", "Dataset total", f"{kpis['respondents_filtered']:,}", "Active filters"),
+        kpi_card("Countries", f"{kpis['countries_total']:,}", "Dataset total", f"{kpis['countries_on_map']:,}", "Shown on map"),
+        kpi_card("Average Compensation", f"${kpis['salary_total']:,.0f}", "Observed records", f"${kpis['salary_filtered']:,.0f}", "Active filters"),
     ]
 
     current_figs = []
@@ -367,7 +397,7 @@ def update_dashboard(selected_ages, selected_workstyles, country_count):
     compensation = data.compensation_records(filtered)
     compensation_summary = data.compensation_box_summary(compensation)
     compensation_y_max = float(compensation_summary["upper"].max() * 1.1) if not compensation_summary.empty else 1.0
-    country_note = f"Showing {len(country_df):,} of {max_countries:,} available countries for the active filters."
+    country_note = f"Showing {len(country_df):,} of {max_countries:,} available countries in the active view."
 
     return (
         kpi_cards,

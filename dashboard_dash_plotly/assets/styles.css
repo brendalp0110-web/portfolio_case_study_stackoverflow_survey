@@ -8,6 +8,14 @@
   --border: #d7ddd6;
   --primary: #087db7;
   --teal: #2f7779;
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-title: 25px;
 }
 
 * {
@@ -22,7 +30,9 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--text);
-  font-family: "Segoe UI", sans-serif;
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.45;
 }
 
 .app-header {
@@ -51,7 +61,8 @@ body {
 
 .brand h1 {
   margin: 0;
-  font-size: 25px;
+  font-size: var(--text-title);
+  font-weight: 800;
   letter-spacing: -0.03em;
 }
 
@@ -61,7 +72,7 @@ body {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   cursor: help;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 800;
   padding: 7px 12px;
 }
@@ -70,10 +81,20 @@ body {
   padding: 2px 18px 12px;
 }
 
+.filter-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .filter-title {
-  display: inline-block;
-  margin-right: 12px;
   font-weight: 700;
+  font-size: var(--text-md);
+}
+
+.filter-help {
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 .filter-row {
@@ -86,7 +107,16 @@ body {
 
 .filter-row label {
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--text-md);
+}
+
+.filter-dropdown .Select-control,
+.filter-dropdown .Select-placeholder,
+.filter-dropdown .Select-value-label,
+.filter-dropdown .Select-input,
+.filter-dropdown .Select-menu-outer {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
 }
 
 .primary-button {
@@ -96,6 +126,7 @@ body {
   border-radius: 6px;
   background: var(--primary);
   color: #ffffff;
+  font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
 }
@@ -128,7 +159,7 @@ body {
 }
 
 .side-nav-title {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -171,7 +202,7 @@ body {
 .nav-group-title {
   margin: 14px 0 8px;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 800;
 }
 
@@ -184,7 +215,7 @@ body {
   border: 0;
   background: rgba(255, 255, 255, 0.72);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -222,12 +253,13 @@ body {
 }
 
 .kpi-card {
-  padding: 14px 18px;
+  padding: 13px 17px;
 }
 
 .kpi-title {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-xs);
+  font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -245,8 +277,8 @@ body {
 }
 
 .kpi-value {
-  font-size: 27px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.05;
 }
 
@@ -257,7 +289,7 @@ body {
 .kpi-caption {
   margin-top: 5px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 
 .dashboard-section {
@@ -267,14 +299,16 @@ body {
 
 .section-heading h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--text-2xl);
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .section-heading p {
   margin: 6px 0 14px;
   color: var(--muted);
-  font-size: 16px;
+  font-size: var(--text-lg);
+  line-height: 1.45;
 }
 
 .chart-grid {
@@ -308,7 +342,8 @@ body {
 
 .chart-title-row h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--text-xl);
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
@@ -321,7 +356,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 800;
   cursor: help;
 }
@@ -338,12 +373,13 @@ body {
   display: block;
   margin-bottom: 6px;
   font-weight: 800;
+  font-size: var(--text-md);
 }
 
 .subtle-note {
   margin-top: 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 @media (max-width: 1100px) {

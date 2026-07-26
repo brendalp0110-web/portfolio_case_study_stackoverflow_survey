@@ -19,6 +19,7 @@ COLORS = {
     "purple": "#8b6f9e",
     "grid": "#e5e9e1",
 }
+FONT_FAMILY = "Segoe UI, Helvetica Neue, Arial, sans-serif"
 TECH_COLORS = {
     "Languages": "#2f7779",
     "Databases": "#d99058",
@@ -49,15 +50,26 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         height=height,
         paper_bgcolor=COLORS["surface"],
         plot_bgcolor=COLORS["surface"],
-        font={"family": "Segoe UI, sans-serif", "color": COLORS["text"], "size": 12},
+        font={"family": FONT_FAMILY, "color": COLORS["text"], "size": 12},
         margin={"l": 8, "r": 28, "t": 8, "b": 38},
         hoverlabel={
             "bgcolor": "#ffffff",
             "bordercolor": "#9aa6a1",
-            "font": {"color": "#111827", "size": 13},
+            "font": {"family": FONT_FAMILY, "color": "#111827", "size": 13},
         },
-        xaxis={"gridcolor": COLORS["grid"], "zeroline": False, "title_font": {"style": "normal"}},
-        yaxis={"gridcolor": COLORS["grid"], "zeroline": False, "title_font": {"style": "normal"}},
+        xaxis={
+            "gridcolor": COLORS["grid"],
+            "zeroline": False,
+            "title_font": {"family": FONT_FAMILY, "size": 12, "style": "normal"},
+            "tickfont": {"family": FONT_FAMILY, "size": 11},
+        },
+        yaxis={
+            "gridcolor": COLORS["grid"],
+            "zeroline": False,
+            "title_font": {"family": FONT_FAMILY, "size": 12, "style": "normal"},
+            "tickfont": {"family": FONT_FAMILY, "size": 11},
+        },
+        modebar={"orientation": "v"},
     )
     return fig
 
