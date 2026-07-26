@@ -14,6 +14,8 @@ pn.extension(sizing_mode="stretch_width")
 
 ACTIVE_VIEW_DEFAULT = "Languages"
 TECH_TOP_N = 12
+FIXED_HEADER_HEIGHT = 254
+NAV_TOP_GAP = 12
 active_view = pn.widgets.TextInput(value=ACTIVE_VIEW_DEFAULT, visible=False)
 nav_panel_open = pn.widgets.Checkbox(value=True, visible=False)
 country_count_slider = pn.widgets.IntSlider(
@@ -25,8 +27,8 @@ country_count_slider = pn.widgets.IntSlider(
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
 global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112, height=42)
-nav_collapse_button = pn.widgets.Button(name="<", button_type="light", width=34, height=32)
-nav_expand_button = pn.widgets.Button(name=">", button_type="light", width=34, height=32)
+nav_collapse_button = pn.widgets.ButtonIcon(icon="chevron-left", width=34, height=32)
+nav_expand_button = pn.widgets.ButtonIcon(icon="menu-2", width=36, height=36)
 AGE_CHIP_LABELS = {
     "Under 18 years old": "<18",
     "18-24 years old": "18-24",
@@ -228,13 +230,18 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
     return pn.pane.HTML(
         f"""
         <style>
+          :root {{
+            --redesign-fixed-header-height: {FIXED_HEADER_HEIGHT}px;
+            --redesign-nav-top-gap: {NAV_TOP_GAP}px;
+            --redesign-nav-top: calc(var(--redesign-fixed-header-height) + var(--redesign-nav-top-gap));
+          }}
           html,
           body,
           body .bk-root {{
             background: {theme['page_bg']} !important;
           }}
           .redesign-fixed-header-spacer {{
-            height: 254px;
+            height: var(--redesign-fixed-header-height);
           }}
           .redesign-filter-bar {{
             background: {theme['page_bg']};
@@ -307,28 +314,30 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             overflow: hidden;
           }}
           .redesign-sidebar {{
-            background: {theme['surface']};
-            border: 1px solid {theme['border']};
+            background: #d7ded3;
+            border: 1px solid #aeb9aa;
             border-radius: 14px;
             padding: 16px 14px;
-            box-shadow: 0 10px 24px rgba(31, 41, 51, 0.06);
-            max-height: calc(100vh - 288px);
+            box-shadow: 0 18px 34px rgba(31, 41, 51, 0.16);
+            max-height: calc(100vh - var(--redesign-nav-top) - 18px);
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: thin;
           }}
           .redesign-sidebar-shell {{
             flex: 0 0 auto;
+            align-self: flex-start;
+            z-index: 8;
           }}
           .redesign-sidebar-rail {{
-            background: {theme['surface']};
-            border: 1px solid {theme['border']};
+            background: #d7ded3;
+            border: 1px solid #aeb9aa;
             border-radius: 14px;
-            padding: 12px 8px;
-            box-shadow: 0 10px 24px rgba(31, 41, 51, 0.06);
-            min-height: 140px;
+            padding: 10px 8px;
+            box-shadow: 0 18px 34px rgba(31, 41, 51, 0.16);
+            min-height: 58px;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
           }}
           .redesign-sidebar-header {{
@@ -353,7 +362,7 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             box-shadow: inset 4px 0 0 {theme['accent']};
           }}
           .redesign-sidebar .bk-btn-light {{
-            background: #ffffff !important;
+            background: rgba(255, 255, 255, 0.82) !important;
             border-color: transparent !important;
             color: {theme['text']} !important;
           }}
@@ -369,7 +378,7 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             line-height: 32px;
           }}
           .redesign-nav-section {{
-            color: {theme['muted']};
+            color: {theme['primary_dark']};
             font-size: 12px;
             font-weight: 800;
             letter-spacing: 0.08em;
@@ -568,12 +577,13 @@ def sticky_header() -> pn.Column:
 
 
 def fixed_header_spacer() -> pn.Spacer:
-    return pn.Spacer(height=254, css_classes=["redesign-fixed-header-spacer"])
+    return pn.Spacer(height=FIXED_HEADER_HEIGHT, css_classes=["redesign-fixed-header-spacer"])
 
 
 @pn.depends(active_view.param.value, base.language_selector.param.value)
 def navigation(selected: str, lang: str) -> pn.Column:
     theme = base._theme()
+    nav_collapse_button.description = "Hide navigation" if lang == "EN" else "Ocultar navegación"
     sections = [
         pn.Row(
             pn.pane.HTML(
@@ -614,32 +624,45 @@ def navigation(selected: str, lang: str) -> pn.Column:
 def navigation_shell(is_open: bool, selected: str, lang: str):
     theme = base._theme()
     if is_open:
-        return pn.Column(
+        fixed_panel = pn.Column(
             navigation,
+            styles={
+                "position": "fixed",
+                "top": "var(--redesign-nav-top)",
+                "left": "10px",
+                "width": "260px",
+                "z-index": "20",
+            },
+            width=260,
+        )
+        return pn.Column(
+            pn.Spacer(width=260, height=1),
+            fixed_panel,
             nav_panel_open,
             css_classes=["redesign-sidebar-shell"],
             width=260,
             styles={"color": theme["text"]},
         )
 
-    label = "Open navigation" if lang == "EN" else "Abrir navegación"
-    nav_expand_button.name = ">"
-    return pn.Column(
+    nav_expand_button.description = "Open navigation" if lang == "EN" else "Abrir navegación"
+    fixed_rail = pn.Column(
         pn.Column(
             nav_expand_button,
-            pn.pane.HTML(
-                f"""
-                <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:{theme['muted']};margin-top:10px;">
-                  {label}
-                </div>
-                """,
-                height=128,
-                width=28,
-                margin=(4, 0, 0, 0),
-            ),
             css_classes=["redesign-sidebar-rail"],
             width=52,
         ),
+        styles={
+            "position": "fixed",
+            "top": "var(--redesign-nav-top)",
+            "left": "10px",
+            "width": "52px",
+            "z-index": "20",
+        },
+        width=52,
+    )
+    return pn.Column(
+        pn.Spacer(width=52, height=1),
+        fixed_rail,
         nav_panel_open,
         css_classes=["redesign-sidebar-shell"],
         width=52,
@@ -898,10 +921,13 @@ def create_redesign_dashboard() -> pn.Column:
         _redesign_css(theme),
         sticky_header(),
         fixed_header_spacer(),
-        pn.panel(redesign_kpis, sizing_mode="stretch_width"),
         pn.Row(
             navigation_shell,
-            content,
+            pn.Column(
+                pn.panel(redesign_kpis, sizing_mode="stretch_width"),
+                content,
+                sizing_mode="stretch_width",
+            ),
             sizing_mode="stretch_width",
             styles={"gap": "16px"},
         ),
