@@ -961,16 +961,44 @@ def _grid_box(*items, ncols: int) -> pn.GridBox:
 
 def _chart_card(item, theme: dict, title: str = "", subtitle: str = "", compact: bool = False) -> pn.Column:
     title_size = "16px" if compact else "17px"
-    subtitle_size = "12px" if compact else "13px"
     padding = "12px 14px 8px 14px" if compact else "14px 16px 10px 16px"
+    info_icon = (
+        f"""
+        <span title="{escape(subtitle)}" style="
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          width:17px;
+          height:17px;
+          border:1px solid {theme['border']};
+          border-radius:50%;
+          color:{theme['muted']};
+          font-size:11px;
+          font-weight:800;
+          line-height:1;
+          cursor:help;
+          margin-left:8px;
+          flex:0 0 auto;
+        ">i</span>
+        """
+        if subtitle
+        else ""
+    )
     header = pn.pane.HTML(
         f"""
         <div style="padding:2px 2px 10px 2px;">
-          <div style="font-size:{title_size};font-weight:750;letter-spacing:-0.01em;color:{theme['text']};line-height:1.25;">
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:2px;
+            font-size:{title_size};
+            font-weight:750;
+            letter-spacing:-0.01em;
+            color:{theme['text']};
+            line-height:1.25;
+          ">
             {escape(title)}
-          </div>
-          <div style="font-size:{subtitle_size};color:{theme['muted']};line-height:1.4;margin-top:4px;">
-            {escape(subtitle)}
+            {info_icon}
           </div>
         </div>
         """,
@@ -1127,25 +1155,27 @@ def _technology_momentum_view(filter_key, top_n, selected_family, lang: str, the
         ncols=2,
         theme=theme,
     )
+    dumbbell_card = _chart_card(
+        make_dumbbell_chart(
+            comparison,
+            config["label"],
+            "count_current",
+            "count_future",
+            "",
+            METRIC_MODE,
+            labels=chart_labels,
+            theme=theme,
+        ),
+        theme,
+        _text("current_future_momentum", lang).format(family=_technology_family_label(selected_family, lang)),
+        _text("momentum_chart_subtitle", lang),
+    )
+    dumbbell_card.margin = (18, 0, 0, 0)
 
     return pn.Column(
         _info_markdown(f"{context}", theme=theme, margin=(0, 0, 8, 0)),
         rankings_grid,
-        _chart_card(
-            make_dumbbell_chart(
-                comparison,
-                config["label"],
-                "count_current",
-                "count_future",
-                "",
-                METRIC_MODE,
-                labels=chart_labels,
-                theme=theme,
-            ),
-            theme,
-            _text("current_future_momentum", lang).format(family=_technology_family_label(selected_family, lang)),
-            _text("momentum_chart_subtitle", lang),
-        ),
+        dumbbell_card,
         sizing_mode="stretch_width",
     )
 

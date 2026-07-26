@@ -394,7 +394,7 @@ def make_dumbbell_chart(
     plot.ygrid.grid_line_color = None
     plot.xaxis.axis_label = _metric_axis_label(metric_mode, labels)
     plot.yaxis.axis_label = ""
-    plot.legend.location = "top_left"
+    plot.legend.location = "top_right"
     plot.legend.orientation = "horizontal"
     plot.add_tools(
         HoverTool(
