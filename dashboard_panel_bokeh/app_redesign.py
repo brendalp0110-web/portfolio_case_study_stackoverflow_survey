@@ -27,8 +27,8 @@ country_count_slider = pn.widgets.IntSlider(
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
 global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112, height=42)
-nav_collapse_button = pn.widgets.ButtonIcon(icon="chevron-left", width=34, height=32)
-nav_expand_button = pn.widgets.ButtonIcon(icon="menu-2", width=36, height=36)
+nav_collapse_button = pn.widgets.Button(name="<", button_type="light", width=34, height=32)
+nav_expand_button = pn.widgets.Button(name="☰", button_type="light", width=36, height=36)
 AGE_CHIP_LABELS = {
     "Under 18 years old": "<18",
     "18-24 years old": "18-24",
@@ -319,10 +319,7 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             border-radius: 14px;
             padding: 16px 14px;
             box-shadow: 0 18px 34px rgba(31, 41, 51, 0.16);
-            max-height: calc(100vh - var(--redesign-nav-top) - 18px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
+            overflow: visible;
           }}
           .redesign-sidebar-shell {{
             flex: 0 0 auto;
@@ -620,12 +617,73 @@ def navigation(selected: str, lang: str) -> pn.Column:
     )
 
 
+@pn.depends(active_view.param.value, base.language_selector.param.value)
+def navigation_accordion(selected: str, lang: str) -> pn.Column:
+    theme = base._theme()
+    nav_title = "Navigation" if lang == "EN" else "Navegación"
+    group_titles = [
+        group if lang == "EN" else (
+            "Comparación y momentum" if group == "Comparison and Momentum" else "Contexto de encuestados"
+        )
+        for group in NAV_GROUPS
+    ]
+    nav_collapse_button.description = "Hide navigation" if lang == "EN" else "Ocultar navegaci\u00f3n"
+    nav_title = "Navigation" if lang == "EN" else "Navegaci\u00f3n"
+    group_titles = [
+        group if lang == "EN" else (
+            "Comparaci\u00f3n y momentum" if group == "Comparison and Momentum" else "Contexto de encuestados"
+        )
+        for group in NAV_GROUPS
+    ]
+    active_group_index = next(
+        (index for index, views in enumerate(NAV_GROUPS.values()) if selected in views),
+        0,
+    )
+    accordion = pn.Accordion(
+        *[
+            (
+                title,
+                pn.Column(
+                    *[_nav_button(view, lang) for view in views],
+                    sizing_mode="stretch_width",
+                    margin=(4, 0, 0, 0),
+                ),
+            )
+            for title, views in zip(group_titles, NAV_GROUPS.values())
+        ],
+        active=[active_group_index],
+        toggle=True,
+        sizing_mode="stretch_width",
+        header_color=theme["primary_dark"],
+        header_background="rgba(255, 255, 255, 0.58)",
+        active_header_background="rgba(255, 255, 255, 0.86)",
+    )
+
+    return pn.Column(
+        pn.Row(
+            pn.pane.HTML(
+                f"""<div class="redesign-nav-title">{nav_title}</div>""",
+                margin=0,
+                sizing_mode="stretch_width",
+            ),
+            nav_collapse_button,
+            css_classes=["redesign-sidebar-header"],
+            sizing_mode="stretch_width",
+        ),
+        accordion,
+        active_view,
+        css_classes=["redesign-sidebar"],
+        width=260,
+        styles={"color": theme["text"]},
+    )
+
+
 @pn.depends(nav_panel_open.param.value, active_view.param.value, base.language_selector.param.value)
 def navigation_shell(is_open: bool, selected: str, lang: str):
     theme = base._theme()
     if is_open:
         fixed_panel = pn.Column(
-            navigation,
+            navigation_accordion,
             styles={
                 "position": "fixed",
                 "top": "var(--redesign-nav-top)",
@@ -644,7 +702,7 @@ def navigation_shell(is_open: bool, selected: str, lang: str):
             styles={"color": theme["text"]},
         )
 
-    nav_expand_button.description = "Open navigation" if lang == "EN" else "Abrir navegación"
+    nav_expand_button.description = "Open navigation" if lang == "EN" else "Abrir navegaci\u00f3n"
     fixed_rail = pn.Column(
         pn.Column(
             nav_expand_button,
