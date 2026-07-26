@@ -15,6 +15,7 @@ pn.extension(sizing_mode="stretch_width")
 ACTIVE_VIEW_DEFAULT = "Languages"
 TECH_TOP_N = 12
 active_view = pn.widgets.TextInput(value=ACTIVE_VIEW_DEFAULT, visible=False)
+nav_panel_open = pn.widgets.Checkbox(value=True, visible=False)
 country_count_slider = pn.widgets.IntSlider(
     name="Countries shown",
     start=1,
@@ -24,6 +25,8 @@ country_count_slider = pn.widgets.IntSlider(
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
 global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112, height=42)
+nav_collapse_button = pn.widgets.Button(name="<", button_type="light", width=34, height=32)
+nav_expand_button = pn.widgets.Button(name=">", button_type="light", width=34, height=32)
 AGE_CHIP_LABELS = {
     "Under 18 years old": "<18",
     "18-24 years old": "18-24",
@@ -213,6 +216,14 @@ redesign_age_selector.param.watch(_redesign_age_changed, "value")
 redesign_remote_selector.param.watch(_redesign_remote_changed, "value")
 
 
+def _toggle_navigation(is_open: bool) -> None:
+    nav_panel_open.value = is_open
+
+
+nav_collapse_button.on_click(lambda event: _toggle_navigation(False))
+nav_expand_button.on_click(lambda event: _toggle_navigation(True))
+
+
 def _redesign_css(theme: dict) -> pn.pane.HTML:
     return pn.pane.HTML(
         f"""
@@ -299,13 +310,76 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             background: {theme['surface']};
             border: 1px solid {theme['border']};
             border-radius: 14px;
-            padding: 14px;
+            padding: 16px 14px;
             box-shadow: 0 10px 24px rgba(31, 41, 51, 0.06);
+            max-height: calc(100vh - 288px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+          }}
+          .redesign-sidebar-shell {{
+            flex: 0 0 auto;
+          }}
+          .redesign-sidebar-rail {{
+            background: {theme['surface']};
+            border: 1px solid {theme['border']};
+            border-radius: 14px;
+            padding: 12px 8px;
+            box-shadow: 0 10px 24px rgba(31, 41, 51, 0.06);
+            min-height: 140px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+          }}
+          .redesign-sidebar-header {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
           }}
           .redesign-sidebar .bk-btn {{
             justify-content: flex-start;
             text-align: left;
             font-size: 14px;
+            font-weight: 650;
+            border-radius: 10px;
+            min-height: 38px;
+            padding-left: 14px;
+            transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+          }}
+          .redesign-sidebar .bk-btn-primary {{
+            background: {theme['primary']} !important;
+            border-color: {theme['primary']} !important;
+            box-shadow: inset 4px 0 0 {theme['accent']};
+          }}
+          .redesign-sidebar .bk-btn-light {{
+            background: #ffffff !important;
+            border-color: transparent !important;
+            color: {theme['text']} !important;
+          }}
+          .redesign-sidebar .bk-btn-light:hover {{
+            background: {theme['page_bg']} !important;
+            border-color: {theme['border']} !important;
+          }}
+          .redesign-nav-title {{
+            color: {theme['text']};
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            line-height: 32px;
+          }}
+          .redesign-nav-section {{
+            color: {theme['muted']};
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 16px 0 8px 0;
+          }}
+          .redesign-nav-rule {{
+            height: 1px;
+            background: {theme['border']};
+            margin: 12px 0 4px 0;
           }}
           .redesign-view-frame {{
             background: {theme['page_bg']};
@@ -501,17 +575,30 @@ def fixed_header_spacer() -> pn.Spacer:
 def navigation(selected: str, lang: str) -> pn.Column:
     theme = base._theme()
     sections = [
-        base._filter_markdown(
-            f"### {'Navigation' if lang == 'EN' else 'Navegacion'}",
-            theme=theme,
-            margin=(0, 0, 8, 0),
+        pn.Row(
+            pn.pane.HTML(
+                f"""<div class="redesign-nav-title">{'Navigation' if lang == 'EN' else 'Navegación'}</div>""",
+                margin=0,
+                sizing_mode="stretch_width",
+            ),
+            nav_collapse_button,
+            css_classes=["redesign-sidebar-header"],
+            sizing_mode="stretch_width",
         )
     ]
-    for group, views in NAV_GROUPS.items():
+    for index, (group, views) in enumerate(NAV_GROUPS.items()):
         title = group if lang == "EN" else (
-            "Comparacion y momentum" if group == "Comparison and Momentum" else "Contexto de encuestados"
+            "Comparación y momentum" if group == "Comparison and Momentum" else "Contexto de encuestados"
         )
-        sections.append(base._filter_markdown(f"#### {title}", theme=theme, margin=(8, 0, 4, 0)))
+        if index:
+            sections.append(pn.pane.HTML('<div class="redesign-nav-rule"></div>', margin=0, height=12))
+        sections.append(
+            pn.pane.HTML(
+                f"""<div class="redesign-nav-section">{title}</div>""",
+                margin=(0, 0, 0, 0),
+                sizing_mode="stretch_width",
+            )
+        )
         sections.extend(_nav_button(view, lang) for view in views)
 
     return pn.Column(
@@ -520,6 +607,42 @@ def navigation(selected: str, lang: str) -> pn.Column:
         css_classes=["redesign-sidebar"],
         width=260,
         styles={"color": theme["text"]},
+    )
+
+
+@pn.depends(nav_panel_open.param.value, active_view.param.value, base.language_selector.param.value)
+def navigation_shell(is_open: bool, selected: str, lang: str):
+    theme = base._theme()
+    if is_open:
+        return pn.Column(
+            navigation,
+            nav_panel_open,
+            css_classes=["redesign-sidebar-shell"],
+            width=260,
+            styles={"color": theme["text"]},
+        )
+
+    label = "Open navigation" if lang == "EN" else "Abrir navegación"
+    nav_expand_button.name = ">"
+    return pn.Column(
+        pn.Column(
+            nav_expand_button,
+            pn.pane.HTML(
+                f"""
+                <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:{theme['muted']};margin-top:10px;">
+                  {label}
+                </div>
+                """,
+                height=128,
+                width=28,
+                margin=(4, 0, 0, 0),
+            ),
+            css_classes=["redesign-sidebar-rail"],
+            width=52,
+        ),
+        nav_panel_open,
+        css_classes=["redesign-sidebar-shell"],
+        width=52,
     )
 
 
@@ -777,7 +900,7 @@ def create_redesign_dashboard() -> pn.Column:
         fixed_header_spacer(),
         pn.panel(redesign_kpis, sizing_mode="stretch_width"),
         pn.Row(
-            navigation,
+            navigation_shell,
             content,
             sizing_mode="stretch_width",
             styles={"gap": "16px"},
