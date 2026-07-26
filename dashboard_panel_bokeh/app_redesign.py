@@ -23,7 +23,7 @@ country_count_slider = pn.widgets.IntSlider(
     sizing_mode="stretch_width",
 )
 age_select_all_button = pn.widgets.Button(name="Check All", width=92)
-global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112)
+global_reset_button = pn.widgets.Button(name="Reset filters", button_type="primary", width=112, height=42)
 AGE_CHIP_LABELS = {
     "Under 18 years old": "<18",
     "18-24 years old": "18-24",
@@ -149,6 +149,23 @@ def _update_selector_placeholders(lang: str | None = None) -> None:
     )
 
 
+def _available_country_count(selected_ages, selected_remote) -> int:
+    filter_key = _redesign_filter_key(selected_ages, selected_remote)
+    available_countries = base._cached_country_map_distribution(filter_key, None)
+    return max(len(available_countries), 1)
+
+
+def _restore_country_slider_to_available_max(selected_ages=None, selected_remote=None) -> None:
+    available_count = _available_country_count(
+        redesign_age_selector.value if selected_ages is None else selected_ages,
+        redesign_remote_selector.value if selected_remote is None else selected_remote,
+    )
+    if country_count_slider.end != available_count:
+        country_count_slider.end = available_count
+    if country_count_slider.value != available_count:
+        country_count_slider.value = available_count
+
+
 def _redesign_age_changed(event) -> None:
     if _syncing_redesign_filters:
         return
@@ -157,6 +174,7 @@ def _redesign_age_changed(event) -> None:
         base._set_age_values(selected)
     else:
         base._set_age_values(base.AGE_ORDER)
+    _restore_country_slider_to_available_max(selected_ages=selected)
     _update_selector_placeholders()
 
 
@@ -168,6 +186,7 @@ def _redesign_remote_changed(event) -> None:
         base._set_remote_values(selected)
     else:
         base._set_remote_values(base.REMOTE_OPTIONS)
+    _restore_country_slider_to_available_max(selected_remote=selected)
     _update_selector_placeholders()
 
 
@@ -227,10 +246,20 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
             text-transform: uppercase;
           }}
           .redesign-filter-label {{
-            color: {theme['muted']};
-            font-size: 13px;
-            font-weight: 700;
+            color: {theme['text']};
+            display: inline-flex;
+            align-items: center;
+            height: 42px;
+            font-size: 15px;
+            font-weight: 750;
+            line-height: 42px;
             white-space: nowrap;
+          }}
+          .redesign-filter-control-row {{
+            align-items: flex-start;
+          }}
+          .redesign-filter-control-group {{
+            align-items: flex-start;
           }}
           .redesign-filter-panel .bk-input,
           .redesign-filter-panel input,
@@ -241,7 +270,8 @@ def _redesign_css(theme: dict) -> pn.pane.HTML:
           .redesign-filter-panel .choices__inner {{
             background: #ffffff !important;
             border-color: {theme['border']} !important;
-            min-height: 38px !important;
+            min-height: 42px !important;
+            font-size: 14px !important;
           }}
           .redesign-filter-panel .choices__list--multiple {{
             overflow: visible !important;
@@ -371,6 +401,20 @@ def header(lang: str) -> pn.Column:
     )
 
 
+def _filter_label(text: str, width: int) -> pn.pane.HTML:
+    theme = base._theme()
+    return pn.pane.HTML(
+        f"""
+        <div class="redesign-filter-label" style="height:42px;line-height:42px;font-size:15px;font-weight:750;color:{theme['text']};">
+          {text}
+        </div>
+        """,
+        width=width,
+        height=42,
+        margin=(0, 8, 0, 0),
+    )
+
+
 @pn.depends(base.language_selector.param.value)
 def filter_bar(lang: str) -> pn.Column:
     global_reset_button.name = base._text("reset_filters", lang)
@@ -403,21 +447,24 @@ def filter_bar(lang: str) -> pn.Column:
             ),
             pn.Row(
                 pn.Row(
-                    pn.pane.HTML(f'<span class="redesign-filter-label">{age_label}</span>', width=56),
+                    _filter_label(age_label, 58),
                     redesign_age_selector,
-                    align="center",
+                    align="start",
                     margin=(0, 24, 0, 0),
+                    css_classes=["redesign-filter-control-group"],
                 ),
                 pn.Row(
-                    pn.pane.HTML(f'<span class="redesign-filter-label">{workstyle_label}</span>', width=82),
+                    _filter_label(workstyle_label, 92),
                     redesign_remote_selector,
-                    align="center",
+                    align="start",
                     margin=(0, 24, 0, 0),
+                    css_classes=["redesign-filter-control-group"],
                 ),
                 global_reset_button,
                 pn.Spacer(sizing_mode="stretch_width"),
                 sizing_mode="stretch_width",
-                align="center",
+                align="start",
+                css_classes=["redesign-filter-control-row"],
             ),
             css_classes=["redesign-filter-panel"],
             sizing_mode="stretch_width",
@@ -641,7 +688,6 @@ def redesign_compensation_experience(selected_ages, selected_remote, lang):
 def redesign_country_distribution(selected_ages, selected_remote, country_count, lang):
     theme = base._theme()
     filter_key = _redesign_filter_key(selected_ages, selected_remote)
-    nomadic_context = base._cached_filtered_df(*filter_key)
     available_countries = base._cached_country_map_distribution(filter_key, None)
     available_count = max(len(available_countries), 1)
     if country_count_slider.end != available_count:
@@ -651,8 +697,8 @@ def redesign_country_distribution(selected_ages, selected_remote, country_count,
         country_count = available_count
     selected_count = min(int(country_count), available_count)
     map_data = base._cached_country_map_distribution(filter_key, selected_count)
-    nomadic_count = int((nomadic_context["Country"] == "Nomadic").sum())
-    nomadic_share = nomadic_count / max(len(nomadic_context), 1) * 100
+    nomadic_count = int((base.BASE_DF["Country"] == "Nomadic").sum())
+    nomadic_share = nomadic_count / max(len(base.BASE_DF), 1) * 100
     nomadic_share_label = "<0.1%" if 0 < nomadic_share < 0.1 else f"{nomadic_share:.1f}%"
     chart_labels = base._chart_labels(lang)
     country_count_slider.name = (
