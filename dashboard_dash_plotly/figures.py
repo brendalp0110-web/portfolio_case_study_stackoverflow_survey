@@ -32,16 +32,108 @@ WORKSTYLE_COLORS = {
     "Hybrid": "#7a8f5a",
     "In-person": "#c66b4e",
 }
-def education_legend_label(level: str) -> str:
+
+FIGURE_TEXT = {
+    "EN": {
+        "respondent_count": "Respondent count",
+        "share_of_respondents": "Share of respondents",
+        "current": "Current",
+        "future": "Future",
+        "delta": "Delta",
+        "age_group": "Age group",
+        "share_within_age": "Share within age group",
+        "share_within_age_axis": "Share within age group (%)",
+        "years_experience": "Years of experience",
+        "annual_compensation": "Annual compensation (USD)",
+        "median": "Median",
+        "mean": "Mean",
+        "whisker_range": "Whisker range",
+        "records": "Records",
+        "share": "Share",
+        "share_pct": "Share %",
+        "respondents": "Respondents",
+        "education_labels": {
+            "bachelor": "Bachelor's",
+            "master": "Master's",
+            "some_college": "Some college",
+            "secondary": "Secondary",
+            "other": "Other",
+        },
+    },
+    "ES": {
+        "respondent_count": "Conteo de encuestados",
+        "share_of_respondents": "Porcentaje de encuestados",
+        "current": "Actual",
+        "future": "Futuro",
+        "delta": "Diferencia",
+        "age_group": "Grupo de edad",
+        "share_within_age": "Porcentaje dentro del grupo de edad",
+        "share_within_age_axis": "Porcentaje dentro del grupo de edad (%)",
+        "years_experience": "Años de experiencia",
+        "annual_compensation": "Compensación anual (USD)",
+        "median": "Mediana",
+        "mean": "Media",
+        "whisker_range": "Rango de bigotes",
+        "records": "Registros",
+        "share": "Porcentaje",
+        "share_pct": "Porcentaje",
+        "respondents": "Encuestados",
+        "education_labels": {
+            "bachelor": "Licenciatura",
+            "master": "Maestría",
+            "some_college": "Estudios universitarios parciales",
+            "secondary": "Secundaria",
+            "other": "Otro",
+        },
+    },
+}
+
+
+def ft(lang: str | None, key: str):
+    return FIGURE_TEXT.get(lang, FIGURE_TEXT["EN"])[key]
+
+
+def age_short_labels(lang: str | None) -> dict[str, str]:
+    labels = data.AGE_SHORT_LABELS.copy()
+    if lang == "ES":
+        labels["Prefer not to say"] = "No declarado"
+    return labels
+
+
+def age_long_label(value: str, lang: str | None) -> str:
+    if lang != "ES":
+        return value
+    return {
+        "Under 18 years old": "Menos de 18 años",
+        "18-24 years old": "18-24 años",
+        "25-34 years old": "25-34 años",
+        "35-44 years old": "35-44 años",
+        "45-54 years old": "45-54 años",
+        "55-64 years old": "55-64 años",
+        "65 years or older": "65 años o más",
+        "Prefer not to say": "No declarado",
+    }.get(value, value)
+
+
+def experience_label(value: str, lang: str | None) -> str:
+    if lang != "ES":
+        return value
+    return value.replace(" years", " años")
+
+
+def education_legend_label(level: str, lang: str | None = "EN") -> str:
     lower = level.lower()
+    labels = ft(lang, "education_labels")
     if "bachelor" in lower:
-        return "Bachelor's"
+        return labels["bachelor"]
     if "master" in lower:
-        return "Master's"
+        return labels["master"]
     if "some college" in lower:
-        return "Some college"
+        return labels["some_college"]
     if "secondary" in lower:
-        return "Secondary"
+        return labels["secondary"]
+    if lower == "other":
+        return labels["other"]
     return level.replace("/university study", " study")
 
 
@@ -74,7 +166,7 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
     return fig
 
 
-def horizontal_bar(df, label_col: str, title_color: str) -> go.Figure:
+def horizontal_bar(df, label_col: str, title_color: str, lang: str | None = "EN") -> go.Figure:
     chart = df.sort_values("count", ascending=True)
     fig = go.Figure(
         go.Bar(
@@ -86,16 +178,16 @@ def horizontal_bar(df, label_col: str, title_color: str) -> go.Figure:
             textposition="outside",
             cliponaxis=False,
             customdata=chart[["share_pct"]],
-            hovertemplate="<b>%{y}</b><br>Share of respondents: %{customdata[0]:.1f}%<extra></extra>",
+            hovertemplate=f"<b>%{{y}}</b><br>{ft(lang, 'share_of_respondents')}: %{{customdata[0]:.1f}}%<extra></extra>",
             width=0.54,
         )
     )
-    fig.update_xaxes(title_text="Respondent count")
+    fig.update_xaxes(title_text=ft(lang, "respondent_count"))
     fig.update_yaxes(title_text="")
     return apply_theme(fig, height=max(330, 29 * len(chart) + 86))
 
 
-def dumbbell(df, label_col: str) -> go.Figure:
+def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
     chart = df.sort_values("score", ascending=True)
     fig = go.Figure()
     for _, row in chart.iterrows():
@@ -114,10 +206,14 @@ def dumbbell(df, label_col: str) -> go.Figure:
             x=chart["count_current"],
             y=chart[label_col],
             mode="markers",
-            name="Current",
+            name=ft(lang, "current"),
             marker={"color": COLORS["primary"], "size": 9, "line": {"color": "#ffffff", "width": 1}},
             customdata=chart[["count_future", "delta"]],
-            hovertemplate="<b>%{y}</b><br>Current: %{x:,.0f}<br>Future: %{customdata[0]:,.0f}<br>Delta: %{customdata[1]:+,.0f}<extra></extra>",
+            hovertemplate=(
+                f"<b>%{{y}}</b><br>{ft(lang, 'current')}: %{{x:,.0f}}<br>"
+                f"{ft(lang, 'future')}: %{{customdata[0]:,.0f}}<br>"
+                f"{ft(lang, 'delta')}: %{{customdata[1]:+,.0f}}<extra></extra>"
+            ),
         )
     )
     fig.add_trace(
@@ -125,20 +221,26 @@ def dumbbell(df, label_col: str) -> go.Figure:
             x=chart["count_future"],
             y=chart[label_col],
             mode="markers",
-            name="Future",
+            name=ft(lang, "future"),
             marker={"color": COLORS["accent"], "size": 9, "line": {"color": "#ffffff", "width": 1}},
             customdata=chart[["count_current", "delta"]],
-            hovertemplate="<b>%{y}</b><br>Future: %{x:,.0f}<br>Current: %{customdata[0]:,.0f}<br>Delta: %{customdata[1]:+,.0f}<extra></extra>",
+            hovertemplate=(
+                f"<b>%{{y}}</b><br>{ft(lang, 'future')}: %{{x:,.0f}}<br>"
+                f"{ft(lang, 'current')}: %{{customdata[0]:,.0f}}<br>"
+                f"{ft(lang, 'delta')}: %{{customdata[1]:+,.0f}}<extra></extra>"
+            ),
         )
     )
-    fig.update_xaxes(title_text="Respondent count")
+    fig.update_xaxes(title_text=ft(lang, "respondent_count"))
     fig.update_yaxes(title_text="")
     fig.update_layout(legend={"orientation": "h", "x": 1, "xanchor": "right", "y": 1.08, "yanchor": "bottom"})
     return apply_theme(fig, height=max(360, 30 * len(chart) + 96))
 
 
-def age_bar(df) -> go.Figure:
-    chart = df.iloc[::-1]
+def age_bar(df, lang: str | None = "EN") -> go.Figure:
+    chart = df.iloc[::-1].copy()
+    chart["age_short"] = chart["age"].map(age_short_labels(lang))
+    chart["age_hover"] = chart["age"].map(lambda value: age_long_label(value, lang))
     fig = go.Figure(
         go.Bar(
             x=chart["count"],
@@ -148,17 +250,19 @@ def age_bar(df) -> go.Figure:
             text=chart["count"].map(lambda value: f"{value:,.0f}"),
             textposition="outside",
             cliponaxis=False,
-            customdata=chart[["age", "share_pct"]],
-            hovertemplate="<b>%{customdata[0]}</b><br>Share of respondents: %{customdata[1]:.1f}%<extra></extra>",
+            customdata=chart[["age_hover", "share_pct"]],
+            hovertemplate=f"<b>%{{customdata[0]}}</b><br>{ft(lang, 'share_of_respondents')}: %{{customdata[1]:.1f}}%<extra></extra>",
             width=0.58,
         )
     )
-    fig.update_xaxes(title_text="Respondent count")
-    fig.update_yaxes(title_text="Age group")
+    fig.update_xaxes(title_text=ft(lang, "respondent_count"))
+    fig.update_yaxes(title_text=ft(lang, "age_group"))
     return apply_theme(fig, height=410)
 
 
-def education_stack(df) -> go.Figure:
+def education_stack(df, lang: str | None = "EN") -> go.Figure:
+    df = df.copy()
+    df["age_short"] = df["age"].map(age_short_labels(lang))
     fig = go.Figure()
     levels = [column for column in df.columns if column not in ["age", "age_short"]]
     for index, level in enumerate(levels):
@@ -166,13 +270,17 @@ def education_stack(df) -> go.Figure:
             go.Bar(
                 x=df["age_short"],
                 y=df[level],
-                name=education_legend_label(level),
+                name=education_legend_label(level, lang),
                 marker={"color": EDUCATION_COLORS[index % len(EDUCATION_COLORS)]},
-                hovertemplate=f"<b>{level}</b><br>Age group: %{{x}}<br>Share within age group: %{{y:.1f}}%<extra></extra>",
+                hovertemplate=(
+                    f"<b>{education_legend_label(level, lang)}</b><br>"
+                    f"{ft(lang, 'age_group')}: %{{x}}<br>"
+                    f"{ft(lang, 'share_within_age')}: %{{y:.1f}}%<extra></extra>"
+                ),
             )
         )
-    fig.update_xaxes(title_text="Age group")
-    fig.update_yaxes(title_text="Share within age group (%)", range=[0, 100])
+    fig.update_xaxes(title_text=ft(lang, "age_group"))
+    fig.update_yaxes(title_text=ft(lang, "share_within_age_axis"), range=[0, 100])
     fig = apply_theme(fig, height=430)
     fig.update_layout(
         barmode="stack",
@@ -190,8 +298,10 @@ def education_stack(df) -> go.Figure:
     return fig
 
 
-def compensation_box(summary_df, workstyle: str, y_max: float) -> go.Figure:
-    chart = summary_df[summary_df["workstyle"] == workstyle]
+def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None = "EN") -> go.Figure:
+    chart = summary_df[summary_df["workstyle"] == workstyle].copy()
+    if not chart.empty:
+        chart["experience_hover"] = chart["experience_band"].map(lambda value: experience_label(str(value), lang))
     fig = go.Figure()
     if not chart.empty:
         color = WORKSTYLE_COLORS.get(workstyle, COLORS["primary"])
@@ -207,16 +317,16 @@ def compensation_box(summary_df, workstyle: str, y_max: float) -> go.Figure:
                 marker={"color": color},
                 line={"color": color, "width": 2},
                 fillcolor=color,
-                name="IQR and median",
+                name="IQR",
                 opacity=0.72,
                 showlegend=False,
-                customdata=chart[["experience_band", "q2", "mean", "count", "lower", "upper"]],
+                customdata=chart[["experience_hover", "q2", "mean", "count", "lower", "upper"]],
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>"
-                    "Median: %{customdata[1]:$,.0f}<br>"
-                    "Mean: %{customdata[2]:$,.0f}<br>"
-                    "Whisker range: %{customdata[4]:$,.0f} - %{customdata[5]:$,.0f}<br>"
-                    "Records: %{customdata[3]:,.0f}<extra></extra>"
+                    f"{ft(lang, 'median')}: %{{customdata[1]:$,.0f}}<br>"
+                    f"{ft(lang, 'mean')}: %{{customdata[2]:$,.0f}}<br>"
+                    f"{ft(lang, 'whisker_range')}: %{{customdata[4]:$,.0f}} - %{{customdata[5]:$,.0f}}<br>"
+                    f"{ft(lang, 'records')}: %{{customdata[3]:,.0f}}<extra></extra>"
                 ),
             )
         )
@@ -225,24 +335,24 @@ def compensation_box(summary_df, workstyle: str, y_max: float) -> go.Figure:
                 x=chart["experience_short"],
                 y=chart["mean"],
                 mode="markers",
-                name="Mean",
+                name=ft(lang, "mean"),
                 marker={
                     "symbol": "diamond",
                     "size": 8,
                     "color": "#ffffff",
                     "line": {"color": color, "width": 2},
                 },
-                customdata=chart[["experience_band", "mean"]],
-                hovertemplate="<b>%{customdata[0]}</b><br>Mean: %{customdata[1]:$,.0f}<extra></extra>",
+                customdata=chart[["experience_hover", "mean"]],
+                hovertemplate=f"<b>%{{customdata[0]}}</b><br>{ft(lang, 'mean')}: %{{customdata[1]:$,.0f}}<extra></extra>",
             )
         )
-    fig.update_xaxes(title_text="Years of experience")
-    fig.update_yaxes(title_text="Annual compensation (USD)", range=[0, max(y_max, 1)])
+    fig.update_xaxes(title_text=ft(lang, "years_experience"))
+    fig.update_yaxes(title_text=ft(lang, "annual_compensation"), range=[0, max(y_max, 1)])
     fig.update_layout(legend={"orientation": "h", "x": 1, "xanchor": "right", "y": 1.08, "yanchor": "bottom"})
     return apply_theme(fig, height=420)
 
 
-def country_map(df) -> go.Figure:
+def country_map(df, lang: str | None = "EN") -> go.Figure:
     chart = df.copy()
     share = chart["share_pct"].astype(float)
     max_share = max(float(share.max()), 1.0) if not share.empty else 1.0
@@ -274,12 +384,15 @@ def country_map(df) -> go.Figure:
                 ],
                 "line": {"color": "#111827", "width": 1},
                 "colorbar": {
-                    "title": "Share %",
+                    "title": ft(lang, "share_pct"),
                     "tickvals": [np.sqrt(value) for value in ticks],
                     "ticktext": [f"{value:g}" for value in ticks],
                 },
             },
-            hovertemplate="<b>%{text}</b><br>Share: %{customdata[0]:.1f}%<br>Respondents: %{customdata[1]:,.0f}<extra></extra>",
+            hovertemplate=(
+                f"<b>%{{text}}</b><br>{ft(lang, 'share')}: %{{customdata[0]:.1f}}%<br>"
+                f"{ft(lang, 'respondents')}: %{{customdata[1]:,.0f}}<extra></extra>"
+            ),
         )
     )
     fig.update_geos(
