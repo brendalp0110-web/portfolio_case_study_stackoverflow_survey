@@ -541,7 +541,6 @@ def layout() -> html.Div:
                                                 value=160,
                                                 step=1,
                                                 marks=country_slider_marks(160),
-                                                tooltip={"placement": "bottom", "always_visible": True},
                                             ),
                                             html.Div(id="country-note", className="subtle-note"),
                                         ],
