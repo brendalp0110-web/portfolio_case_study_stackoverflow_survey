@@ -1,13 +1,15 @@
 :root {
-  --page: #f3f4f1;
-  --surface: #ffffff;
-  --surface-strong: #e9ece6;
-  --header: #173851;
-  --text: #1f2933;
-  --muted: #52637a;
-  --border: #d7ddd6;
-  --primary: #087db7;
-  --teal: #2f7779;
+  --page: #eef1ed;
+  --surface: #fbfcfa;
+  --surface-strong: #e5ebe3;
+  --header: #123247;
+  --text: #17232f;
+  --muted: #5b6978;
+  --border: #d2dbd0;
+  --primary: #0b7f95;
+  --teal: #2d7a78;
+  --accent: #d8894f;
+  --sage: #819766;
   --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --text-xs: 12px;
   --text-sm: 13px;
@@ -57,8 +59,8 @@ body {
   position: relative;
   z-index: 1000;
   background: var(--page);
-  border-bottom: 1px solid rgba(31, 41, 51, 0.08);
-  box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
+  border-bottom: 1px solid rgba(23, 35, 47, 0.08);
+  box-shadow: 0 10px 24px rgba(23, 35, 47, 0.08);
 }
 
 .brand {
@@ -117,7 +119,7 @@ body {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(31, 41, 51, 0.48);
+  background: rgba(23, 35, 47, 0.48);
   backdrop-filter: blur(6px);
 }
 
@@ -132,7 +134,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  box-shadow: 0 26px 70px rgba(31, 41, 51, 0.28);
+  box-shadow: 0 26px 70px rgba(23, 35, 47, 0.28);
 }
 
 .about-modal-header {
@@ -315,10 +317,10 @@ body {
   max-height: none;
   overflow: visible;
   padding: 14px 12px;
-  background: linear-gradient(180deg, #e2e9e3 0%, #d9e2da 100%);
-  border: 1px solid rgba(31, 41, 51, 0.08);
+  background: linear-gradient(180deg, #e0e8df 0%, #d7e1d7 100%);
+  border: 1px solid rgba(23, 35, 47, 0.08);
   border-radius: 16px;
-  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.11);
+  box-shadow: 0 14px 34px rgba(23, 35, 47, 0.11);
   z-index: 20;
 }
 
@@ -333,7 +335,7 @@ body {
   gap: 8px;
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(31, 41, 51, 0.08);
+  border-bottom: 1px solid rgba(23, 35, 47, 0.08);
 }
 
 .side-nav-title {
@@ -363,8 +365,8 @@ body {
   place-items: center;
   background: rgba(255, 255, 255, 0.82);
   color: var(--header);
-  border-color: rgba(31, 41, 51, 0.1);
-  box-shadow: 0 6px 16px rgba(31, 41, 51, 0.12);
+  border-color: rgba(23, 35, 47, 0.1);
+  box-shadow: 0 6px 16px rgba(23, 35, 47, 0.12);
   transition: background 140ms ease, color 140ms ease, transform 140ms ease;
 }
 
@@ -380,15 +382,15 @@ body {
   align-self: start;
   border-radius: 13px;
   border-color: rgba(255, 255, 255, 0.55);
-  background: linear-gradient(180deg, var(--primary), #096f9d);
+  background: linear-gradient(180deg, var(--primary), #0b6f82);
   color: #ffffff;
-  box-shadow: 0 12px 28px rgba(31, 41, 51, 0.18);
+  box-shadow: 0 12px 28px rgba(23, 35, 47, 0.18);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 
 .nav-rail:hover {
   transform: translateX(1px);
-  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.22);
+  box-shadow: 0 14px 34px rgba(23, 35, 47, 0.22);
 }
 
 .nav-rail.hidden {
@@ -430,7 +432,7 @@ body {
   background: #ffffff;
   color: #ffffff;
   color: var(--header);
-  box-shadow: 0 8px 18px rgba(31, 41, 51, 0.12);
+  box-shadow: 0 8px 18px rgba(23, 35, 47, 0.12);
   transform: none;
 }
 
@@ -471,7 +473,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(31, 41, 51, 0.07);
+  box-shadow: 0 10px 24px rgba(23, 35, 47, 0.07);
   min-width: 0;
 }
 

@@ -7,30 +7,30 @@ from dashboard_dash_plotly import data
 
 
 COLORS = {
-    "page": "#f3f4f1",
-    "surface": "#ffffff",
-    "text": "#1f2933",
-    "muted": "#52637a",
-    "border": "#d7ddd6",
-    "primary": "#2f7779",
-    "accent": "#d99058",
-    "green": "#7a8f5a",
-    "red": "#c66b4e",
-    "purple": "#8b6f9e",
-    "grid": "#edf1ec",
+    "page": "#eef1ed",
+    "surface": "#fbfcfa",
+    "text": "#17232f",
+    "muted": "#5b6978",
+    "border": "#d2dbd0",
+    "primary": "#2d7a78",
+    "accent": "#d8894f",
+    "green": "#819766",
+    "red": "#c56f55",
+    "purple": "#8d78a4",
+    "grid": "#eef3ed",
 }
 FONT_FAMILY = "Segoe UI, Helvetica Neue, Arial, sans-serif"
 TECH_COLORS = {
-    "Languages": "#2f7779",
-    "Databases": "#d99058",
-    "Platforms": "#7a8f5a",
-    "Frameworks": "#8b6f9e",
+    "Languages": "#2d7a78",
+    "Databases": "#d8894f",
+    "Platforms": "#819766",
+    "Frameworks": "#8d78a4",
 }
-EDUCATION_COLORS = ["#2f7779", "#d99058", "#7a8f5a", "#8b6f9e", "#c66b4e"]
+EDUCATION_COLORS = ["#2d7a78", "#d8894f", "#819766", "#8d78a4", "#c56f55"]
 WORKSTYLE_COLORS = {
-    "Remote": "#2f7779",
-    "Hybrid": "#7a8f5a",
-    "In-person": "#c66b4e",
+    "Remote": "#2d7a78",
+    "Hybrid": "#819766",
+    "In-person": "#c56f55",
 }
 
 FIGURE_TEXT = {
@@ -158,7 +158,7 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         font={"family": FONT_FAMILY, "color": COLORS["text"], "size": 12},
         margin={"l": 8, "r": 34, "t": 8, "b": 38},
         hoverlabel={
-            "bgcolor": "#ffffff",
+            "bgcolor": "#fbfcfa",
             "bordercolor": "#c7d0c8",
             "font": {"family": FONT_FAMILY, "color": "#111827", "size": 13},
             "align": "left",
@@ -228,7 +228,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
                 x=[row["count_current"], row["count_future"]],
                 y=[row[label_col], row[label_col]],
                 mode="lines",
-                line={"color": "#c4ccc5", "width": 2.4},
+                line={"color": "#c7d0c8", "width": 2.4},
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -272,7 +272,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
             "xanchor": "right",
             "y": 1.1,
             "yanchor": "bottom",
-            "bgcolor": "rgba(255,255,255,0.86)",
+            "bgcolor": "rgba(251,252,250,0.9)",
             "bordercolor": COLORS["border"],
             "borderwidth": 1,
             "font": {"size": 11},
@@ -427,12 +427,12 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
                 "cmin": 0,
                 "cmax": np.sqrt(tick_upper),
                 "colorscale": [
-                    [0.00, "#f4dfb8"],
-                    [0.08, "#e4bd7a"],
-                    [0.20, "#d99058"],
-                    [0.45, "#9a7b66"],
-                    [0.70, "#5f7f75"],
-                    [1.00, "#1f666d"],
+                    [0.00, "#f2ddb1"],
+                    [0.08, "#e5bd78"],
+                    [0.20, "#d8894f"],
+                    [0.45, "#9a7d67"],
+                    [0.70, "#5f8174"],
+                    [1.00, "#21696f"],
                 ],
                 "line": {"color": "#111827", "width": 1},
                 "colorbar": {
@@ -450,11 +450,11 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
     fig.update_geos(
         projection_type="natural earth",
         showland=True,
-        landcolor="#e2e7e5",
+        landcolor="#e1e7e4",
         showcountries=True,
         countrycolor="#ffffff",
         showocean=True,
-        oceancolor="#f5f7f5",
+        oceancolor="#f6f8f6",
         showframe=False,
         lataxis_showgrid=False,
         lonaxis_showgrid=False,
