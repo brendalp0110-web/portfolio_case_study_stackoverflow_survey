@@ -53,20 +53,20 @@ I18N = {
         "about_close": "Close",
         "about_sections": [
             (
-                "Purpose",
-                "This dashboard explores developer technology momentum, respondent context, and compensation signals from a curated Stack Overflow survey dataset.",
+                "Dashboard purpose",
+                "This portfolio project analyzes developer technology adoption, future interest, respondent context, and compensation patterns to turn a large public survey into an explorable product-style dashboard.",
             ),
             (
-                "Data",
-                "The app uses the cleaned and reduced survey dataset prepared in this portfolio project. Geography is enriched with local country centroid coordinates for the map.",
+                "Dataset origin",
+                "The analysis uses a curated subset of the public Stack Overflow Developer Survey 2024 dataset. Stack Overflow reports 65,437 responses from 185 countries in the original survey; this project uses 18,845 records as its input. Source: https://survey.stackoverflow.co/2024/",
             ),
             (
-                "Interaction model",
-                "Age and workstyle are global filters. Technology rankings always show the top 10 items per family, while the country map has its own local country-count slider.",
+                "Dashboard scope",
+                "The dashboard uses the cleaned, normalized, and reduced survey dataset. Age and workstyle are global filters; technology rankings show the top 10 items per family; dumbbell charts compare high-visibility technologies across current use and future interest; and the map has its own country-count slider.",
             ),
             (
                 "Tools",
-                "Built with Python, Dash, Plotly, pandas, and NumPy.",
+                "Built with Python, pandas, NumPy, Jupyter notebooks, Dash, Plotly, HTML/CSS, and Git.",
             ),
         ],
         "global_filters": "Global filters",
@@ -128,20 +128,20 @@ I18N = {
         "about_close": "Cerrar",
         "about_sections": [
             (
-                "Propósito",
-                "Este dashboard explora el momentum tecnológico, el contexto de los encuestados y señales de compensación a partir de un dataset curado de la encuesta de Stack Overflow.",
+                "Propósito del dashboard",
+                "Este proyecto de portafolio analiza adopción tecnológica, interés futuro, contexto de los encuestados y patrones de compensación para convertir una encuesta pública amplia en un dashboard exploratorio con enfoque de producto.",
             ),
             (
-                "Datos",
-                "La app usa el dataset limpio y reducido preparado en este proyecto de portafolio. La geografía se enriquece con coordenadas locales de centroides por país para el mapa.",
+                "Origen del dataset",
+                "El análisis usa un subconjunto curado del dataset público Stack Overflow Developer Survey 2024. Stack Overflow reporta 65,437 respuestas de 185 países en la encuesta original; este proyecto usa 18,845 registros como entrada. Fuente: https://survey.stackoverflow.co/2024/",
             ),
             (
-                "Modelo de interacción",
-                "Edad y modalidad son filtros globales. Los rankings de tecnologías siempre muestran los 10 principales elementos por familia, mientras el mapa tiene su propio slider local de cantidad de países.",
+                "Alcance del dashboard",
+                "El dashboard usa el dataset limpio, normalizado y reducido. Edad y modalidad son filtros globales; los rankings tecnológicos muestran el Top 10 por familia; los gráficos dumbbell comparan tecnologías de alta visibilidad entre uso actual e interés futuro; y el mapa tiene su propio slider de cantidad de países.",
             ),
             (
                 "Herramientas",
-                "Construido con Python, Dash, Plotly, pandas y NumPy.",
+                "Construido con Python, pandas, NumPy, notebooks Jupyter, Dash, Plotly, HTML/CSS y Git.",
             ),
         ],
         "global_filters": "Filtros globales",
