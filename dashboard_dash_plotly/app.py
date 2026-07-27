@@ -8,7 +8,7 @@ from dashboard_dash_plotly import data, figures
 FULL_DF = data.load_dataset()
 TECH_TOP_N = 12
 
-app = Dash(__name__, suppress_callback_exceptions=True, title="Stack Overflow Dashboard Mockup")
+app = Dash(__name__, suppress_callback_exceptions=True, title="Stack Overflow Developer Survey Dashboard")
 server = app.server
 
 TECH_FAMILIES = list(data.TECH_FAMILIES)
@@ -46,6 +46,26 @@ I18N = {
         "dashboard_title": "Developer Technology Trends Dashboard",
         "about": "About",
         "about_title": "Dash and Plotly dashboard using the cleaned Stack Overflow survey dataset.",
+        "about_modal_title": "About this dashboard",
+        "about_close": "Close",
+        "about_sections": [
+            (
+                "Purpose",
+                "This dashboard explores developer technology momentum, respondent context, and compensation signals from a curated Stack Overflow survey dataset.",
+            ),
+            (
+                "Data",
+                "The app uses the cleaned and reduced survey dataset prepared in this portfolio project. Geography is enriched with local country centroid coordinates for the map.",
+            ),
+            (
+                "Interaction model",
+                "Age and workstyle are global filters. Technology rankings always show the top 12 items per family, while the country map has its own local country-count slider.",
+            ),
+            (
+                "Tools",
+                "Built with Python, Dash, Plotly, pandas, and NumPy.",
+            ),
+        ],
         "global_filters": "Global filters",
         "filter_help": "Age and workstyle define the active respondent view.",
         "age": "Age",
@@ -101,6 +121,26 @@ I18N = {
         "dashboard_title": "Dashboard de Tendencias Tecnológicas",
         "about": "Acerca de",
         "about_title": "Dashboard creado con Dash y Plotly a partir del dataset limpio de la encuesta de Stack Overflow.",
+        "about_modal_title": "Acerca de este dashboard",
+        "about_close": "Cerrar",
+        "about_sections": [
+            (
+                "Propósito",
+                "Este dashboard explora el momentum tecnológico, el contexto de los encuestados y señales de compensación a partir de un dataset curado de la encuesta de Stack Overflow.",
+            ),
+            (
+                "Datos",
+                "La app usa el dataset limpio y reducido preparado en este proyecto de portafolio. La geografía se enriquece con coordenadas locales de centroides por país para el mapa.",
+            ),
+            (
+                "Modelo de interacción",
+                "Edad y modalidad son filtros globales. Los rankings de tecnologías siempre muestran los 12 principales elementos por familia, mientras el mapa tiene su propio slider local de cantidad de países.",
+            ),
+            (
+                "Herramientas",
+                "Construido con Python, Dash, Plotly, pandas y NumPy.",
+            ),
+        ],
         "global_filters": "Filtros globales",
         "filter_help": "Edad y modalidad definen la vista activa de encuestados.",
         "age": "Edad",
@@ -198,6 +238,19 @@ def info_icon(content: str, icon_id: str | None = None) -> html.Span:
     return html.Span("i", id=icon_id, title=content, className="info-icon")
 
 
+def about_modal_body(lang: str | None) -> list[html.Div]:
+    return [
+        html.Div(
+            [
+                html.H3(title),
+                html.P(description),
+            ],
+            className="about-section",
+        )
+        for title, description in text(lang, "about_sections")
+    ]
+
+
 def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_label: str) -> html.Div:
     return html.Div(
         [
@@ -291,6 +344,25 @@ def layout() -> html.Div:
         [
             dcc.Store(id="active-view", data="languages"),
             dcc.Store(id="nav-open", data=True),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.H2("About this dashboard", id="about-modal-title"),
+                                    html.Button("Close", id="about-close", className="about-close-button", title="Close"),
+                                ],
+                                className="about-modal-header",
+                            ),
+                            html.Div(id="about-modal-body", className="about-modal-body"),
+                        ],
+                        className="about-modal-card",
+                    )
+                ],
+                id="about-modal",
+                className="about-modal hidden",
+            ),
             html.Header(
                 [
                     html.Div(
@@ -497,6 +569,10 @@ STATIC_TEXT_OUTPUTS = [
     Output("dashboard-title", "children"),
     Output("about-button", "children"),
     Output("about-button", "title"),
+    Output("about-modal-title", "children"),
+    Output("about-modal-body", "children"),
+    Output("about-close", "children"),
+    Output("about-close", "title"),
     Output("filter-title", "children"),
     Output("filter-help", "children"),
     Output("age-filter-label", "children"),
@@ -565,6 +641,10 @@ def update_static_text(lang):
         text(lang, "dashboard_title"),
         text(lang, "about"),
         text(lang, "about_title"),
+        text(lang, "about_modal_title"),
+        about_modal_body(lang),
+        text(lang, "about_close"),
+        text(lang, "about_close"),
         text(lang, "global_filters"),
         text(lang, "filter_help"),
         text(lang, "age"),
@@ -608,6 +688,22 @@ def update_static_text(lang):
         text(lang, "map_title"),
         tooltips["map"],
     )
+
+
+@app.callback(
+    Output("about-modal", "className"),
+    Input("about-button", "n_clicks"),
+    Input("about-close", "n_clicks"),
+    State("about-modal", "className"),
+    prevent_initial_call=True,
+)
+def toggle_about_modal(_open_clicks, _close_clicks, class_name):
+    triggered = callback_context.triggered_id
+    if triggered == "about-button":
+        return "about-modal"
+    if triggered == "about-close":
+        return "about-modal hidden"
+    return class_name or "about-modal hidden"
 
 
 @app.callback(
