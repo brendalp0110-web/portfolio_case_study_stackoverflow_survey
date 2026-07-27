@@ -88,6 +88,7 @@ I18N = {
         "active_filters": "Active filters",
         "shown_on_map": "Shown on map",
         "observed_records": "Observed records",
+        "dataset_average": "Dataset average",
         "top_current": "Top Current {family}",
         "top_future": "Top Future {family}",
         "momentum": "Current vs Future {family} Momentum",
@@ -163,6 +164,7 @@ I18N = {
         "active_filters": "Filtros activos",
         "shown_on_map": "Mostrados en mapa",
         "observed_records": "Registros observados",
+        "dataset_average": "Promedio del dataset",
         "top_current": "Top actual: {family}",
         "top_future": "Top futuro: {family}",
         "momentum": "Momentum actual vs futuro: {family}",
@@ -450,7 +452,7 @@ def layout() -> html.Div:
                             html.Div(
                                 [
                                     html.Div("Navigation", id="side-nav-title", className="side-nav-title"),
-                                    html.Button("<", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
+                                    html.Button("‹", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
                                 ],
                                 className="side-nav-header",
                             ),
@@ -839,7 +841,7 @@ def update_dashboard(selected_ages, selected_workstyles, country_count, lang):
         kpi_card(
             text(lang, "average_compensation"),
             f"${kpis['salary_total']:,.0f}",
-            text(lang, "observed_records"),
+            text(lang, "dataset_average"),
             f"${kpis['salary_filtered']:,.0f}",
             text(lang, "active_filters"),
         ),
