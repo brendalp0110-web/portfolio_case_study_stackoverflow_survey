@@ -64,11 +64,11 @@ body {
 }
 
 .brand {
-  margin: 8px;
-  padding: 12px 26px;
+  margin: 0;
+  padding: 13px 28px;
   background: var(--header);
   color: #ffffff;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 9px 9px;
 }
 
 .brand-title-row {
