@@ -93,6 +93,13 @@ def ft(lang: str | None, key: str):
     return FIGURE_TEXT.get(lang, FIGURE_TEXT["EN"])[key]
 
 
+def format_share_pct(value: float, decimal_separator: str = ".") -> str:
+    if 0 < value < 0.1:
+        return f"<0{decimal_separator}1%"
+    formatted = f"{value:.1f}%"
+    return formatted.replace(".", decimal_separator) if decimal_separator != "." else formatted
+
+
 def age_short_labels(lang: str | None) -> dict[str, str]:
     labels = data.AGE_SHORT_LABELS.copy()
     if lang == "ES":
@@ -356,6 +363,8 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
     chart = df.copy()
     share = chart["share_pct"].astype(float)
     max_share = max(float(share.max()), 1.0) if not share.empty else 1.0
+    decimal_separator = "," if lang == "ES" else "."
+    chart["share_label"] = share.map(lambda value: format_share_pct(value, decimal_separator))
     chart["color_value"] = np.sqrt(share.clip(lower=0))
     chart["bubble_size"] = 7 + np.sqrt(share.clip(lower=0) / max_share) * 34
     tick_step = 5
@@ -366,7 +375,7 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
             lon=chart["longitude"],
             lat=chart["latitude"],
             text=chart["country"],
-            customdata=chart[["share_pct", "count"]],
+            customdata=chart[["share_label", "count"]],
             mode="markers",
             marker={
                 "size": chart["bubble_size"],
@@ -389,7 +398,7 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
                 },
             },
             hovertemplate=(
-                f"<b>%{{text}}</b><br>{ft(lang, 'share')}: %{{customdata[0]:.1f}}%<br>"
+                f"<b>%{{text}}</b><br>{ft(lang, 'share')}: %{{customdata[0]}}<br>"
                 f"{ft(lang, 'respondents')}: %{{customdata[1]:,.0f}}<extra></extra>"
             ),
         )

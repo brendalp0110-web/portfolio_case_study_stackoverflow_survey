@@ -26,8 +26,8 @@ TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
     "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
     "momentum_tooltip": (
-        f"Compares current use and future interest for the {TECH_TOP_N} technologies with the highest presence in either list. "
-        "The selection is ranked by max(current, future), not by the largest difference."
+        f"Compares current use and future interest for the {TECH_TOP_N} technologies that appear most often in either the current or future ranking. "
+        "It prioritizes overall visibility, not the technologies with the biggest increase or decrease."
     ),
 }
 SECTION_COPY = {
@@ -197,8 +197,8 @@ I18N = {
             "current_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas en uso actual para esta familia bajo los filtros activos.",
             "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después para esta familia bajo los filtros activos.",
             "momentum_tooltip": (
-                f"Compara uso actual e interés futuro para las {TECH_TOP_N} tecnologías con mayor presencia en cualquiera de las dos listas. "
-                "La selección se ordena por max(actual, futuro), no por la mayor diferencia."
+                f"Compara uso actual e interés futuro para las {TECH_TOP_N} tecnologías que aparecen con más frecuencia en el ranking actual o futuro. "
+                "Prioriza visibilidad general, no las tecnologías con mayor subida o caída."
             ),
             "age_distribution": "Distribución de encuestados por grupo de edad.",
             "education_composition": "Composición educativa por edad, normalizada a 100%.",
