@@ -280,11 +280,6 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
     graph_config = {"displaylogo": False}
-    animation_options = {
-        "frame": {"duration": 500, "redraw": False},
-        "transition": {"duration": 650, "easing": "cubic-in-out"},
-    }
-    graph_kwargs = {"animate": True, "animation_options": animation_options} if graph_id != "country-map" else {}
     card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
     title_row = [html.H3(title, id=f"{graph_id}-title")]
     if graph_id != "country-map":
@@ -295,7 +290,7 @@ def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
                 title_row,
                 className="chart-title-row",
             ),
-            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph", **graph_kwargs),
+            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
         ],
         className=card_class,
     )

@@ -191,7 +191,6 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         },
         modebar={"orientation": "v"},
         bargap=0.28,
-        transition={"duration": 650, "easing": "cubic-in-out"},
     )
     return fig
 
@@ -328,7 +327,7 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
                 ),
             )
         )
-    fig.update_xaxes(title_text=ft(lang, "age_group"))
+    fig.update_xaxes(title_text=ft(lang, "age_group"), categoryorder="array", categoryarray=df["age_short"].tolist())
     fig.update_yaxes(title_text=ft(lang, "share_within_age_axis"), range=[0, 100])
     fig = apply_theme(fig, height=430)
     fig.update_layout(
