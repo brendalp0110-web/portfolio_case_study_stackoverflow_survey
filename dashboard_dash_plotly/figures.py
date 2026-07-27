@@ -191,6 +191,7 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         },
         modebar={"orientation": "v"},
         bargap=0.28,
+        transition={"duration": 650, "easing": "cubic-in-out"},
     )
     return fig
 

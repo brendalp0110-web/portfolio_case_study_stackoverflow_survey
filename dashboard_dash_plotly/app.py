@@ -280,6 +280,11 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
     graph_config = {"displaylogo": False}
+    animation_options = {
+        "frame": {"duration": 500, "redraw": False},
+        "transition": {"duration": 650, "easing": "cubic-in-out"},
+    }
+    graph_kwargs = {"animate": True, "animation_options": animation_options} if graph_id != "country-map" else {}
     card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
     title_row = [html.H3(title, id=f"{graph_id}-title")]
     if graph_id != "country-map":
@@ -290,7 +295,7 @@ def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
                 title_row,
                 className="chart-title-row",
             ),
-            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
+            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph", **graph_kwargs),
         ],
         className=card_class,
     )
@@ -340,13 +345,6 @@ def country_slider_marks(max_countries: int) -> dict[int, str]:
     if max_value not in values:
         values.append(max_value)
     return {value: f"{value}" for value in sorted(set(values))}
-
-
-def triggered_component_id() -> str | None:
-    try:
-        return callback_context.triggered_id
-    except Exception:
-        return None
 
 
 def layout() -> html.Div:
@@ -541,7 +539,7 @@ def layout() -> html.Div:
                                                 min=1,
                                                 max=160,
                                                 value=160,
-                                                step=None,
+                                                step=1,
                                                 marks=country_slider_marks(160),
                                                 tooltip={"placement": "bottom", "always_visible": True},
                                             ),
@@ -792,11 +790,18 @@ def reset_filters(_):
 
 
 @app.callback(
-    Output("kpi-row", "children"),
-    Output("country-slider", "value"),
     Output("country-slider", "max"),
     Output("country-slider", "marks"),
-    Output("country-note", "children"),
+    Input("age-filter", "value"),
+    Input("workstyle-filter", "value"),
+)
+def update_country_slider_bounds(selected_ages, selected_workstyles):
+    filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
+    max_countries = max(len(data.country_map_distribution(filtered, None)), 1)
+    return max_countries, country_slider_marks(max_countries)
+
+
+@app.callback(
     *[Output(f"{family.lower()}-current", "figure") for family in TECH_FAMILIES],
     *[Output(f"{family.lower()}-future", "figure") for family in TECH_FAMILIES],
     *[Output(f"{family.lower()}-momentum", "figure") for family in TECH_FAMILIES],
@@ -805,23 +810,65 @@ def reset_filters(_):
     Output("remote-compensation", "figure"),
     Output("hybrid-compensation", "figure"),
     Output("inperson-compensation", "figure"),
+    Input("age-filter", "value"),
+    Input("workstyle-filter", "value"),
+    Input("language-selector", "value"),
+)
+def update_dashboard(selected_ages, selected_workstyles, lang):
+    lang = normalize_lang(lang)
+    filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
+
+    current_figs = []
+    future_figs = []
+    momentum_figs = []
+    for family, config in data.TECH_FAMILIES.items():
+        color = figures.TECH_COLORS[family]
+        current = data.top_multiselect_counts(filtered, config["current"], TECH_TOP_N, config["label"])
+        future = data.top_multiselect_counts(filtered, config["future"], TECH_TOP_N, config["label"])
+        comparison = data.comparison_table(filtered, config["current"], config["future"], TECH_TOP_N, config["label"])
+        current_figs.append(figures.horizontal_bar(current, config["label"], color, lang))
+        future_figs.append(figures.horizontal_bar(future, config["label"], color, lang))
+        momentum_figs.append(figures.dumbbell(comparison, config["label"], lang))
+
+    compensation = data.compensation_records(filtered)
+    compensation_summary = data.compensation_box_summary(compensation)
+    compensation_y_max = float(compensation_summary["upper"].max() * 1.1) if not compensation_summary.empty else 1.0
+    age_distribution_fig = figures.age_bar(data.age_distribution(filtered), lang)
+    education_fig = figures.education_stack(data.age_education_distribution(filtered), lang)
+    remote_fig = figures.compensation_box(compensation_summary, "Remote", compensation_y_max, lang)
+    hybrid_fig = figures.compensation_box(compensation_summary, "Hybrid", compensation_y_max, lang)
+    inperson_fig = figures.compensation_box(compensation_summary, "In-person", compensation_y_max, lang)
+
+    return (
+        *current_figs,
+        *future_figs,
+        *momentum_figs,
+        age_distribution_fig,
+        education_fig,
+        remote_fig,
+        hybrid_fig,
+        inperson_fig,
+    )
+
+
+@app.callback(
+    Output("kpi-row", "children"),
+    Output("country-note", "children"),
     Output("country-map", "figure"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
     Input("country-slider", "value"),
     Input("language-selector", "value"),
 )
-def update_dashboard(selected_ages, selected_workstyles, country_count, lang):
+def update_map_context(selected_ages, selected_workstyles, country_count, lang):
     lang = normalize_lang(lang)
     filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
     available_countries = data.country_map_distribution(filtered, None)
     max_countries = max(len(available_countries), 1)
-    if triggered_component_id() in {"age-filter", "workstyle-filter"}:
-        countries_to_show = max_countries
-    else:
-        countries_to_show = min(int(country_count or max_countries), max_countries)
+    countries_to_show = min(max(int(country_count or max_countries), 1), max_countries)
     country_df = data.country_map_distribution(filtered, countries_to_show)
     kpis = data.build_kpis(FULL_DF, filtered, len(country_df))
+    country_note = text(lang, "country_note").format(shown=len(country_df), available=max_countries)
 
     kpi_cards = [
         kpi_card(
@@ -847,39 +894,7 @@ def update_dashboard(selected_ages, selected_workstyles, country_count, lang):
         ),
     ]
 
-    current_figs = []
-    future_figs = []
-    momentum_figs = []
-    for family, config in data.TECH_FAMILIES.items():
-        color = figures.TECH_COLORS[family]
-        current = data.top_multiselect_counts(filtered, config["current"], TECH_TOP_N, config["label"])
-        future = data.top_multiselect_counts(filtered, config["future"], TECH_TOP_N, config["label"])
-        comparison = data.comparison_table(filtered, config["current"], config["future"], TECH_TOP_N, config["label"])
-        current_figs.append(figures.horizontal_bar(current, config["label"], color, lang))
-        future_figs.append(figures.horizontal_bar(future, config["label"], color, lang))
-        momentum_figs.append(figures.dumbbell(comparison, config["label"], lang))
-
-    compensation = data.compensation_records(filtered)
-    compensation_summary = data.compensation_box_summary(compensation)
-    compensation_y_max = float(compensation_summary["upper"].max() * 1.1) if not compensation_summary.empty else 1.0
-    country_note = text(lang, "country_note").format(shown=len(country_df), available=max_countries)
-
-    return (
-        kpi_cards,
-        countries_to_show,
-        max_countries,
-        country_slider_marks(max_countries),
-        country_note,
-        *current_figs,
-        *future_figs,
-        *momentum_figs,
-        figures.age_bar(data.age_distribution(filtered), lang),
-        figures.education_stack(data.age_education_distribution(filtered), lang),
-        figures.compensation_box(compensation_summary, "Remote", compensation_y_max, lang),
-        figures.compensation_box(compensation_summary, "Hybrid", compensation_y_max, lang),
-        figures.compensation_box(compensation_summary, "In-person", compensation_y_max, lang),
-        figures.country_map(country_df, lang),
-    )
+    return kpi_cards, country_note, figures.country_map(country_df, lang)
 
 
 if __name__ == "__main__":
