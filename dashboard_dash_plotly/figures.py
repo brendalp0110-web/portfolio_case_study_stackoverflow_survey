@@ -17,7 +17,7 @@ COLORS = {
     "green": "#7a8f5a",
     "red": "#c66b4e",
     "purple": "#8b6f9e",
-    "grid": "#e5e9e1",
+    "grid": "#edf1ec",
 }
 FONT_FAMILY = "Segoe UI, Helvetica Neue, Arial, sans-serif"
 TECH_COLORS = {
@@ -93,6 +93,12 @@ def ft(lang: str | None, key: str):
     return FIGURE_TEXT.get(lang, FIGURE_TEXT["EN"])[key]
 
 
+def hex_to_rgba(hex_color: str, alpha: float) -> str:
+    hex_color = hex_color.lstrip("#")
+    red, green, blue = (int(hex_color[index : index + 2], 16) for index in (0, 2, 4))
+    return f"rgba({red}, {green}, {blue}, {alpha})"
+
+
 def format_share_pct(value: float, decimal_separator: str = ".") -> str:
     if 0 < value < 0.1:
         return f"<0{decimal_separator}1%"
@@ -150,25 +156,41 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         paper_bgcolor=COLORS["surface"],
         plot_bgcolor=COLORS["surface"],
         font={"family": FONT_FAMILY, "color": COLORS["text"], "size": 12},
-        margin={"l": 8, "r": 28, "t": 8, "b": 38},
+        margin={"l": 8, "r": 34, "t": 8, "b": 38},
         hoverlabel={
             "bgcolor": "#ffffff",
-            "bordercolor": "#9aa6a1",
+            "bordercolor": "#c7d0c8",
             "font": {"family": FONT_FAMILY, "color": "#111827", "size": 13},
+            "align": "left",
         },
         xaxis={
             "gridcolor": COLORS["grid"],
+            "gridwidth": 0.45,
             "zeroline": False,
+            "showline": True,
+            "linecolor": COLORS["border"],
+            "linewidth": 1,
+            "ticks": "",
             "title_font": {"family": FONT_FAMILY, "size": 12, "style": "normal"},
             "tickfont": {"family": FONT_FAMILY, "size": 11},
+            "title_standoff": 10,
+            "automargin": True,
         },
         yaxis={
             "gridcolor": COLORS["grid"],
+            "gridwidth": 0.45,
             "zeroline": False,
+            "showline": True,
+            "linecolor": COLORS["border"],
+            "linewidth": 1,
+            "ticks": "",
             "title_font": {"family": FONT_FAMILY, "size": 12, "style": "normal"},
             "tickfont": {"family": FONT_FAMILY, "size": 11},
+            "title_standoff": 10,
+            "automargin": True,
         },
         modebar={"orientation": "v"},
+        bargap=0.28,
     )
     return fig
 
@@ -180,9 +202,11 @@ def horizontal_bar(df, label_col: str, title_color: str, lang: str | None = "EN"
             x=chart["count"],
             y=chart[label_col],
             orientation="h",
-            marker={"color": title_color},
+            marker={"color": title_color, "line": {"width": 0}},
+            opacity=0.96,
             text=chart["count"].map(lambda value: f"{value:,.0f}"),
             textposition="outside",
+            textfont={"color": COLORS["muted"], "size": 11, "family": FONT_FAMILY},
             cliponaxis=False,
             customdata=chart[["share_pct"]],
             hovertemplate=f"<b>%{{y}}</b><br>{ft(lang, 'share_of_respondents')}: %{{customdata[0]:.1f}}%<extra></extra>",
@@ -191,6 +215,7 @@ def horizontal_bar(df, label_col: str, title_color: str, lang: str | None = "EN"
     )
     fig.update_xaxes(title_text=ft(lang, "respondent_count"))
     fig.update_yaxes(title_text="")
+    fig.update_layout(barcornerradius=5)
     return apply_theme(fig, height=max(330, 29 * len(chart) + 86))
 
 
@@ -203,7 +228,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
                 x=[row["count_current"], row["count_future"]],
                 y=[row[label_col], row[label_col]],
                 mode="lines",
-                line={"color": "#9aa6a1", "width": 3},
+                line={"color": "#c4ccc5", "width": 2.4},
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -214,7 +239,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
             y=chart[label_col],
             mode="markers",
             name=ft(lang, "current"),
-            marker={"color": COLORS["primary"], "size": 9, "line": {"color": "#ffffff", "width": 1}},
+            marker={"color": COLORS["primary"], "size": 10, "line": {"color": "#ffffff", "width": 1.6}},
             customdata=chart[["count_future", "delta"]],
             hovertemplate=(
                 f"<b>%{{y}}</b><br>{ft(lang, 'current')}: %{{x:,.0f}}<br>"
@@ -229,7 +254,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
             y=chart[label_col],
             mode="markers",
             name=ft(lang, "future"),
-            marker={"color": COLORS["accent"], "size": 9, "line": {"color": "#ffffff", "width": 1}},
+            marker={"color": COLORS["accent"], "size": 10, "line": {"color": "#ffffff", "width": 1.6}},
             customdata=chart[["count_current", "delta"]],
             hovertemplate=(
                 f"<b>%{{y}}</b><br>{ft(lang, 'future')}: %{{x:,.0f}}<br>"
@@ -240,8 +265,20 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
     )
     fig.update_xaxes(title_text=ft(lang, "respondent_count"))
     fig.update_yaxes(title_text="")
-    fig.update_layout(legend={"orientation": "h", "x": 1, "xanchor": "right", "y": 1.08, "yanchor": "bottom"})
-    return apply_theme(fig, height=max(360, 30 * len(chart) + 96))
+    fig.update_layout(
+        legend={
+            "orientation": "h",
+            "x": 1,
+            "xanchor": "right",
+            "y": 1.1,
+            "yanchor": "bottom",
+            "bgcolor": "rgba(255,255,255,0.86)",
+            "bordercolor": COLORS["border"],
+            "borderwidth": 1,
+            "font": {"size": 11},
+        }
+    )
+    return apply_theme(fig, height=max(345, 27 * len(chart) + 104))
 
 
 def age_bar(df, lang: str | None = "EN") -> go.Figure:
@@ -253,9 +290,11 @@ def age_bar(df, lang: str | None = "EN") -> go.Figure:
             x=chart["count"],
             y=chart["age_short"],
             orientation="h",
-            marker={"color": COLORS["primary"]},
+            marker={"color": COLORS["primary"], "line": {"width": 0}},
+            opacity=0.96,
             text=chart["count"].map(lambda value: f"{value:,.0f}"),
             textposition="outside",
+            textfont={"color": COLORS["muted"], "size": 11, "family": FONT_FAMILY},
             cliponaxis=False,
             customdata=chart[["age_hover", "share_pct"]],
             hovertemplate=f"<b>%{{customdata[0]}}</b><br>{ft(lang, 'share_of_respondents')}: %{{customdata[1]:.1f}}%<extra></extra>",
@@ -264,6 +303,7 @@ def age_bar(df, lang: str | None = "EN") -> go.Figure:
     )
     fig.update_xaxes(title_text=ft(lang, "respondent_count"))
     fig.update_yaxes(title_text=ft(lang, "age_group"))
+    fig.update_layout(barcornerradius=5)
     return apply_theme(fig, height=410)
 
 
@@ -278,7 +318,8 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
                 x=df["age_short"],
                 y=df[level],
                 name=education_legend_label(level, lang),
-                marker={"color": EDUCATION_COLORS[index % len(EDUCATION_COLORS)]},
+                marker={"color": EDUCATION_COLORS[index % len(EDUCATION_COLORS)], "line": {"color": COLORS["surface"], "width": 0.7}},
+                opacity=0.95,
                 hovertemplate=(
                     f"<b>{education_legend_label(level, lang)}</b><br>"
                     f"{ft(lang, 'age_group')}: %{{x}}<br>"
@@ -312,6 +353,7 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
     fig = go.Figure()
     if not chart.empty:
         color = WORKSTYLE_COLORS.get(workstyle, COLORS["primary"])
+        fill = hex_to_rgba(color, 0.48)
         fig.add_trace(
             go.Box(
                 x=chart["experience_short"],
@@ -321,12 +363,14 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
                 lowerfence=chart["lower"],
                 upperfence=chart["upper"],
                 boxpoints=False,
-                marker={"color": color},
-                line={"color": color, "width": 2},
-                fillcolor=color,
+                marker={"color": color, "line": {"color": "#ffffff", "width": 1}},
+                line={"color": color, "width": 1.8},
+                fillcolor=fill,
                 name="IQR",
-                opacity=0.72,
+                opacity=1,
                 showlegend=False,
+                width=0.48,
+                whiskerwidth=0.7,
                 customdata=chart[["experience_hover", "q2", "mean", "count", "lower", "upper"]],
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>"
@@ -345,7 +389,7 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
                 name=ft(lang, "mean"),
                 marker={
                     "symbol": "diamond",
-                    "size": 8,
+                    "size": 7,
                     "color": "#ffffff",
                     "line": {"color": color, "width": 2},
                 },
