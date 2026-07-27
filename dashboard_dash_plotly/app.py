@@ -6,7 +6,7 @@ from dashboard_dash_plotly import data, figures
 
 
 FULL_DF = data.load_dataset()
-TECH_TOP_N = 12
+TECH_TOP_N = 10
 
 app = Dash(__name__, suppress_callback_exceptions=True, title="Stack Overflow Developer Survey Dashboard")
 server = app.server
@@ -23,9 +23,12 @@ VIEW_IDS = [
 ]
 
 TECH_COPY = {
-    "current_tooltip": "Technologies reported in current use.",
-    "future_tooltip": "Technologies respondents want to use next.",
-    "momentum_tooltip": "Direct current-use vs future-interest comparison.",
+    "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
+    "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
+    "momentum_tooltip": (
+        f"Compares current use and future interest for the {TECH_TOP_N} technologies with the highest presence in either list. "
+        "The selection is ranked by max(current, future), not by the largest difference."
+    ),
 }
 SECTION_COPY = {
     "age_context": "Profile the respondent mix by age and education under the active filters.",
@@ -59,7 +62,7 @@ I18N = {
             ),
             (
                 "Interaction model",
-                "Age and workstyle are global filters. Technology rankings always show the top 12 items per family, while the country map has its own local country-count slider.",
+                "Age and workstyle are global filters. Technology rankings always show the top 10 items per family, while the country map has its own local country-count slider.",
             ),
             (
                 "Tools",
@@ -134,7 +137,7 @@ I18N = {
             ),
             (
                 "Modelo de interacción",
-                "Edad y modalidad son filtros globales. Los rankings de tecnologías siempre muestran los 12 principales elementos por familia, mientras el mapa tiene su propio slider local de cantidad de países.",
+                "Edad y modalidad son filtros globales. Los rankings de tecnologías siempre muestran los 10 principales elementos por familia, mientras el mapa tiene su propio slider local de cantidad de países.",
             ),
             (
                 "Herramientas",
@@ -191,9 +194,12 @@ I18N = {
             "Frameworks": "Frameworks web usados para crear aplicaciones de usuario y servicios backend.",
         },
         "tooltips": {
-            "current_tooltip": "Tecnologías reportadas en uso actual.",
-            "future_tooltip": "Tecnologías que los encuestados quieren usar después.",
-            "momentum_tooltip": "Comparación directa entre uso actual e interés futuro.",
+            "current_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas en uso actual para esta familia bajo los filtros activos.",
+            "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después para esta familia bajo los filtros activos.",
+            "momentum_tooltip": (
+                f"Compara uso actual e interés futuro para las {TECH_TOP_N} tecnologías con mayor presencia en cualquiera de las dos listas. "
+                "La selección se ordena por max(actual, futuro), no por la mayor diferencia."
+            ),
             "age_distribution": "Distribución de encuestados por grupo de edad.",
             "education_composition": "Composición educativa por edad, normalizada a 100%.",
             "remote_compensation": "Rangos de compensación remota por experiencia.",
