@@ -25,6 +25,17 @@ Open:
 http://127.0.0.1:8050
 ```
 
+## Deploy On Koyeb
+
+This repository is prepared for Koyeb deployment with Python buildpacks:
+
+- Runtime: Python 3.13, declared in `.python-version`.
+- Process command: `Procfile`.
+- Web server: `gunicorn --bind :$PORT dashboard_dash_plotly.app:server`.
+- Build mode: Buildpack, no Dockerfile required.
+
+In Koyeb, create a Web Service from the GitHub repository, select the target branch, keep the root directory empty if this folder is the repository root, and choose the Free instance while testing.
+
 ## Current Scope
 
 - Fixed header with global filters for age and workstyle.
