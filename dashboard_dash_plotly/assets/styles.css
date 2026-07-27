@@ -515,6 +515,11 @@ body {
   overflow: hidden;
 }
 
+.map-card {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
 .chart-title-row {
   display: flex;
   align-items: center;

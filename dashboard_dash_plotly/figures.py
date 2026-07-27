@@ -55,7 +55,7 @@ FIGURE_TEXT = {
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
-            "some_college": "Some college",
+            "some_college": "Some college study",
             "secondary": "Secondary",
             "other": "Other",
         },
@@ -81,7 +81,7 @@ FIGURE_TEXT = {
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
-            "some_college": "Estudios universitarios parciales",
+            "some_college": "Estudios parciales",
             "secondary": "Secundaria",
             "other": "Otro",
         },
@@ -288,12 +288,12 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
             "orientation": "h",
             "x": 0,
             "xanchor": "left",
-            "y": 1.13,
+            "y": 1.08,
             "yanchor": "bottom",
-            "font": {"size": 11},
-            "itemwidth": 30,
+            "font": {"size": 9},
+            "itemsizing": "constant",
         },
-        margin={"l": 8, "r": 28, "t": 44, "b": 44},
+        margin={"l": 8, "r": 28, "t": 42, "b": 40},
     )
     return fig
 
@@ -358,10 +358,9 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
     max_share = max(float(share.max()), 1.0) if not share.empty else 1.0
     chart["color_value"] = np.sqrt(share.clip(lower=0))
     chart["bubble_size"] = 7 + np.sqrt(share.clip(lower=0) / max_share) * 34
-    tick_source = [0, 1, 2, 5, 10, 15, max_share]
-    ticks = sorted({value for value in tick_source if value <= max_share})
-    if max_share not in ticks:
-        ticks.append(max_share)
+    tick_step = 5
+    tick_upper = int(np.ceil(max_share / tick_step) * tick_step)
+    ticks = list(range(0, tick_upper + tick_step, tick_step))
     fig = go.Figure(
         go.Scattergeo(
             lon=chart["longitude"],
@@ -373,7 +372,7 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
                 "size": chart["bubble_size"],
                 "color": chart["color_value"],
                 "cmin": 0,
-                "cmax": np.sqrt(max_share),
+                "cmax": np.sqrt(tick_upper),
                 "colorscale": [
                     [0.00, "#f4dfb8"],
                     [0.08, "#e4bd7a"],
@@ -386,7 +385,7 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
                 "colorbar": {
                     "title": ft(lang, "share_pct"),
                     "tickvals": [np.sqrt(value) for value in ticks],
-                    "ticktext": [f"{value:g}" for value in ticks],
+                    "ticktext": [f"{value}" for value in ticks],
                 },
             },
             hovertemplate=(
@@ -408,4 +407,4 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
         lonaxis_showgrid=False,
     )
     fig.update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
-    return apply_theme(fig, height=520)
+    return apply_theme(fig, height=460)

@@ -23,9 +23,9 @@ VIEW_IDS = [
 ]
 
 TECH_COPY = {
-    "current_tooltip": "Current-use ranking for the active filters. Counts are shown on the bars; hover for share of respondents.",
-    "future_tooltip": "Future-interest ranking for the active filters. Counts are shown on the bars; hover for share of respondents.",
-    "momentum_tooltip": "Connects each technology's current use and future interest to reveal momentum within the selected family.",
+    "current_tooltip": "Technologies reported in current use.",
+    "future_tooltip": "Technologies respondents want to use next.",
+    "momentum_tooltip": "Direct current-use vs future-interest comparison.",
 }
 SECTION_COPY = {
     "age_context": "Profile the respondent mix by age and education under the active filters.",
@@ -33,12 +33,12 @@ SECTION_COPY = {
     "country": "Explore geographic concentration. The local slider controls how many ranked countries appear on the map.",
 }
 CHART_TOOLTIPS = {
-    "age_distribution": "Respondent count by age group. Hover for the share represented by each group.",
-    "education_composition": "Education mix within each age group, normalized to 100% so groups are comparable.",
-    "remote_compensation": "Observed annual compensation by experience band for remote respondents. Diamond markers show the mean.",
-    "hybrid_compensation": "Observed annual compensation by experience band for hybrid respondents. Diamond markers show the mean.",
-    "inperson_compensation": "Observed annual compensation by experience band for in-person respondents. Diamond markers show the mean.",
-    "map": "Bubble size and color represent each country's share of respondents. Respondent count is secondary and appears only in the tooltip.",
+    "age_distribution": "Respondent distribution by age group.",
+    "education_composition": "Education mix by age group, normalized to 100%.",
+    "remote_compensation": "Remote compensation ranges by experience band.",
+    "hybrid_compensation": "Hybrid compensation ranges by experience band.",
+    "inperson_compensation": "In-person compensation ranges by experience band.",
+    "map": "Bubble size and color represent share of respondents.",
 }
 
 I18N = {
@@ -191,15 +191,15 @@ I18N = {
             "Frameworks": "Frameworks web usados para crear aplicaciones de usuario y servicios backend.",
         },
         "tooltips": {
-            "current_tooltip": "Ranking de uso actual bajo los filtros activos. Los conteos aparecen en las barras; pasa el cursor para ver el porcentaje de encuestados.",
-            "future_tooltip": "Ranking de interés futuro bajo los filtros activos. Los conteos aparecen en las barras; pasa el cursor para ver el porcentaje de encuestados.",
-            "momentum_tooltip": "Conecta el uso actual y el interés futuro de cada tecnología para revelar momentum dentro de la familia seleccionada.",
-            "age_distribution": "Conteo de encuestados por grupo de edad. Pasa el cursor para ver el porcentaje que representa cada grupo.",
-            "education_composition": "Composición educativa dentro de cada grupo de edad, normalizada a 100% para facilitar la comparación.",
-            "remote_compensation": "Compensación anual observada por banda de experiencia para encuestados remotos. Los diamantes muestran la media.",
-            "hybrid_compensation": "Compensación anual observada por banda de experiencia para encuestados híbridos. Los diamantes muestran la media.",
-            "inperson_compensation": "Compensación anual observada por banda de experiencia para encuestados presenciales. Los diamantes muestran la media.",
-            "map": "El tamaño y color de las burbujas representan el porcentaje de encuestados de cada país. El conteo aparece solo en el tooltip.",
+            "current_tooltip": "Tecnologías reportadas en uso actual.",
+            "future_tooltip": "Tecnologías que los encuestados quieren usar después.",
+            "momentum_tooltip": "Comparación directa entre uso actual e interés futuro.",
+            "age_distribution": "Distribución de encuestados por grupo de edad.",
+            "education_composition": "Composición educativa por edad, normalizada a 100%.",
+            "remote_compensation": "Rangos de compensación remota por experiencia.",
+            "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
+            "inperson_compensation": "Rangos de compensación presencial por experiencia.",
+            "map": "El tamaño y color representan el porcentaje de encuestados.",
         },
     },
 }
@@ -271,6 +271,8 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 
 
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
+    graph_config = {"displaylogo": False}
+    card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
     return html.Div(
         [
             html.Div(
@@ -280,9 +282,9 @@ def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
                 ],
                 className="chart-title-row",
             ),
-            dcc.Graph(id=graph_id, config={"displaylogo": False}, className="chart-graph"),
+            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
         ],
-        className="chart-card",
+        className=card_class,
     )
 
 
