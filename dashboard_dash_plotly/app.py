@@ -273,13 +273,13 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
     graph_config = {"displaylogo": False}
     card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
+    title_row = [html.H3(title, id=f"{graph_id}-title")]
+    if graph_id != "country-map":
+        title_row.append(info_icon(tooltip, icon_id=f"{graph_id}-info"))
     return html.Div(
         [
             html.Div(
-                [
-                    html.H3(title, id=f"{graph_id}-title"),
-                    info_icon(tooltip, icon_id=f"{graph_id}-info"),
-                ],
+                title_row,
                 className="chart-title-row",
             ),
             dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
@@ -380,16 +380,12 @@ def layout() -> html.Div:
                                                 title="Dash and Plotly dashboard using the cleaned Stack Overflow survey dataset.",
                                                 className="about-button",
                                             ),
-                                            dcc.Dropdown(
+                                            html.Button(
+                                                "EN",
                                                 id="language-selector",
-                                                options=[
-                                                    {"label": "🌐 EN", "value": "EN"},
-                                                    {"label": "🌐 ES", "value": "ES"},
-                                                ],
                                                 value="EN",
-                                                clearable=False,
-                                                searchable=False,
-                                                className="language-dropdown",
+                                                title="Toggle language",
+                                                className="language-toggle",
                                             ),
                                         ],
                                         className="header-actions",
@@ -545,7 +541,7 @@ def layout() -> html.Div:
                                         ],
                                         className="map-control",
                                     ),
-                                    chart_card("Respondent Map by Country", CHART_TOOLTIPS["map"], "country-map"),
+                                    chart_card("Respondent Map by Country", "", "country-map"),
                                 ],
                                 id="country-distribution",
                                 className="dashboard-section view-section",
@@ -616,7 +612,6 @@ STATIC_TEXT_OUTPUTS = [
     Output("country-copy", "children"),
     Output("country-slider-label", "children"),
     Output("country-map-title", "children"),
-    Output("country-map-info", "title"),
 ]
 
 
@@ -688,8 +683,23 @@ def update_static_text(lang):
         text(lang, "country_text"),
         text(lang, "countries_shown"),
         text(lang, "map_title"),
-        tooltips["map"],
     )
+
+
+@app.callback(
+    Output("language-selector", "value"),
+    Output("language-selector", "children"),
+    Output("language-selector", "title"),
+    Input("language-selector", "n_clicks"),
+    State("language-selector", "value"),
+)
+def toggle_language(_clicks, current_lang):
+    current_lang = normalize_lang(current_lang)
+    if not _clicks:
+        next_lang = current_lang
+    else:
+        next_lang = "ES" if current_lang == "EN" else "EN"
+    return next_lang, next_lang, text(next_lang, "language")
 
 
 @app.callback(
