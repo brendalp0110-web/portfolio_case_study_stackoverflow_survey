@@ -25,16 +25,17 @@ Open:
 http://127.0.0.1:8050
 ```
 
-## Deploy On Koyeb
+## Deploy On Render
 
-This repository is prepared for Koyeb deployment with Python buildpacks:
+This repository is prepared for Render deployment as a Python Web Service:
 
-- Runtime: Python 3.13, declared in `.python-version`.
-- Process command: `Procfile`.
-- Web server: `gunicorn --bind :$PORT dashboard_dash_plotly.app:server`.
-- Build mode: Buildpack, no Dockerfile required.
+- Runtime: Python 3.13.
+- Build command: `pip install --upgrade pip && pip install -r requirements.txt`.
+- Start command: `gunicorn --bind 0.0.0.0:$PORT dashboard_dash_plotly.app:server`.
+- Health check path: `/`.
+- Deployment config: `render.yaml`.
 
-In Koyeb, create a Web Service from the GitHub repository, select the target branch, keep the root directory empty if this folder is the repository root, and choose the Free instance while testing.
+In Render, create a Web Service from the GitHub repository, select the target branch, keep the root directory empty because this folder is the repository root, and choose the Free instance while testing.
 
 ## Current Scope
 
