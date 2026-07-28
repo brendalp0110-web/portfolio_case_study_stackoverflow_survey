@@ -454,7 +454,7 @@ def layout() -> html.Div:
                             html.Div(
                                 [
                                     html.Div("Navigation", id="side-nav-title", className="side-nav-title"),
-                                    html.Button("‹", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
+                                    html.Button("<", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
                                 ],
                                 className="side-nav-header",
                             ),

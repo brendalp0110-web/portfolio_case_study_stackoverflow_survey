@@ -40,7 +40,7 @@ The cleaning process prioritizes consistency, interpretability, and a compact fi
 
 ## Official Dashboard
 
-The official dashboard is implemented with Dash and Plotly in `dashboard_dash_plotly/`.
+The official dashboard is implemented with Dash and Plotly in `dashboard_dash_plotly/` and published with Plotly Cloud.
 
 It includes:
 
@@ -64,6 +64,13 @@ Then open:
 ```text
 http://127.0.0.1:8050
 ```
+
+Deployment:
+
+- The public version is hosted on Plotly Cloud.
+- The deployment uses a minimal upload package rather than the full repository.
+- The package contains a root `app.py`, `dashboard_dash_plotly/`, `data/survey_data_cleaned_reduced.csv`, and dashboard runtime dependencies.
+- Plotly Cloud is configured with `app.py` as the main file and Python 3.13.
 
 ## Key Findings
 
