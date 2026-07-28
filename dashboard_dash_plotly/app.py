@@ -21,6 +21,15 @@ VIEW_IDS = [
     "compensation",
     "country-distribution",
 ]
+VIEW_RAIL_LABELS = {
+    "languages": "LANG",
+    "databases": "DB",
+    "platforms": "PLAT",
+    "frameworks": "F",
+    "age-context": "AGE",
+    "compensation": "PAY",
+    "country-distribution": "MAP",
+}
 
 TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
@@ -333,6 +342,10 @@ def nav_button(view_id: str) -> html.Button:
     return html.Button("", id=f"nav-{view_id}", className="nav-button")
 
 
+def nav_rail_button(view_id: str) -> html.Button:
+    return html.Button(VIEW_RAIL_LABELS[view_id], id=f"nav-rail-{view_id}", className="nav-rail-button")
+
+
 def country_slider_marks(max_countries: int) -> dict[int, str]:
     max_value = max(int(max_countries), 1)
     values = [1]
@@ -462,7 +475,16 @@ def layout() -> html.Div:
                         id="side-nav",
                         className="side-nav",
                     ),
-                    html.Button("☰", id="nav-expand", className="nav-rail", title="Open navigation"),
+                    html.Nav(
+                        [
+                            html.Button(">", id="nav-expand", className="nav-rail-toggle", title="Open navigation"),
+                            *[nav_rail_button(view_id) for view_id in VIEW_IDS[:4]],
+                            html.Div(className="nav-rail-divider"),
+                            *[nav_rail_button(view_id) for view_id in VIEW_IDS[4:]],
+                        ],
+                        id="nav-rail",
+                        className="nav-rail hidden",
+                    ),
                     html.Main(
                         [
                             html.Div(id="kpi-row", className="kpi-grid"),
@@ -584,6 +606,7 @@ STATIC_TEXT_OUTPUTS = [
     Output("side-nav-title", "children"),
     Output("nav-collapse", "title"),
     Output("nav-expand", "title"),
+    *[Output(f"nav-rail-{view_id}", "title") for view_id in VIEW_IDS],
     Output("comparison-nav-title", "children"),
     Output("context-nav-title", "children"),
     *[Output(f"nav-{view_id}", "children") for view_id in VIEW_IDS],
@@ -655,6 +678,7 @@ def update_static_text(lang):
         text(lang, "navigation"),
         text(lang, "collapse_navigation"),
         text(lang, "open_navigation"),
+        *nav_labels,
         text(lang, "comparison_group"),
         text(lang, "context_group"),
         *nav_labels,
@@ -722,13 +746,14 @@ def toggle_about_modal(_open_clicks, _close_clicks, class_name):
 @app.callback(
     Output("active-view", "data"),
     *[Input(f"nav-{view_id}", "n_clicks") for view_id in VIEW_IDS],
+    *[Input(f"nav-rail-{view_id}", "n_clicks") for view_id in VIEW_IDS],
     prevent_initial_call=True,
 )
 def set_active_view(*_):
     triggered = callback_context.triggered_id
     if not triggered:
         return "languages"
-    return triggered.replace("nav-", "")
+    return triggered.replace("nav-rail-", "").replace("nav-", "")
 
 
 @app.callback(
@@ -750,7 +775,7 @@ def toggle_navigation(_collapse_clicks, _expand_clicks, is_open):
 @app.callback(
     Output("body-shell", "className"),
     Output("side-nav", "className"),
-    Output("nav-expand", "className"),
+    Output("nav-rail", "className"),
     Output("content-shell", "className"),
     Input("nav-open", "data"),
 )
@@ -766,12 +791,14 @@ def update_navigation_shell(is_open):
 @app.callback(
     *[Output(view_id, "style") for view_id in VIEW_IDS],
     *[Output(f"nav-{view_id}", "className") for view_id in VIEW_IDS],
+    *[Output(f"nav-rail-{view_id}", "className") for view_id in VIEW_IDS],
     Input("active-view", "data"),
 )
 def show_active_view(active_view):
     styles = [{"display": "block" if view_id == active_view else "none"} for view_id in VIEW_IDS]
     classes = ["nav-button active" if view_id == active_view else "nav-button" for view_id in VIEW_IDS]
-    return (*styles, *classes)
+    rail_classes = ["nav-rail-button active" if view_id == active_view else "nav-rail-button" for view_id in VIEW_IDS]
+    return (*styles, *classes, *rail_classes)
 
 
 @app.callback(
