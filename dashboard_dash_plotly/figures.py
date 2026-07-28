@@ -463,4 +463,6 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
         lonaxis_showgrid=False,
     )
     fig.update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
-    return apply_theme(fig, height=460)
+    fig = apply_theme(fig, height=450)
+    fig.update_layout(autosize=True)
+    return fig

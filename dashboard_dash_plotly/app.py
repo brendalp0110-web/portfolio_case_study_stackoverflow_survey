@@ -280,6 +280,9 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
     graph_config = {"displaylogo": False}
     card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
+    graph_class = "chart-graph map-graph" if graph_id == "country-map" else "chart-graph"
+    if graph_id == "country-map":
+        graph_config["responsive"] = True
     title_row = [html.H3(title, id=f"{graph_id}-title")]
     if graph_id != "country-map":
         title_row.append(info_icon(tooltip, icon_id=f"{graph_id}-info"))
@@ -289,7 +292,7 @@ def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
                 title_row,
                 className="chart-title-row",
             ),
-            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
+            dcc.Graph(id=graph_id, config=graph_config, className=graph_class),
         ],
         className=card_class,
     )

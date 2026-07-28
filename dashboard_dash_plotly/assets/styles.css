@@ -665,8 +665,13 @@ body {
 }
 
 .map-card {
-  width: min(100%, 1060px);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+}
+
+.map-graph {
+  min-height: 340px;
+  height: clamp(340px, 47vh, 520px);
 }
 
 .chart-title-row {
