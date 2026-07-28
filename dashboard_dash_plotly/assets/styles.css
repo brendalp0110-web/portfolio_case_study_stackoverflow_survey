@@ -619,89 +619,32 @@ body {
 }
 
 .teal-slider,
-.map-control .rc-slider {
+.teal-slider * {
+  --Dash-Fill-Interactive-Strong: var(--primary);
+  --Dash-Fill-Interactive-Weak: rgba(22, 124, 128, 0.16);
+  --Dash-Fill-Inverse-Strong: var(--surface);
+  --Dash-Shading-Weak: rgba(22, 124, 128, 0.18);
+  accent-color: var(--primary);
+}
+
+.teal-slider {
   margin: 0 8px;
 }
 
-#country-slider,
-.teal-slider {
-  --slider-teal: #167c80;
-  --slider-teal-deep: #0f6166;
-}
-
-#country-slider .rc-slider,
-.teal-slider .rc-slider {
-  margin: 0;
-}
-
-#country-slider .rc-slider-rail,
-.teal-slider .rc-slider-rail,
-.map-control .rc-slider-rail {
-  height: 4px;
-  background: rgba(22, 124, 128, 0.16) !important;
-  background-color: rgba(22, 124, 128, 0.16) !important;
-}
-
-#country-slider .rc-slider-track,
-.teal-slider .rc-slider-track,
-.map-control .rc-slider-track {
-  height: 4px;
-  background: var(--slider-teal, #167c80) !important;
-  background-color: var(--primary) !important;
-  border-color: var(--slider-teal, #167c80) !important;
-}
-
-#country-slider .rc-slider-handle,
-.teal-slider .rc-slider-handle,
-.map-control .rc-slider-handle {
-  width: 16px;
-  height: 16px;
-  margin-top: -6px;
-  border: 2px solid var(--primary) !important;
-  background-color: var(--surface) !important;
+.teal-slider .dash-slider-thumb {
   box-shadow: 0 4px 12px rgba(22, 124, 128, 0.24);
-  opacity: 1;
 }
 
-#country-slider .rc-slider-handle:hover,
-#country-slider .rc-slider-handle:focus,
-#country-slider .rc-slider-handle-dragging,
-.teal-slider .rc-slider-handle:hover,
-.teal-slider .rc-slider-handle:focus,
-.teal-slider .rc-slider-handle-dragging,
-.map-control .rc-slider-handle:hover,
-.map-control .rc-slider-handle:focus,
-.map-control .rc-slider-handle-dragging {
-  border-color: var(--primary-deep) !important;
-  box-shadow: 0 0 0 5px rgba(22, 124, 128, 0.16) !important;
+.teal-slider .dash-slider-thumb:hover,
+.teal-slider .dash-slider-thumb:focus {
+  --Dash-Fill-Interactive-Strong: var(--primary-deep);
+  box-shadow: 0 0 0 5px rgba(22, 124, 128, 0.16);
 }
 
-#country-slider .rc-slider-dot,
-.teal-slider .rc-slider-dot,
-.map-control .rc-slider-dot {
-  border-color: rgba(22, 124, 128, 0.16);
-  background-color: rgba(22, 124, 128, 0.16);
-}
-
-#country-slider .rc-slider-dot-active,
-.teal-slider .rc-slider-dot-active,
-.map-control .rc-slider-dot-active {
-  border-color: var(--primary) !important;
-  background-color: var(--primary) !important;
-}
-
-#country-slider .rc-slider-mark-text,
-.teal-slider .rc-slider-mark-text,
-.map-control .rc-slider-mark-text {
-  color: var(--muted);
-  font-size: var(--text-xs);
-}
-
-#country-slider .rc-slider-mark-text-active,
-.teal-slider .rc-slider-mark-text-active,
-.map-control .rc-slider-mark-text-active {
+.teal-slider .dash-slider-mark-active,
+.teal-slider .dash-slider-tick-active {
   color: var(--primary);
-  font-weight: 650;
+  border-color: var(--primary);
 }
 
 @media (max-width: 1100px) {
@@ -728,121 +671,4 @@ body {
   .chart-grid.three {
     grid-template-columns: 1fr;
   }
-}
-
-/* Final slider override: Dash 4 uses Radix slider classes, older versions use rc-slider. */
-#country-slider,
-#country-slider *,
-.teal-slider,
-.teal-slider * {
-  --Dash-Fill-Interactive-Strong: var(--primary) !important;
-  --Dash-Fill-Interactive-Weak: rgba(22, 124, 128, 0.16) !important;
-  --Dash-Fill-Inverse-Strong: var(--surface) !important;
-  --Dash-Shading-Weak: rgba(22, 124, 128, 0.18) !important;
-  accent-color: var(--primary) !important;
-}
-
-#country-slider [data-radix-slider-track],
-#country-slider .dash-slider-track,
-.teal-slider [data-radix-slider-track],
-.teal-slider .dash-slider-track {
-  background: rgba(22, 124, 128, 0.16) !important;
-  background-color: rgba(22, 124, 128, 0.16) !important;
-}
-
-#country-slider [data-radix-slider-range],
-#country-slider .dash-slider-range,
-#country-slider .dash-slider-track-active,
-.teal-slider [data-radix-slider-range],
-.teal-slider .dash-slider-range,
-.teal-slider .dash-slider-track-active {
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-}
-
-#country-slider [data-radix-slider-thumb],
-#country-slider .dash-slider-thumb,
-.teal-slider [data-radix-slider-thumb],
-.teal-slider .dash-slider-thumb {
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-  border-color: var(--surface) !important;
-  box-shadow: 0 4px 12px rgba(22, 124, 128, 0.24) !important;
-}
-
-#country-slider [data-radix-slider-thumb]:hover,
-#country-slider [data-radix-slider-thumb]:focus,
-#country-slider .dash-slider-thumb:hover,
-#country-slider .dash-slider-thumb:focus,
-.teal-slider [data-radix-slider-thumb]:hover,
-.teal-slider [data-radix-slider-thumb]:focus,
-.teal-slider .dash-slider-thumb:hover,
-.teal-slider .dash-slider-thumb:focus {
-  background: var(--primary-deep) !important;
-  background-color: var(--primary-deep) !important;
-  box-shadow: 0 0 0 5px rgba(22, 124, 128, 0.16) !important;
-}
-
-#country-slider .dash-slider-mark-active,
-#country-slider .dash-slider-tick-active,
-.teal-slider .dash-slider-mark-active,
-.teal-slider .dash-slider-tick-active {
-  color: var(--primary) !important;
-  border-color: var(--primary) !important;
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-}
-
-#country-slider .rc-slider-rail,
-.teal-slider .rc-slider-rail,
-.rc-slider-rail {
-  background: rgba(22, 124, 128, 0.16) !important;
-  background-color: rgba(22, 124, 128, 0.16) !important;
-}
-
-#country-slider .rc-slider-track,
-#country-slider .rc-slider-track-1,
-.teal-slider .rc-slider-track,
-.teal-slider .rc-slider-track-1,
-.rc-slider-track,
-.rc-slider-track-1 {
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
-}
-
-#country-slider .rc-slider-handle,
-.teal-slider .rc-slider-handle,
-.rc-slider-handle {
-  border-color: var(--primary) !important;
-  background: var(--surface) !important;
-  background-color: var(--surface) !important;
-  box-shadow: 0 4px 12px rgba(22, 124, 128, 0.24) !important;
-}
-
-#country-slider .rc-slider-handle:hover,
-#country-slider .rc-slider-handle:focus,
-#country-slider .rc-slider-handle-dragging,
-.teal-slider .rc-slider-handle:hover,
-.teal-slider .rc-slider-handle:focus,
-.teal-slider .rc-slider-handle-dragging,
-.rc-slider-handle:hover,
-.rc-slider-handle:focus,
-.rc-slider-handle-dragging {
-  border-color: var(--primary-deep) !important;
-  box-shadow: 0 0 0 5px rgba(22, 124, 128, 0.16) !important;
-}
-
-#country-slider .rc-slider-dot-active,
-.teal-slider .rc-slider-dot-active,
-.rc-slider-dot-active {
-  border-color: var(--primary) !important;
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-}
-
-#country-slider .rc-slider-mark-text-active,
-.teal-slider .rc-slider-mark-text-active,
-.rc-slider-mark-text-active {
-  color: var(--primary) !important;
 }
