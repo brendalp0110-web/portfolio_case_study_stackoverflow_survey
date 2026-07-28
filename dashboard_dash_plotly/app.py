@@ -103,7 +103,6 @@ I18N = {
         "country_text": SECTION_COPY["country"],
         "countries_shown": "Countries shown",
         "map_title": "Respondent Map by Country",
-        "country_note": "Showing {shown:,} of {available:,} available countries in the active view.",
         "language": "Language",
         "families": {
             "Languages": "Languages",
@@ -179,7 +178,6 @@ I18N = {
         "country_text": "Explora la concentración geográfica. El slider local controla cuántos países aparecen en el mapa.",
         "countries_shown": "Países mostrados",
         "map_title": "Mapa de encuestados por país",
-        "country_note": "Mostrando {shown:,} de {available:,} países disponibles en la vista activa.",
         "language": "Idioma",
         "families": {
             "Languages": "Lenguajes",
@@ -342,13 +340,17 @@ def nav_rail_button(view_id: str) -> html.Button:
 
 
 
-def country_slider_marks(max_countries: int) -> dict[int, str]:
-    max_value = max(int(max_countries), 1)
-    values = [1]
-    values.extend(range(10, max_value + 1, 10))
-    if max_value not in values:
-        values.append(max_value)
-    return {value: f"{value}" for value in sorted(set(values))}
+def country_slider_marks(max_countries: int):
+    return None
+
+
+def clamp_country_count(value, max_countries: int) -> int:
+    max_value = max(int(max_countries or 1), 1)
+    try:
+        numeric_value = int(value)
+    except (TypeError, ValueError):
+        numeric_value = max_value
+    return min(max(numeric_value, 1), max_value)
 
 
 def layout() -> html.Div:
@@ -546,21 +548,56 @@ def layout() -> html.Div:
                                     ),
                                     html.Div(
                                         [
-                                            html.Label("Countries shown", id="country-slider-label"),
-                                            dcc.Slider(
-                                                id="country-slider",
-                                                className="teal-slider",
-                                                min=1,
-                                                max=160,
-                                                value=160,
-                                                step=1,
-                                                marks=country_slider_marks(160),
+                                            html.Div(
+                                                [
+                                                    html.Div(
+                                                        [
+                                                            html.H3("Respondent Map by Country", id="country-map-title"),
+                                                        ],
+                                                        className="chart-title-row",
+                                                    ),
+                                                    html.Div(
+                                                        [
+                                                            html.Div(
+                                                                [
+                                                                    html.Label("Countries shown", id="country-slider-label"),
+                                                                    dcc.Input(
+                                                                        id="country-count-input",
+                                                                        type="number",
+                                                                        min=1,
+                                                                        max=160,
+                                                                        value=160,
+                                                                        step=1,
+                                                                        debounce=True,
+                                                                        className="country-count-input",
+                                                                    ),
+                                                                    dcc.Slider(
+                                                                        id="country-slider",
+                                                                        className="teal-slider vertical-country-slider",
+                                                                        min=1,
+                                                                        max=160,
+                                                                        value=160,
+                                                                        step=1,
+                                                                        marks=country_slider_marks(160),
+                                                                        vertical=True,
+                                                                        verticalHeight=340,
+                                                                    ),
+                                                                ],
+                                                                className="map-control map-control-vertical",
+                                                            ),
+                                                            dcc.Graph(
+                                                                id="country-map",
+                                                                config={"displaylogo": False, "responsive": True},
+                                                                className="chart-graph map-graph",
+                                                            ),
+                                                        ],
+                                                        className="map-panel-body",
+                                                    ),
+                                                ],
+                                                className="chart-card map-card map-panel",
                                             ),
-                                            html.Div(id="country-note", className="subtle-note"),
                                         ],
-                                        className="map-control",
                                     ),
-                                    chart_card("Respondent Map by Country", "", "country-map"),
                                 ],
                                 id="country-distribution",
                                 className="dashboard-section view-section",
@@ -810,13 +847,32 @@ def reset_filters(_):
 @app.callback(
     Output("country-slider", "max"),
     Output("country-slider", "marks"),
+    Output("country-slider", "value"),
+    Output("country-count-input", "max"),
+    Output("country-count-input", "value"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
+    Input("active-view", "data"),
 )
-def update_country_slider_bounds(selected_ages, selected_workstyles):
+def update_country_slider_bounds(selected_ages, selected_workstyles, _active_view):
     filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
     max_countries = max(len(data.country_map_distribution(filtered, None)), 1)
-    return max_countries, country_slider_marks(max_countries)
+    return max_countries, country_slider_marks(max_countries), max_countries, max_countries, max_countries
+
+
+@app.callback(
+    Output("country-slider", "value", allow_duplicate=True),
+    Output("country-count-input", "value", allow_duplicate=True),
+    Input("country-slider", "value"),
+    Input("country-count-input", "value"),
+    State("country-slider", "max"),
+    prevent_initial_call=True,
+)
+def sync_country_count_control(slider_value, input_value, max_countries):
+    triggered_id = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else "country-slider"
+    raw_value = input_value if triggered_id == "country-count-input" else slider_value
+    value = clamp_country_count(raw_value, max_countries)
+    return value, value
 
 
 @app.callback(
@@ -871,7 +927,6 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
 
 @app.callback(
     Output("kpi-row", "children"),
-    Output("country-note", "children"),
     Output("country-map", "figure"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
@@ -886,7 +941,6 @@ def update_map_context(selected_ages, selected_workstyles, country_count, lang):
     countries_to_show = min(max(int(country_count or max_countries), 1), max_countries)
     country_df = data.country_map_distribution(filtered, countries_to_show)
     kpis = data.build_kpis(FULL_DF, filtered, len(country_df))
-    country_note = text(lang, "country_note").format(shown=len(country_df), available=max_countries)
 
     kpi_cards = [
         kpi_card(
@@ -912,7 +966,7 @@ def update_map_context(selected_ages, selected_workstyles, country_count, lang):
         ),
     ]
 
-    return kpi_cards, country_note, figures.country_map(country_df, lang)
+    return kpi_cards, figures.country_map(country_df, lang)
 
 
 if __name__ == "__main__":
