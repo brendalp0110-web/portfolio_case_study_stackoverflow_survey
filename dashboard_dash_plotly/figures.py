@@ -9,7 +9,6 @@ from dashboard_dash_plotly import data
 COLORS = {
     "page": "#f1f3ef",
     "surface": "#fffdfa",
-    "surface_strong": "#e7ede4",
     "header": "#17384c",
     "text": "#152331",
     "muted": "#5f6f7d",

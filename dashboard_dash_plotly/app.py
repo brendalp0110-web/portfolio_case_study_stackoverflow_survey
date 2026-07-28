@@ -40,7 +40,6 @@ CHART_TOOLTIPS = {
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
-    "map": "Bubble size and color represent share of respondents.",
 }
 
 I18N = {
@@ -206,7 +205,6 @@ I18N = {
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
-            "map": "El tamaño y color representan el porcentaje de encuestados.",
         },
     },
 }
