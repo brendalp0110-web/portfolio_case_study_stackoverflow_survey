@@ -32,7 +32,7 @@ TECH_COPY = {
 SECTION_COPY = {
     "age_context": "Profile the respondent mix by age and education under the active filters.",
     "compensation": "Compare observed compensation ranges across experience bands and workstyles.",
-    "country": "Explore geographic concentration. The local slider controls how many ranked countries appear on the map.",
+    "country": "Explore geographic concentration. The local control sets how many ranked countries appear on the map.",
 }
 CHART_TOOLTIPS = {
     "age_distribution": "Respondent distribution by age group.",
@@ -60,7 +60,7 @@ I18N = {
             ),
             (
                 "Dashboard scope",
-                "The dashboard uses the cleaned, normalized, and reduced survey dataset. Age and workstyle are global filters; technology rankings show the top 10 items per family; dumbbell charts compare high-visibility technologies across current use and future interest; and the map has its own country-count slider.",
+                "The dashboard uses the cleaned, normalized, and reduced survey dataset. Age and workstyle are global filters; technology rankings show the top 10 items per family; dumbbell charts compare high-visibility technologies across current use and future interest; and the map has its own country-count control.",
             ),
             (
                 "Tools",
@@ -102,6 +102,7 @@ I18N = {
         "country_distribution": "Country Distribution",
         "country_text": SECTION_COPY["country"],
         "countries_shown": "Countries shown",
+        "countries_shown_help": "Type the number of countries to show and press Enter. The value resets to the maximum available when filters change.",
         "map_title": "Respondent Map by Country",
         "language": "Language",
         "families": {
@@ -135,7 +136,7 @@ I18N = {
             ),
             (
                 "Alcance del dashboard",
-                "El dashboard usa el dataset limpio, normalizado y reducido. Edad y modalidad son filtros globales; los rankings tecnológicos muestran el Top 10 por familia; los gráficos dumbbell comparan tecnologías de alta visibilidad entre uso actual e interés futuro; y el mapa tiene su propio slider de cantidad de países.",
+                "El dashboard usa el dataset limpio, normalizado y reducido. Edad y modalidad son filtros globales; los rankings tecnológicos muestran el Top 10 por familia; los gráficos dumbbell comparan tecnologías de alta visibilidad entre uso actual e interés futuro; y el mapa tiene su propio control de cantidad de países.",
             ),
             (
                 "Herramientas",
@@ -175,8 +176,9 @@ I18N = {
         "hybrid_compensation": "Compensación híbrida",
         "inperson_compensation": "Compensación presencial",
         "country_distribution": "Distribución por país",
-        "country_text": "Explora la concentración geográfica. El slider local controla cuántos países aparecen en el mapa.",
+        "country_text": "Explora la concentración geográfica. El control local define cuántos países aparecen en el mapa.",
         "countries_shown": "Países mostrados",
+        "countries_shown_help": "Escribe la cantidad de países que quieres mostrar y presiona Enter. El valor vuelve al máximo disponible cuando cambian los filtros.",
         "map_title": "Mapa de encuestados por país",
         "language": "Idioma",
         "families": {
@@ -338,10 +340,6 @@ def nav_rail_icon(view_id: str) -> html.Span:
 def nav_rail_button(view_id: str) -> html.Button:
     return html.Button(nav_rail_icon(view_id), id=f"nav-rail-{view_id}", className="nav-rail-button")
 
-
-
-def country_slider_marks(max_countries: int):
-    return None
 
 
 def clamp_country_count(value, max_countries: int) -> int:
@@ -560,7 +558,16 @@ def layout() -> html.Div:
                                                         [
                                                             html.Div(
                                                                 [
-                                                                    html.Label("Countries shown", id="country-slider-label"),
+                                                                    html.Div(
+                                                                        [
+                                                                            html.Label("Countries shown", id="country-count-label"),
+                                                                            info_icon(
+                                                                                "Type the number of countries to show and press Enter.",
+                                                                                icon_id="country-count-info",
+                                                                            ),
+                                                                        ],
+                                                                        className="map-control-label-row",
+                                                                    ),
                                                                     dcc.Input(
                                                                         id="country-count-input",
                                                                         type="number",
@@ -570,17 +577,6 @@ def layout() -> html.Div:
                                                                         step=1,
                                                                         debounce=True,
                                                                         className="country-count-input",
-                                                                    ),
-                                                                    dcc.Slider(
-                                                                        id="country-slider",
-                                                                        className="teal-slider vertical-country-slider",
-                                                                        min=1,
-                                                                        max=160,
-                                                                        value=160,
-                                                                        step=1,
-                                                                        marks=country_slider_marks(160),
-                                                                        vertical=True,
-                                                                        verticalHeight=340,
                                                                     ),
                                                                 ],
                                                                 className="map-control map-control-vertical",
@@ -667,7 +663,8 @@ STATIC_TEXT_OUTPUTS = [
     Output("inperson-compensation-info", "title"),
     Output("country-title", "children"),
     Output("country-copy", "children"),
-    Output("country-slider-label", "children"),
+    Output("country-count-label", "children"),
+    Output("country-count-info", "title"),
     Output("country-map-title", "children"),
 ]
 
@@ -740,6 +737,7 @@ def update_static_text(lang):
         text(lang, "country_distribution"),
         text(lang, "country_text"),
         text(lang, "countries_shown"),
+        text(lang, "countries_shown_help"),
         text(lang, "map_title"),
     )
 
@@ -845,34 +843,26 @@ def reset_filters(_):
 
 
 @app.callback(
-    Output("country-slider", "max"),
-    Output("country-slider", "marks"),
-    Output("country-slider", "value"),
     Output("country-count-input", "max"),
     Output("country-count-input", "value"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
     Input("active-view", "data"),
 )
-def update_country_slider_bounds(selected_ages, selected_workstyles, _active_view):
+def update_country_count_bounds(selected_ages, selected_workstyles, _active_view):
     filtered = data.filter_dataset(FULL_DF, selected_ages, selected_workstyles)
     max_countries = max(len(data.country_map_distribution(filtered, None)), 1)
-    return max_countries, country_slider_marks(max_countries), max_countries, max_countries, max_countries
+    return max_countries, max_countries
 
 
 @app.callback(
-    Output("country-slider", "value", allow_duplicate=True),
     Output("country-count-input", "value", allow_duplicate=True),
-    Input("country-slider", "value"),
     Input("country-count-input", "value"),
-    State("country-slider", "max"),
+    State("country-count-input", "max"),
     prevent_initial_call=True,
 )
-def sync_country_count_control(slider_value, input_value, max_countries):
-    triggered_id = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else "country-slider"
-    raw_value = input_value if triggered_id == "country-count-input" else slider_value
-    value = clamp_country_count(raw_value, max_countries)
-    return value, value
+def clamp_country_count_input(country_count, max_countries):
+    return clamp_country_count(country_count, max_countries)
 
 
 @app.callback(
@@ -930,7 +920,7 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
     Output("country-map", "figure"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
-    Input("country-slider", "value"),
+    Input("country-count-input", "value"),
     Input("language-selector", "value"),
 )
 def update_map_context(selected_ages, selected_workstyles, country_count, lang):
