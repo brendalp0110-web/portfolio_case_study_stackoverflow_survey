@@ -96,11 +96,6 @@ def load_country_centroids() -> pd.DataFrame:
     return centroids.rename(columns={"name": "country_lookup"})
 
 
-def selected_or_all(selected: Iterable[str] | None, available: list[str]) -> list[str]:
-    values = list(selected or [])
-    return values if values else available
-
-
 def filter_dataset(df: pd.DataFrame, ages: Iterable[str] | None, workstyles: Iterable[str] | None) -> pd.DataFrame:
     filtered = df.copy()
     selected_ages = list(ages or [])

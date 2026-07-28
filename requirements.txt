@@ -1,6 +1,5 @@
 beautifulsoup4==4.15.0
 dash
-gunicorn
 ipykernel==7.3.0
 matplotlib==3.11.1
 numpy==2.5.1

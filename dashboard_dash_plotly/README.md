@@ -25,17 +25,25 @@ Open:
 http://127.0.0.1:8050
 ```
 
-## Deploy On Render
+## Deploy On Plotly Cloud
 
-This repository is prepared for Render deployment as a Python Web Service:
+The official hosted dashboard is deployed on Plotly Cloud. For deployment, upload a minimal app package rather than the full project repository.
 
-- Runtime: Python 3.13.
-- Build command: `pip install --upgrade pip && pip install -r requirements.txt`.
-- Start command: `gunicorn --bind 0.0.0.0:$PORT dashboard_dash_plotly.app:server`.
-- Health check path: `/`.
-- Deployment config: `render.yaml`.
+The Plotly Cloud package should include:
 
-In Render, create a Web Service from the GitHub repository, select the target branch, keep the root directory empty because this folder is the repository root, and choose the Free instance while testing.
+- A root `app.py` file defining the Dash app.
+- `dashboard_dash_plotly/` with the dashboard source and assets.
+- `data/survey_data_cleaned_reduced.csv`.
+- `requirements.txt` with the runtime dependencies needed by the app.
+
+Recommended Plotly Cloud configuration:
+
+- Main file: `app.py`.
+- Python version: `3.13`.
+- Compute: `Sleep - Starter` while using the free workspace.
+- Environment variables: none required.
+
+The deployment package used for Plotly Cloud should keep dependencies focused on the dashboard runtime: Dash, Plotly, pandas, and NumPy.
 
 ## Current Scope
 

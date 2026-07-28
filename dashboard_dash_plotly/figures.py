@@ -7,30 +7,32 @@ from dashboard_dash_plotly import data
 
 
 COLORS = {
-    "page": "#eef1ed",
-    "surface": "#fbfcfa",
-    "text": "#17232f",
-    "muted": "#5b6978",
-    "border": "#d2dbd0",
-    "primary": "#2d7a78",
-    "accent": "#d8894f",
-    "green": "#819766",
-    "red": "#c56f55",
-    "purple": "#8d78a4",
-    "grid": "#eef3ed",
+    "page": "#f1f3ef",
+    "surface": "#fffdfa",
+    "header": "#17384c",
+    "text": "#152331",
+    "muted": "#5f6f7d",
+    "border": "#d3ddd1",
+    "primary": "#167c80",
+    "primary_deep": "#0f6166",
+    "accent": "#d4824a",
+    "sage": "#7f9465",
+    "clay": "#bf6b52",
+    "violet": "#876f98",
+    "grid": "#edf2eb",
 }
 FONT_FAMILY = "Segoe UI, Helvetica Neue, Arial, sans-serif"
 TECH_COLORS = {
-    "Languages": "#2d7a78",
-    "Databases": "#d8894f",
-    "Platforms": "#819766",
-    "Frameworks": "#8d78a4",
+    "Languages": COLORS["primary"],
+    "Databases": COLORS["accent"],
+    "Platforms": COLORS["sage"],
+    "Frameworks": COLORS["violet"],
 }
-EDUCATION_COLORS = ["#2d7a78", "#d8894f", "#819766", "#8d78a4", "#c56f55"]
+EDUCATION_COLORS = [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"]]
 WORKSTYLE_COLORS = {
-    "Remote": "#2d7a78",
-    "Hybrid": "#819766",
-    "In-person": "#c56f55",
+    "Remote": COLORS["primary"],
+    "Hybrid": COLORS["sage"],
+    "In-person": COLORS["clay"],
 }
 
 FIGURE_TEXT = {
@@ -158,9 +160,9 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         font={"family": FONT_FAMILY, "color": COLORS["text"], "size": 12},
         margin={"l": 8, "r": 34, "t": 8, "b": 38},
         hoverlabel={
-            "bgcolor": "#fbfcfa",
-            "bordercolor": "#c7d0c8",
-            "font": {"family": FONT_FAMILY, "color": "#111827", "size": 13},
+            "bgcolor": COLORS["surface"],
+            "bordercolor": COLORS["border"],
+            "font": {"family": FONT_FAMILY, "color": COLORS["text"], "size": 13},
             "align": "left",
         },
         xaxis={
@@ -228,7 +230,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
                 x=[row["count_current"], row["count_future"]],
                 y=[row[label_col], row[label_col]],
                 mode="lines",
-                line={"color": "#c7d0c8", "width": 2.4},
+                line={"color": COLORS["border"], "width": 2.4},
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -272,7 +274,7 @@ def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
             "xanchor": "right",
             "y": 1.1,
             "yanchor": "bottom",
-            "bgcolor": "rgba(251,252,250,0.9)",
+            "bgcolor": "rgba(255,253,250,0.92)",
             "bordercolor": COLORS["border"],
             "borderwidth": 1,
             "font": {"size": 11},
@@ -428,13 +430,13 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
                 "cmax": np.sqrt(tick_upper),
                 "colorscale": [
                     [0.00, "#f2ddb1"],
-                    [0.08, "#e5bd78"],
-                    [0.20, "#d8894f"],
-                    [0.45, "#9a7d67"],
-                    [0.70, "#5f8174"],
-                    [1.00, "#21696f"],
+                    [0.08, "#e2b778"],
+                    [0.20, COLORS["accent"]],
+                    [0.45, "#927f68"],
+                    [0.70, "#598177"],
+                    [1.00, COLORS["primary_deep"]],
                 ],
-                "line": {"color": "#111827", "width": 1},
+                "line": {"color": COLORS["text"], "width": 1},
                 "colorbar": {
                     "title": ft(lang, "share_pct"),
                     "tickvals": [np.sqrt(value) for value in ticks],
@@ -450,14 +452,16 @@ def country_map(df, lang: str | None = "EN") -> go.Figure:
     fig.update_geos(
         projection_type="natural earth",
         showland=True,
-        landcolor="#e1e7e4",
+        landcolor="#e1e8e2",
         showcountries=True,
         countrycolor="#ffffff",
         showocean=True,
-        oceancolor="#f6f8f6",
+        oceancolor="#f7f8f5",
         showframe=False,
         lataxis_showgrid=False,
         lonaxis_showgrid=False,
     )
     fig.update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
-    return apply_theme(fig, height=460)
+    fig = apply_theme(fig, height=450)
+    fig.update_layout(autosize=True)
+    return fig

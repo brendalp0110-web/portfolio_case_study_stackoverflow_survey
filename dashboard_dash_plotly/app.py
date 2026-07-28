@@ -21,7 +21,6 @@ VIEW_IDS = [
     "compensation",
     "country-distribution",
 ]
-
 TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
     "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
@@ -41,7 +40,6 @@ CHART_TOOLTIPS = {
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
-    "map": "Bubble size and color represent share of respondents.",
 }
 
 I18N = {
@@ -86,7 +84,7 @@ I18N = {
         "average_compensation": "Average Compensation",
         "dataset_total": "Dataset total",
         "active_filters": "Active filters",
-        "shown_on_map": "Shown on map",
+        "shown_on_map": "Active filters",
         "observed_records": "Observed records",
         "dataset_average": "Dataset average",
         "top_current": "Top Current {family}",
@@ -162,7 +160,7 @@ I18N = {
         "average_compensation": "Compensación promedio",
         "dataset_total": "Total del dataset",
         "active_filters": "Filtros activos",
-        "shown_on_map": "Mostrados en mapa",
+        "shown_on_map": "Filtros activos",
         "observed_records": "Registros observados",
         "dataset_average": "Promedio del dataset",
         "top_current": "Top actual: {family}",
@@ -207,7 +205,6 @@ I18N = {
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
-            "map": "El tamaño y color representan el porcentaje de encuestados.",
         },
     },
 }
@@ -281,6 +278,9 @@ def kpi_card(title: str, total: str, total_label: str, filtered: str, filtered_l
 def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
     graph_config = {"displaylogo": False}
     card_class = "chart-card map-card" if graph_id == "country-map" else "chart-card"
+    graph_class = "chart-graph map-graph" if graph_id == "country-map" else "chart-graph"
+    if graph_id == "country-map":
+        graph_config["responsive"] = True
     title_row = [html.H3(title, id=f"{graph_id}-title")]
     if graph_id != "country-map":
         title_row.append(info_icon(tooltip, icon_id=f"{graph_id}-info"))
@@ -290,7 +290,7 @@ def chart_card(title: str, tooltip: str, graph_id: str) -> html.Div:
                 title_row,
                 className="chart-title-row",
             ),
-            dcc.Graph(id=graph_id, config=graph_config, className="chart-graph"),
+            dcc.Graph(id=graph_id, config=graph_config, className=graph_class),
         ],
         className=card_class,
     )
@@ -331,6 +331,15 @@ def technology_section(family: str) -> html.Section:
 
 def nav_button(view_id: str) -> html.Button:
     return html.Button("", id=f"nav-{view_id}", className="nav-button")
+
+
+def nav_rail_icon(view_id: str) -> html.Span:
+    return html.Span(className=f"nav-rail-icon nav-rail-icon-{view_id}")
+
+
+def nav_rail_button(view_id: str) -> html.Button:
+    return html.Button(nav_rail_icon(view_id), id=f"nav-rail-{view_id}", className="nav-rail-button")
+
 
 
 def country_slider_marks(max_countries: int) -> dict[int, str]:
@@ -445,7 +454,7 @@ def layout() -> html.Div:
                             html.Div(
                                 [
                                     html.Div("Navigation", id="side-nav-title", className="side-nav-title"),
-                                    html.Button("‹", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
+                                    html.Button("<", id="nav-collapse", className="nav-toggle", title="Collapse navigation"),
                                 ],
                                 className="side-nav-header",
                             ),
@@ -462,7 +471,16 @@ def layout() -> html.Div:
                         id="side-nav",
                         className="side-nav",
                     ),
-                    html.Button("☰", id="nav-expand", className="nav-rail", title="Open navigation"),
+                    html.Nav(
+                        [
+                            html.Button(">", id="nav-expand", className="nav-rail-toggle", title="Open navigation"),
+                            *[nav_rail_button(view_id) for view_id in VIEW_IDS[:4]],
+                            html.Div(className="nav-rail-divider"),
+                            *[nav_rail_button(view_id) for view_id in VIEW_IDS[4:]],
+                        ],
+                        id="nav-rail",
+                        className="nav-rail hidden",
+                    ),
                     html.Main(
                         [
                             html.Div(id="kpi-row", className="kpi-grid"),
@@ -531,6 +549,7 @@ def layout() -> html.Div:
                                             html.Label("Countries shown", id="country-slider-label"),
                                             dcc.Slider(
                                                 id="country-slider",
+                                                className="teal-slider",
                                                 min=1,
                                                 max=160,
                                                 value=160,
@@ -583,6 +602,7 @@ STATIC_TEXT_OUTPUTS = [
     Output("side-nav-title", "children"),
     Output("nav-collapse", "title"),
     Output("nav-expand", "title"),
+    *[Output(f"nav-rail-{view_id}", "title") for view_id in VIEW_IDS],
     Output("comparison-nav-title", "children"),
     Output("context-nav-title", "children"),
     *[Output(f"nav-{view_id}", "children") for view_id in VIEW_IDS],
@@ -654,6 +674,7 @@ def update_static_text(lang):
         text(lang, "navigation"),
         text(lang, "collapse_navigation"),
         text(lang, "open_navigation"),
+        *nav_labels,
         text(lang, "comparison_group"),
         text(lang, "context_group"),
         *nav_labels,
@@ -721,13 +742,14 @@ def toggle_about_modal(_open_clicks, _close_clicks, class_name):
 @app.callback(
     Output("active-view", "data"),
     *[Input(f"nav-{view_id}", "n_clicks") for view_id in VIEW_IDS],
+    *[Input(f"nav-rail-{view_id}", "n_clicks") for view_id in VIEW_IDS],
     prevent_initial_call=True,
 )
 def set_active_view(*_):
     triggered = callback_context.triggered_id
     if not triggered:
         return "languages"
-    return triggered.replace("nav-", "")
+    return triggered.replace("nav-rail-", "").replace("nav-", "")
 
 
 @app.callback(
@@ -749,7 +771,7 @@ def toggle_navigation(_collapse_clicks, _expand_clicks, is_open):
 @app.callback(
     Output("body-shell", "className"),
     Output("side-nav", "className"),
-    Output("nav-expand", "className"),
+    Output("nav-rail", "className"),
     Output("content-shell", "className"),
     Input("nav-open", "data"),
 )
@@ -765,12 +787,14 @@ def update_navigation_shell(is_open):
 @app.callback(
     *[Output(view_id, "style") for view_id in VIEW_IDS],
     *[Output(f"nav-{view_id}", "className") for view_id in VIEW_IDS],
+    *[Output(f"nav-rail-{view_id}", "className") for view_id in VIEW_IDS],
     Input("active-view", "data"),
 )
 def show_active_view(active_view):
     styles = [{"display": "block" if view_id == active_view else "none"} for view_id in VIEW_IDS]
     classes = ["nav-button active" if view_id == active_view else "nav-button" for view_id in VIEW_IDS]
-    return (*styles, *classes)
+    rail_classes = ["nav-rail-button active" if view_id == active_view else "nav-rail-button" for view_id in VIEW_IDS]
+    return (*styles, *classes, *rail_classes)
 
 
 @app.callback(
