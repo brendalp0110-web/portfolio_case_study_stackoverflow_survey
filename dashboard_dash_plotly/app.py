@@ -21,16 +21,6 @@ VIEW_IDS = [
     "compensation",
     "country-distribution",
 ]
-VIEW_RAIL_LABELS = {
-    "languages": "LANG",
-    "databases": "DB",
-    "platforms": "PLAT",
-    "frameworks": "F",
-    "age-context": "AGE",
-    "compensation": "PAY",
-    "country-distribution": "MAP",
-}
-
 TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
     "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
@@ -342,8 +332,13 @@ def nav_button(view_id: str) -> html.Button:
     return html.Button("", id=f"nav-{view_id}", className="nav-button")
 
 
+def nav_rail_icon(view_id: str) -> html.Span:
+    return html.Span(className=f"nav-rail-icon nav-rail-icon-{view_id}")
+
+
 def nav_rail_button(view_id: str) -> html.Button:
-    return html.Button(VIEW_RAIL_LABELS[view_id], id=f"nav-rail-{view_id}", className="nav-rail-button")
+    return html.Button(nav_rail_icon(view_id), id=f"nav-rail-{view_id}", className="nav-rail-button")
+
 
 
 def country_slider_marks(max_countries: int) -> dict[int, str]:
