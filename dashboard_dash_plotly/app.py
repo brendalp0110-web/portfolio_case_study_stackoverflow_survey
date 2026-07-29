@@ -23,7 +23,7 @@ VIEW_IDS = [
 ]
 TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
-    "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
+    "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next. Tile area represents respondent count; larger tiles are placed higher.",
     "momentum_tooltip": (
         f"Compares current use and future interest for the {TECH_TOP_N} technologies that appear most often in either the current or future ranking. "
         "It prioritizes overall visibility, not the technologies with the biggest increase or decrease."
@@ -37,9 +37,11 @@ SECTION_COPY = {
 CHART_TOOLTIPS = {
     "age_distribution": "Respondent distribution by age group.",
     "education_composition": "Education mix by age group, normalized to 100%.",
+    "devtype_distribution": "Developer roles grouped into macro-categories after applying the active filters. Bubble size represents role mentions; hover to see the most common roles inside each group.",
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
+    "job_satisfaction": "Average job satisfaction by experience band and workstyle in the active filtered view.",
 }
 
 I18N = {
@@ -65,6 +67,10 @@ I18N = {
             (
                 "Tools",
                 "Built with Python, pandas, NumPy, Jupyter notebooks, Dash, Plotly, HTML/CSS, and Git.",
+            ),
+            (
+                "Author",
+                "Brenda López Pérez, Data Analyst. Project repository: https://github.com/brendalp0110-web/portfolio_case_study_stackoverflow_survey. LinkedIn: https://linkedin.com/in/brenda-lópez-b0a614345.",
             ),
         ],
         "global_filters": "Global filters",
@@ -94,11 +100,13 @@ I18N = {
         "age_context_text": SECTION_COPY["age_context"],
         "age_distribution": "Age Distribution",
         "education_composition": "Education Level Composition by Age Group",
+        "devtype_distribution": "Developer Role Distribution",
         "compensation": "Compensation by Experience",
         "compensation_text": SECTION_COPY["compensation"],
         "remote_compensation": "Remote Compensation",
         "hybrid_compensation": "Hybrid Compensation",
         "inperson_compensation": "In-person Compensation",
+        "job_satisfaction": "Job Satisfaction by Experience and Workstyle",
         "country_distribution": "Country Distribution",
         "country_text": SECTION_COPY["country"],
         "countries_shown": "Countries shown",
@@ -142,6 +150,10 @@ I18N = {
                 "Herramientas",
                 "Construido con Python, pandas, NumPy, notebooks Jupyter, Dash, Plotly, HTML/CSS y Git.",
             ),
+            (
+                "Autora",
+                "Brenda López Pérez, Data Analyst. Repositorio del proyecto: https://github.com/brendalp0110-web/portfolio_case_study_stackoverflow_survey. LinkedIn: https://linkedin.com/in/brenda-lópez-b0a614345.",
+            ),
         ],
         "global_filters": "Filtros globales",
         "filter_help": "Edad y modalidad definen la vista activa de encuestados.",
@@ -170,11 +182,13 @@ I18N = {
         "age_context_text": "Perfila la composición de encuestados por edad y educación bajo los filtros activos.",
         "age_distribution": "Distribución por edad",
         "education_composition": "Composición educativa por grupo de edad",
+        "devtype_distribution": "Distribución de roles de desarrollo",
         "compensation": "Compensación por experiencia",
         "compensation_text": "Compara los rangos de compensación observada por experiencia y modalidad de trabajo.",
         "remote_compensation": "Compensación remota",
         "hybrid_compensation": "Compensación híbrida",
         "inperson_compensation": "Compensación presencial",
+        "job_satisfaction": "Satisfacción laboral por experiencia y modalidad",
         "country_distribution": "Distribución por país",
         "country_text": "Explora la concentración geográfica. El control local define cuántos países aparecen en el mapa.",
         "countries_shown": "Países mostrados",
@@ -195,16 +209,18 @@ I18N = {
         },
         "tooltips": {
             "current_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas en uso actual para esta familia bajo los filtros activos.",
-            "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después para esta familia bajo los filtros activos.",
+            "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después. El área de cada bloque representa el conteo de encuestados; los bloques más grandes quedan más arriba.",
             "momentum_tooltip": (
                 f"Compara uso actual e interés futuro para las {TECH_TOP_N} tecnologías que aparecen con más frecuencia en el ranking actual o futuro. "
                 "Prioriza visibilidad general, no las tecnologías con mayor subida o caída."
             ),
             "age_distribution": "Distribución de encuestados por grupo de edad.",
             "education_composition": "Composición educativa por edad, normalizada a 100%.",
+            "devtype_distribution": "Roles de desarrollo agrupados en macro-categorías después de aplicar los filtros activos. El tamaño de la burbuja representa menciones de rol; pasa el cursor para ver los roles más comunes dentro de cada grupo.",
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
+            "job_satisfaction": "Satisfacción laboral promedio por experiencia y modalidad en la vista filtrada activa.",
         },
     },
 }
@@ -243,12 +259,45 @@ def info_icon(content: str, icon_id: str | None = None) -> html.Span:
     return html.Span("i", id=icon_id, title=content, className="info-icon")
 
 
+def about_link_label(url: str, lang: str | None) -> str:
+    normalized_lang = normalize_lang(lang)
+    if "github.com/brendalp0110-web" in url:
+        return "project repository" if normalized_lang == "EN" else "repositorio del proyecto"
+    if "linkedin.com/in/" in url:
+        return "LinkedIn"
+    if "survey.stackoverflow.co/2024" in url:
+        return "Stack Overflow Developer Survey 2024"
+    return url
+
+
+def about_description_content(description: str, lang: str | None) -> list:
+    content: list = []
+    remaining = description
+    while "https://" in remaining:
+        before, after = remaining.split("https://", 1)
+        if before:
+            content.append(before)
+        raw_url, separator, rest = after.partition(" ")
+        trailing = ""
+        while raw_url and raw_url[-1] in ".,);]":
+            trailing = raw_url[-1] + trailing
+            raw_url = raw_url[:-1]
+        url = f"https://{raw_url}"
+        content.append(html.A(about_link_label(url, lang), href=url, target="_blank", rel="noopener noreferrer"))
+        if trailing:
+            content.append(trailing)
+        remaining = rest if separator else ""
+    if remaining:
+        content.append(remaining)
+    return content or [description]
+
+
 def about_modal_body(lang: str | None) -> list[html.Div]:
     return [
         html.Div(
             [
                 html.H3(title),
-                html.P(description),
+                html.P(about_description_content(description, lang)),
             ],
             className="about-section",
         )
@@ -508,6 +557,14 @@ def layout() -> html.Div:
                                         ],
                                         className="chart-grid two",
                                     ),
+                                    html.Div(
+                                        chart_card(
+                                            "Developer Role Distribution",
+                                            CHART_TOOLTIPS["devtype_distribution"],
+                                            "devtype-distribution",
+                                        ),
+                                        className="devtype-row",
+                                    ),
                                 ],
                                 id="age-context",
                                 className="dashboard-section view-section",
@@ -529,6 +586,14 @@ def layout() -> html.Div:
                                             chart_card("In-person Compensation", CHART_TOOLTIPS["inperson_compensation"], "inperson-compensation"),
                                         ],
                                         className="chart-grid three",
+                                    ),
+                                    html.Div(
+                                        chart_card(
+                                            "Job Satisfaction by Experience and Workstyle",
+                                            CHART_TOOLTIPS["job_satisfaction"],
+                                            "job-satisfaction",
+                                        ),
+                                        className="wide-row",
                                     ),
                                 ],
                                 id="compensation",
@@ -653,6 +718,8 @@ STATIC_TEXT_OUTPUTS = [
     Output("age-distribution-info", "title"),
     Output("education-composition-title", "children"),
     Output("education-composition-info", "title"),
+    Output("devtype-distribution-title", "children"),
+    Output("devtype-distribution-info", "title"),
     Output("compensation-title", "children"),
     Output("compensation-copy", "children"),
     Output("remote-compensation-title", "children"),
@@ -661,6 +728,8 @@ STATIC_TEXT_OUTPUTS = [
     Output("hybrid-compensation-info", "title"),
     Output("inperson-compensation-title", "children"),
     Output("inperson-compensation-info", "title"),
+    Output("job-satisfaction-title", "children"),
+    Output("job-satisfaction-info", "title"),
     Output("country-title", "children"),
     Output("country-copy", "children"),
     Output("country-count-label", "children"),
@@ -726,6 +795,8 @@ def update_static_text(lang):
         tooltips["age_distribution"],
         text(lang, "education_composition"),
         tooltips["education_composition"],
+        text(lang, "devtype_distribution"),
+        tooltips["devtype_distribution"],
         text(lang, "compensation"),
         text(lang, "compensation_text"),
         text(lang, "remote_compensation"),
@@ -734,6 +805,8 @@ def update_static_text(lang):
         tooltips["hybrid_compensation"],
         text(lang, "inperson_compensation"),
         tooltips["inperson_compensation"],
+        text(lang, "job_satisfaction"),
+        tooltips["job_satisfaction"],
         text(lang, "country_distribution"),
         text(lang, "country_text"),
         text(lang, "countries_shown"),
@@ -871,9 +944,11 @@ def clamp_country_count_input(country_count, max_countries):
     *[Output(f"{family.lower()}-momentum", "figure") for family in TECH_FAMILIES],
     Output("age-distribution", "figure"),
     Output("education-composition", "figure"),
+    Output("devtype-distribution", "figure"),
     Output("remote-compensation", "figure"),
     Output("hybrid-compensation", "figure"),
     Output("inperson-compensation", "figure"),
+    Output("job-satisfaction", "figure"),
     Input("age-filter", "value"),
     Input("workstyle-filter", "value"),
     Input("language-selector", "value"),
@@ -891,7 +966,7 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
         future = data.top_multiselect_counts(filtered, config["future"], TECH_TOP_N, config["label"])
         comparison = data.comparison_table(filtered, config["current"], config["future"], TECH_TOP_N, config["label"])
         current_figs.append(figures.horizontal_bar(current, config["label"], color, lang))
-        future_figs.append(figures.horizontal_bar(future, config["label"], color, lang))
+        future_figs.append(figures.vertical_treemap(future, config["label"], family, lang))
         momentum_figs.append(figures.dumbbell(comparison, config["label"], lang))
 
     compensation = data.compensation_records(filtered)
@@ -899,9 +974,11 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
     compensation_y_max = float(compensation_summary["upper"].max() * 1.1) if not compensation_summary.empty else 1.0
     age_distribution_fig = figures.age_bar(data.age_distribution(filtered), lang)
     education_fig = figures.education_stack(data.age_education_distribution(filtered), lang)
+    devtype_fig = figures.devtype_packed_bubbles(data.devtype_distribution(filtered), lang)
     remote_fig = figures.compensation_box(compensation_summary, "Remote", compensation_y_max, lang)
     hybrid_fig = figures.compensation_box(compensation_summary, "Hybrid", compensation_y_max, lang)
     inperson_fig = figures.compensation_box(compensation_summary, "In-person", compensation_y_max, lang)
+    job_satisfaction_fig = figures.job_satisfaction_lines(data.job_satisfaction_by_experience(filtered), lang)
 
     return (
         *current_figs,
@@ -909,9 +986,11 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
         *momentum_figs,
         age_distribution_fig,
         education_fig,
+        devtype_fig,
         remote_fig,
         hybrid_fig,
         inperson_fig,
+        job_satisfaction_fig,
     )
 
 

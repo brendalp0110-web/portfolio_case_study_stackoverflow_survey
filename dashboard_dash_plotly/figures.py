@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import plotly.graph_objects as go
 
@@ -34,6 +36,13 @@ WORKSTYLE_COLORS = {
     "Hybrid": COLORS["sage"],
     "In-person": COLORS["clay"],
 }
+TREEMAP_TILE_COLORS = {
+    "Languages": [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+    "Databases": [COLORS["accent"], COLORS["primary"], COLORS["sage"], COLORS["clay"], COLORS["violet"], "#b79b61", "#4f7892", "#697b8c", "#d19a66", "#2f6f73"],
+    "Platforms": [COLORS["sage"], COLORS["primary"], COLORS["accent"], COLORS["clay"], COLORS["violet"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+    "Frameworks": [COLORS["violet"], COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+}
+DEVTYPE_COLORS = [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73"]
 
 FIGURE_TEXT = {
     "EN": {
@@ -54,6 +63,12 @@ FIGURE_TEXT = {
         "share": "Share",
         "share_pct": "Share %",
         "respondents": "Respondents",
+        "role_mentions": "Role mentions",
+        "share_of_role_mentions": "Share of role mentions",
+        "roles_included": "Top roles",
+        "distinct_roles": "Distinct roles",
+        "average_job_sat": "Average JobSat",
+        "median_job_sat": "Median JobSat",
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
@@ -80,6 +95,12 @@ FIGURE_TEXT = {
         "share": "Porcentaje",
         "share_pct": "Porcentaje",
         "respondents": "Encuestados",
+        "role_mentions": "Menciones de rol",
+        "share_of_role_mentions": "Porcentaje de menciones de rol",
+        "roles_included": "Roles principales",
+        "distinct_roles": "Roles distintos",
+        "average_job_sat": "JobSat promedio",
+        "median_job_sat": "JobSat mediana",
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
@@ -99,6 +120,91 @@ def hex_to_rgba(hex_color: str, alpha: float) -> str:
     hex_color = hex_color.lstrip("#")
     red, green, blue = (int(hex_color[index : index + 2], 16) for index in (0, 2, 4))
     return f"rgba({red}, {green}, {blue}, {alpha})"
+
+
+def readable_text_color(hex_color: str) -> str:
+    hex_color = hex_color.lstrip("#")
+    red, green, blue = (int(hex_color[index : index + 2], 16) for index in (0, 2, 4))
+    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    return "#ffffff" if luminance < 142 else COLORS["text"]
+
+
+def short_technology_label(value: str) -> str:
+    replacements = {
+        "Bash/Shell (all shells)": "Bash/Shell",
+        "Amazon Web Services (AWS)": "AWS",
+        "Microsoft Azure": "Azure",
+        "Oracle Cloud Infrastructure (OCI)": "Oracle OCI",
+        "Firebase Realtime Database": "Firebase RTDB",
+        "Google Cloud Firestore": "Firestore",
+        "ASP.NET CORE": "ASP.NET Core",
+    }
+    return replacements.get(value, value)
+
+
+def devtype_group_label(value: str, lang: str | None = "EN") -> str:
+    labels = {
+        "Core software development": ("Core software development", "Desarrollo de software"),
+        "Leadership & product": ("Leadership & product", "Liderazgo y producto"),
+        "Infrastructure, cloud & operations": ("Infrastructure, cloud & operations", "Infraestructura, cloud y operaciones"),
+        "Data, analytics & AI": ("Data, analytics & AI", "Datos, analítica e IA"),
+        "Research & education": ("Research & education", "Investigación y educación"),
+        "Unspecified": ("Unspecified", "No especificado"),
+        "Developer relations & experience": ("Developer relations & experience", "Relaciones y experiencia dev"),
+        "Security": ("Security", "Seguridad"),
+        "Design & commercial": ("Design & commercial", "Diseño y comercial"),
+    }
+    if value in labels:
+        return labels[value][1 if lang == "ES" else 0]
+    return value
+
+
+def compact_role_label(value: str, lang: str | None = "EN") -> str:
+    labels = {
+        "Developer, full-stack": ("Full-stack", "Full-stack"),
+        "Developer, back-end": ("Back-end", "Back-end"),
+        "Developer, front-end": ("Front-end", "Front-end"),
+        "Developer, desktop or enterprise applications": ("Desktop / enterprise", "Desktop / enterprise"),
+        "Developer, mobile": ("Mobile", "Móvil"),
+        "Developer, embedded applications or devices": ("Embedded", "Embedded"),
+        "Developer, game or graphics": ("Game / graphics", "Juegos / gráficos"),
+        "Developer, QA or test": ("QA / test", "QA / test"),
+        "Developer, AI": ("AI developer", "Dev IA"),
+        "Data engineer": ("Data engineer", "Data engineer"),
+        "Data scientist or machine learning specialist": ("Data scientist / ML", "Data scientist / ML"),
+        "Data or business analyst": ("Data / business analyst", "Analista datos / negocio"),
+        "Scientist": ("Scientist", "Científico"),
+        "DevOps specialist": ("DevOps", "DevOps"),
+        "Cloud infrastructure engineer": ("Cloud infra.", "Infra. cloud"),
+        "Engineer, site reliability": ("SRE", "SRE"),
+        "System administrator": ("Sysadmin", "Sysadmin"),
+        "Database administrator": ("DBA", "DBA"),
+        "Blockchain": ("Blockchain", "Blockchain"),
+        "Hardware Engineer": ("Hardware", "Hardware"),
+        "Engineering manager": ("Eng. manager", "Eng. manager"),
+        "Senior Executive (C-Suite, VP, etc.)": ("Executive", "Ejecutivo"),
+        "Project manager": ("Project manager", "Project manager"),
+        "Product manager": ("Product manager", "Product manager"),
+        "Research & Development role": ("R&D", "I+D"),
+        "Academic researcher": ("Academic researcher", "Investigador académico"),
+        "Educator": ("Educator", "Educador"),
+        "Student": ("Student", "Estudiante"),
+        "Developer Experience": ("DevEx", "DevEx"),
+        "Developer Advocate": ("Dev advocate", "Dev advocate"),
+        "Security professional": ("Security", "Seguridad"),
+        "Designer": ("Designer", "Diseñador"),
+        "Marketing or sales professional": ("Marketing / sales", "Marketing / ventas"),
+        "Other (please specify):": ("Unspecified", "No especificado"),
+    }
+    if value in labels:
+        return labels[value][1 if lang == "ES" else 0]
+    return value.replace("Developer, ", "")
+
+
+def compact_roles_list(value: str, role_count: int, lang: str | None = "EN") -> str:
+    roles = [compact_role_label(role, lang) for role in value.split("; ") if role]
+    suffix = " etc." if role_count > len(roles) else ""
+    return ", ".join(roles) + suffix
 
 
 def format_share_pct(value: float, decimal_separator: str = ".") -> str:
@@ -219,6 +325,116 @@ def horizontal_bar(df, label_col: str, title_color: str, lang: str | None = "EN"
     fig.update_yaxes(title_text="")
     fig.update_layout(barcornerradius=5)
     return apply_theme(fig, height=max(330, 29 * len(chart) + 86))
+
+
+def vertical_treemap(df, label_col: str, family: str, lang: str | None = "EN") -> go.Figure:
+    chart = df.sort_values("count", ascending=False).reset_index(drop=True).copy()
+    if chart.empty:
+        return apply_theme(go.Figure(), height=335)
+
+    chart["rank"] = np.arange(1, len(chart) + 1)
+    top_total = max(float(chart["count"].sum()), 1.0)
+    row_groups = [chart.iloc[0:3], chart.iloc[3:6], chart.iloc[6:10]]
+    colors = TREEMAP_TILE_COLORS.get(family, TREEMAP_TILE_COLORS["Languages"])
+
+    fig = go.Figure()
+    annotations = []
+    hover_x = []
+    hover_y = []
+    hover_custom = []
+    hover_text = []
+    y_top = 100.0
+    color_index = 0
+
+    for row_df in row_groups:
+        if row_df.empty:
+            continue
+        row_height = 100.0 * row_df["count"].sum() / top_total
+        y0 = y_top - row_height
+        x0 = 0.0
+        row_total = max(float(row_df["count"].sum()), 1.0)
+        for row in row_df.itertuples(index=False):
+            width = 100.0 * float(row.count) / row_total
+            color = colors[color_index % len(colors)]
+            text_color = readable_text_color(color)
+            label = short_technology_label(getattr(row, label_col))
+            tile_area = width * row_height
+            fig.add_shape(
+                type="rect",
+                x0=x0,
+                y0=y0,
+                x1=x0 + width,
+                y1=y_top,
+                line={"color": COLORS["surface"], "width": 3},
+                fillcolor=color,
+                opacity=0.96,
+            )
+            if tile_area > 440:
+                annotations.extend(
+                    [
+                        {
+                            "x": x0 + 1.2,
+                            "y": y_top - 3,
+                            "text": f"#{int(row.rank)} {label}",
+                            "showarrow": False,
+                            "xanchor": "left",
+                            "yanchor": "top",
+                            "font": {"color": text_color, "size": 13, "family": FONT_FAMILY},
+                        },
+                        {
+                            "x": x0 + 1.2,
+                            "y": y0 + 2.4,
+                            "text": f"{int(row.count):,} | {float(row.share_pct):.1f}%",
+                            "showarrow": False,
+                            "xanchor": "left",
+                            "yanchor": "bottom",
+                            "font": {"color": text_color, "size": 11, "family": FONT_FAMILY},
+                        },
+                    ]
+                )
+            elif tile_area > 200:
+                annotations.append(
+                    {
+                        "x": x0 + width / 2,
+                        "y": y0 + row_height / 2,
+                        "text": f"#{int(row.rank)}<br>{label}<br>{float(row.share_pct):.1f}%",
+                        "showarrow": False,
+                        "xanchor": "center",
+                        "yanchor": "middle",
+                        "font": {"color": text_color, "size": 10, "family": FONT_FAMILY},
+                    }
+                )
+            hover_x.append(x0 + width / 2)
+            hover_y.append(y0 + row_height / 2)
+            hover_text.append(label)
+            hover_custom.append([row.rank, row.count, row.share_pct])
+            x0 += width
+            color_index += 1
+        y_top = y0
+
+    fig.add_trace(
+        go.Scatter(
+            x=hover_x,
+            y=hover_y,
+            text=hover_text,
+            customdata=hover_custom,
+            mode="markers",
+            marker={"size": 18, "opacity": 0},
+            hovertemplate=(
+                "<b>%{text}</b><br>"
+                "Rank: #%{customdata[0]:.0f}<br>"
+                f"{ft(lang, 'respondent_count')}: %{{customdata[1]:,.0f}}<br>"
+                f"{ft(lang, 'share_of_respondents')}: %{{customdata[2]:.1f}}%<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
+    fig.update_layout(annotations=annotations)
+    fig.update_xaxes(visible=False, range=[0, 100], fixedrange=True)
+    fig.update_yaxes(visible=False, range=[0, 100], fixedrange=True)
+    fig = apply_theme(fig, height=335)
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 4, "b": 4}, dragmode=False)
+    return fig
 
 
 def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
@@ -348,6 +564,111 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
     return fig
 
 
+def circle_pack_positions(radii: list[float]) -> list[tuple[float, float]]:
+    positions: list[tuple[float, float]] = []
+    for index, radius in enumerate(radii):
+        if index == 0:
+            positions.append((0.0, 0.0))
+            continue
+
+        best: tuple[float, float] | None = None
+        best_distance = float("inf")
+        max_extent = max([abs(x) + r for (x, _y), r in zip(positions, radii[:index], strict=False)] + [radius])
+        for search_radius in np.linspace(radius, max_extent + radius * 5.8, 110):
+            for angle in np.linspace(0, 2 * math.pi, 160, endpoint=False):
+                x = math.cos(angle) * search_radius
+                y = math.sin(angle) * search_radius
+                overlaps = any(
+                    math.hypot(x - px, y - py) < radius + previous_radius + 0.035
+                    for (px, py), previous_radius in zip(positions, radii[:index], strict=False)
+                )
+                if overlaps:
+                    continue
+                distance = math.hypot(x, y)
+                if distance < best_distance:
+                    best = (x, y)
+                    best_distance = distance
+            if best is not None:
+                break
+        positions.append(best or (max_extent + radius, 0.0))
+    return positions
+
+
+def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
+    chart = df.sort_values("count", ascending=False).reset_index(drop=True).copy()
+    if chart.empty:
+        return apply_theme(go.Figure(), height=430)
+
+    chart["rank"] = np.arange(1, len(chart) + 1)
+    max_count = max(float(chart["count"].max()), 1.0)
+    bubble_scale = 1.72
+    bubble_floor = 0.3
+    radii = (np.sqrt(chart["count"] / max_count) * bubble_scale + bubble_floor).tolist()
+    positions = circle_pack_positions(radii)
+    colors = [DEVTYPE_COLORS[index % len(DEVTYPE_COLORS)] for index in range(len(chart))]
+
+    fig = go.Figure()
+    for row, position, radius, color in zip(chart.itertuples(index=False), positions, radii, colors, strict=False):
+        label = devtype_group_label(row.devtype_group, lang)
+        text_color = readable_text_color(color)
+        roles_included = compact_roles_list(row.roles_included, int(row.role_count), lang)
+        fig.add_trace(
+            go.Scatter(
+                x=[position[0]],
+                y=[position[1]],
+                mode="markers+text",
+                text=[f"{int(row.rank)}"],
+                name=f"#{int(row.rank)} {label}",
+                textposition="middle center",
+                textfont={"family": FONT_FAMILY, "size": 13, "color": text_color},
+                marker={
+                    "size": radius * 82,
+                    "color": color,
+                    "opacity": 0.92,
+                    "line": {"color": COLORS["surface"], "width": 2.4},
+                },
+                customdata=[[label, row.count, row.share_pct, row.role_count, roles_included]],
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>"
+                    f"{ft(lang, 'role_mentions')}: %{{customdata[1]:,.0f}}<br>"
+                    f"{ft(lang, 'share_of_role_mentions')}: %{{customdata[2]:.1f}}%<br>"
+                    f"{ft(lang, 'distinct_roles')}: %{{customdata[3]:,.0f}}<br>"
+                    f"{ft(lang, 'roles_included')}: %{{customdata[4]}}<extra></extra>"
+                ),
+                showlegend=True,
+            )
+        )
+    extents = [
+        value
+        for (x, y), radius in zip(positions, radii, strict=False)
+        for value in (x - radius, x + radius, y - radius, y + radius)
+    ]
+    min_x = min(x - radius for (x, _y), radius in zip(positions, radii, strict=False))
+    max_x = max(x + radius for (x, _y), radius in zip(positions, radii, strict=False))
+    min_y = min(y - radius for (_x, y), radius in zip(positions, radii, strict=False))
+    max_y = max(y + radius for (_x, y), radius in zip(positions, radii, strict=False))
+    pad = max((max(extents) - min(extents)) * 0.015, 0.16)
+    fig.update_xaxes(visible=False, range=[min_x - pad, max_x + pad], fixedrange=True)
+    fig.update_yaxes(visible=False, range=[min_y - pad, max_y + pad], fixedrange=True, scaleanchor="x", scaleratio=1)
+    fig = apply_theme(fig, height=400)
+    fig.update_layout(
+        margin={"l": 0, "r": 210, "t": 2, "b": 2},
+        dragmode=False,
+        legend={
+            "orientation": "v",
+            "x": 1.0,
+            "xanchor": "left",
+            "y": 0.5,
+            "yanchor": "middle",
+            "bgcolor": "rgba(255,253,250,0)",
+            "borderwidth": 0,
+            "font": {"family": FONT_FAMILY, "size": 12, "color": COLORS["text"]},
+            "itemsizing": "constant",
+        },
+    )
+    return fig
+
+
 def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None = "EN") -> go.Figure:
     chart = summary_df[summary_df["workstyle"] == workstyle].copy()
     if not chart.empty:
@@ -403,6 +724,54 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
     fig.update_yaxes(title_text=ft(lang, "annual_compensation"), range=[0, max(y_max, 1)])
     fig.update_layout(legend={"orientation": "h", "x": 1, "xanchor": "right", "y": 1.08, "yanchor": "bottom"})
     return apply_theme(fig, height=420)
+
+
+def job_satisfaction_lines(summary_df, lang: str | None = "EN") -> go.Figure:
+    chart = summary_df.copy()
+    fig = go.Figure()
+    for workstyle, color in WORKSTYLE_COLORS.items():
+        series = chart[chart["workstyle"] == workstyle].copy()
+        if series.empty:
+            continue
+        series["experience_hover"] = series["experience_band"].map(lambda value: experience_label(str(value), lang))
+        fig.add_trace(
+            go.Scatter(
+                x=series["experience_short"],
+                y=series["mean"],
+                mode="lines+markers+text",
+                name=workstyle,
+                line={"color": color, "width": 3},
+                marker={"size": 9, "color": color, "line": {"color": COLORS["surface"], "width": 1.8}},
+                text=series["mean"].map(lambda value: f"{value:.1f}"),
+                textposition="top center",
+                textfont={"family": FONT_FAMILY, "size": 11, "color": COLORS["muted"]},
+                customdata=series[["experience_hover", "median", "count"]],
+                hovertemplate=(
+                    "<b>%{fullData.name}</b><br>"
+                    "%{customdata[0]}<br>"
+                    f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
+                    f"{ft(lang, 'median_job_sat')}: %{{customdata[1]:.1f}}<br>"
+                    f"{ft(lang, 'records')}: %{{customdata[2]:,.0f}}<extra></extra>"
+                ),
+            )
+        )
+    fig.update_xaxes(title_text=ft(lang, "years_experience"), categoryorder="array", categoryarray=[band.replace(" years", "") for band in data.EXPERIENCE_BAND_ORDER])
+    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), rangemode="tozero")
+    fig.update_layout(
+        legend={
+            "orientation": "h",
+            "x": 1,
+            "xanchor": "right",
+            "y": 1.08,
+            "yanchor": "bottom",
+            "bgcolor": "rgba(255,253,250,0.92)",
+            "bordercolor": COLORS["border"],
+            "borderwidth": 1,
+        }
+    )
+    fig = apply_theme(fig, height=380)
+    fig.update_layout(margin={"l": 8, "r": 28, "t": 26, "b": 42})
+    return fig
 
 
 def country_map(df, lang: str | None = "EN") -> go.Figure:

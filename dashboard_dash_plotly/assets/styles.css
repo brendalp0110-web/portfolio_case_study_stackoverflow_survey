@@ -130,8 +130,8 @@ body {
 }
 
 .about-modal-card {
-  width: min(680px, 100%);
-  max-height: min(720px, 86vh);
+  width: min(980px, 96vw);
+  max-height: min(880px, 94vh);
   overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -174,8 +174,8 @@ body {
 
 .about-modal-body {
   display: grid;
-  gap: 16px;
-  padding: 18px 22px 22px;
+  gap: 14px;
+  padding: 18px 24px 24px;
 }
 
 .about-section h3 {
@@ -190,6 +190,17 @@ body {
   color: var(--muted);
   font-size: var(--text-md);
   line-height: 1.55;
+}
+
+.about-section a {
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.about-section a:hover {
+  color: var(--primary-deep);
+  text-decoration: underline;
 }
 
 .language-toggle {
@@ -656,6 +667,14 @@ body {
 }
 
 .dumbbell-row {
+  margin-top: 18px;
+}
+
+.wide-row {
+  margin-top: 18px;
+}
+
+.devtype-row {
   margin-top: 18px;
 }
 
