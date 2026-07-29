@@ -159,6 +159,23 @@ def devtype_group_label(value: str, lang: str | None = "EN") -> str:
     return value
 
 
+def compact_devtype_group_label(value: str, lang: str | None = "EN") -> str:
+    labels = {
+        "Core software development": ("Core software dev", "Desarrollo software"),
+        "Leadership & product": ("Leadership/product", "Liderazgo/producto"),
+        "Infrastructure, cloud & operations": ("Infra/cloud/ops", "Infra/cloud/ops"),
+        "Data, analytics & AI": ("Data/analytics/AI", "Datos/analítica/IA"),
+        "Research & education": ("Research/education", "Investigación/educación"),
+        "Unspecified": ("Unspecified", "No especificado"),
+        "Developer relations & experience": ("DevRel/DevEx", "DevRel/DevEx"),
+        "Security": ("Security", "Seguridad"),
+        "Design & commercial": ("Design/commercial", "Diseño/comercial"),
+    }
+    if value in labels:
+        return labels[value][1 if lang == "ES" else 0]
+    return devtype_group_label(value, lang)
+
+
 def compact_role_label(value: str, lang: str | None = "EN") -> str:
     labels = {
         "Developer, full-stack": ("Full-stack", "Full-stack"),
@@ -556,7 +573,7 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
             "xanchor": "left",
             "y": 1.08,
             "yanchor": "bottom",
-            "font": {"size": 9},
+            "font": {"family": FONT_FAMILY, "size": 11, "color": COLORS["text"]},
             "itemsizing": "constant",
         },
         margin={"l": 8, "r": 28, "t": 42, "b": 40},
@@ -565,6 +582,7 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
 
 
 def circle_pack_positions(radii: list[float]) -> list[tuple[float, float]]:
+    gap = -0.12
     positions: list[tuple[float, float]] = []
     for index, radius in enumerate(radii):
         if index == 0:
@@ -579,7 +597,7 @@ def circle_pack_positions(radii: list[float]) -> list[tuple[float, float]]:
                 x = math.cos(angle) * search_radius
                 y = math.sin(angle) * search_radius
                 overlaps = any(
-                    math.hypot(x - px, y - py) < radius + previous_radius + 0.035
+                    math.hypot(x - px, y - py) < radius + previous_radius + gap
                     for (px, py), previous_radius in zip(positions, radii[:index], strict=False)
                 )
                 if overlaps:
@@ -601,31 +619,49 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
 
     chart["rank"] = np.arange(1, len(chart) + 1)
     max_count = max(float(chart["count"].max()), 1.0)
-    bubble_scale = 1.72
-    bubble_floor = 0.3
+    bubble_scale = 1.88
+    bubble_floor = 0.36
     radii = (np.sqrt(chart["count"] / max_count) * bubble_scale + bubble_floor).tolist()
     positions = circle_pack_positions(radii)
     colors = [DEVTYPE_COLORS[index % len(DEVTYPE_COLORS)] for index in range(len(chart))]
 
     fig = go.Figure()
+    annotations = []
     for row, position, radius, color in zip(chart.itertuples(index=False), positions, radii, colors, strict=False):
         label = devtype_group_label(row.devtype_group, lang)
         text_color = readable_text_color(color)
         roles_included = compact_roles_list(row.roles_included, int(row.role_count), lang)
+        fig.add_shape(
+            type="circle",
+            x0=position[0] - radius,
+            y0=position[1] - radius,
+            x1=position[0] + radius,
+            y1=position[1] + radius,
+            fillcolor=color,
+            opacity=0.94,
+            line={"color": color, "width": 0},
+        )
+        annotations.append(
+            {
+                "x": position[0],
+                "y": position[1],
+                "text": f"{int(row.rank)}",
+                "showarrow": False,
+                "xanchor": "center",
+                "yanchor": "middle",
+                "font": {"family": FONT_FAMILY, "size": 13, "color": text_color},
+            }
+        )
         fig.add_trace(
             go.Scatter(
                 x=[position[0]],
                 y=[position[1]],
-                mode="markers+text",
-                text=[f"{int(row.rank)}"],
-                name=f"#{int(row.rank)} {label}",
-                textposition="middle center",
-                textfont={"family": FONT_FAMILY, "size": 13, "color": text_color},
+                mode="markers",
                 marker={
-                    "size": radius * 82,
+                    "size": max(radius * 76, 24),
                     "color": color,
-                    "opacity": 0.92,
-                    "line": {"color": COLORS["surface"], "width": 2.4},
+                    "opacity": 0,
+                    "line": {"width": 0},
                 },
                 customdata=[[label, row.count, row.share_pct, row.role_count, roles_included]],
                 hovertemplate=(
@@ -635,6 +671,17 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
                     f"{ft(lang, 'distinct_roles')}: %{{customdata[3]:,.0f}}<br>"
                     f"{ft(lang, 'roles_included')}: %{{customdata[4]}}<extra></extra>"
                 ),
+                showlegend=False,
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name=f"#{int(row.rank)} {compact_devtype_group_label(row.devtype_group, lang)}",
+                marker={"size": 10, "color": color, "opacity": 1, "line": {"width": 0}},
+                hoverinfo="skip",
                 showlegend=True,
             )
         )
@@ -647,23 +694,26 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
     max_x = max(x + radius for (x, _y), radius in zip(positions, radii, strict=False))
     min_y = min(y - radius for (_x, y), radius in zip(positions, radii, strict=False))
     max_y = max(y + radius for (_x, y), radius in zip(positions, radii, strict=False))
-    pad = max((max(extents) - min(extents)) * 0.015, 0.16)
+    pad = max((max(extents) - min(extents)) * 0.005, 0.08)
     fig.update_xaxes(visible=False, range=[min_x - pad, max_x + pad], fixedrange=True)
     fig.update_yaxes(visible=False, range=[min_y - pad, max_y + pad], fixedrange=True, scaleanchor="x", scaleratio=1)
-    fig = apply_theme(fig, height=400)
+    fig = apply_theme(fig, height=410)
     fig.update_layout(
-        margin={"l": 0, "r": 210, "t": 2, "b": 2},
+        annotations=annotations,
+        margin={"l": 0, "r": 0, "t": 86, "b": 4},
         dragmode=False,
         legend={
-            "orientation": "v",
-            "x": 1.0,
+            "orientation": "h",
+            "x": 0,
             "xanchor": "left",
-            "y": 0.5,
-            "yanchor": "middle",
+            "y": 1.24,
+            "yanchor": "top",
             "bgcolor": "rgba(255,253,250,0)",
             "borderwidth": 0,
-            "font": {"family": FONT_FAMILY, "size": 12, "color": COLORS["text"]},
+            "font": {"family": FONT_FAMILY, "size": 11, "color": COLORS["text"]},
             "itemsizing": "constant",
+            "entrywidth": 0.33,
+            "entrywidthmode": "fraction",
         },
     )
     return fig

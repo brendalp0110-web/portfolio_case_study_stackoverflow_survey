@@ -30,7 +30,7 @@ TECH_COPY = {
     ),
 }
 SECTION_COPY = {
-    "age_context": "Profile the respondent mix by age and education under the active filters.",
+    "age_context": "Profile who is represented in the active view through age, developer role groups, and education composition.",
     "compensation": "Compare observed compensation ranges across experience bands and workstyles.",
     "country": "Explore geographic concentration. The local control sets how many ranked countries appear on the map.",
 }
@@ -96,7 +96,7 @@ I18N = {
         "top_current": "Top Current {family}",
         "top_future": "Top Future {family}",
         "momentum": "Current vs Future {family} Momentum",
-        "age_context": "Age and Education",
+        "age_context": "Respondent Profile",
         "age_context_text": SECTION_COPY["age_context"],
         "age_distribution": "Age Distribution",
         "education_composition": "Education Level Composition by Age Group",
@@ -178,8 +178,8 @@ I18N = {
         "top_current": "Top actual: {family}",
         "top_future": "Top futuro: {family}",
         "momentum": "Momentum actual vs futuro: {family}",
-        "age_context": "Edad y educación",
-        "age_context_text": "Perfila la composición de encuestados por edad y educación bajo los filtros activos.",
+        "age_context": "Perfil de encuestados",
+        "age_context_text": "Perfila quiénes componen la vista activa mediante edad, grupos de roles de desarrollo y composición educativa.",
         "age_distribution": "Distribución por edad",
         "education_composition": "Composición educativa por grupo de edad",
         "devtype_distribution": "Distribución de roles de desarrollo",
@@ -541,30 +541,30 @@ def layout() -> html.Div:
                                 [
                                     html.Div(
                                         [
-                                            html.H2("Age and Education", id="age-context-title"),
+                                            html.H2("Respondent Profile", id="age-context-title"),
                                             html.P(SECTION_COPY["age_context"], id="age-context-copy"),
                                         ],
                                         className="section-heading",
                                     ),
-                                    html.Div(
-                                        [
-                                            chart_card("Age Distribution", CHART_TOOLTIPS["age_distribution"], "age-distribution"),
-                                            chart_card(
-                                                "Education Level Composition by Age Group",
-                                                CHART_TOOLTIPS["education_composition"],
-                                                "education-composition",
-                                            ),
-                                        ],
-                                        className="chart-grid two",
-                                    ),
-                                    html.Div(
-                                        chart_card(
-                                            "Developer Role Distribution",
-                                            CHART_TOOLTIPS["devtype_distribution"],
-                                            "devtype-distribution",
-                                        ),
-                                        className="devtype-row",
-                                    ),
+                                     html.Div(
+                                         [
+                                             chart_card("Age Distribution", CHART_TOOLTIPS["age_distribution"], "age-distribution"),
+                                             chart_card(
+                                                "Developer Role Distribution",
+                                                CHART_TOOLTIPS["devtype_distribution"],
+                                                "devtype-distribution",
+                                             ),
+                                         ],
+                                         className="chart-grid two",
+                                     ),
+                                     html.Div(
+                                         chart_card(
+                                            "Education Level Composition by Age Group",
+                                            CHART_TOOLTIPS["education_composition"],
+                                            "education-composition",
+                                         ),
+                                        className="education-row",
+                                     ),
                                 ],
                                 id="age-context",
                                 className="dashboard-section view-section",
