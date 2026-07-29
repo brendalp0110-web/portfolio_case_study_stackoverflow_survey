@@ -50,11 +50,13 @@ The deployment package used for Plotly Cloud should keep dependencies focused on
 - Fixed header with global filters for age and workstyle.
 - Side navigation across technology and respondent-context sections.
 - KPI cards for respondents, countries, and average compensation.
-- Current/future technology rankings showing the Top 10 most mentioned technologies per family.
+- Current technology rankings as Top 10 horizontal bar charts.
+- Future-interest technology rankings as Top 10 treemaps, where larger tiles indicate more respondent mentions.
 - Dumbbell momentum charts comparing high-visibility technologies across current use and future interest.
 - Age distribution and education composition.
-- Compensation by experience and workstyle.
-- Country map with a country-count slider.
+- Compensation distribution by experience and workstyle, with empty-state notes when a filtered workstyle has no observed salary records.
+- Job-satisfaction trend lines by experience and workstyle, with low-sample points marked separately.
+- Country map with a local country-count input.
 
 ## Cleaning And Metric Notes
 
@@ -62,3 +64,4 @@ The deployment package used for Plotly Cloud should keep dependencies focused on
 - `ConvertedCompYearly` is the survey-provided annual compensation converted to USD.
 - Missing compensation values are median-imputed in the final dataset for completeness.
 - Compensation KPI and charts use observed salary records by excluding the imputed median cluster when detected.
+- Job-satisfaction lines use valid `JobSat` records only. Solid points require at least 10 records; low-sample points are shown as X markers and should be read as directional context, not a stable trend.

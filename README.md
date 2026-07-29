@@ -24,7 +24,7 @@ The project is organized as a notebook-based pipeline:
 1. `01_data_acquisition.ipynb`: documents the survey input used by the project.
 2. `02_data_cleaning.ipynb`: cleans, normalizes, imputes, and reduces the dataset.
 3. `03_eda_statistics.ipynb`: integrates descriptive analysis, statistics, and visual exploration.
-4. `05_dashboarding.ipynb`: documents the final dashboarding layer and how it communicates the analysis.
+4. `04_dashboarding.ipynb`: documents the final dashboarding layer and how it communicates the analysis.
 
 The workflow intentionally produces one final survey dataset for downstream use: `data/survey_data_cleaned_reduced.csv`.
 
@@ -47,9 +47,12 @@ It includes:
 - Global filters for age and workstyle.
 - KPI cards showing total dataset context and active-filter context.
 - Hierarchical side navigation for technology and respondent-context views.
-- Top 10 current and future technology rankings per family.
+- Top 10 current technology rankings as horizontal bar charts.
+- Top 10 future-interest technology rankings as treemaps.
 - Dumbbell charts comparing high-visibility technologies across current use and future interest.
-- Age, education, compensation, and country-distribution views.
+- Age distribution and education-composition views.
+- Compensation boxplots by experience and workstyle, plus job-satisfaction trends by experience and workstyle.
+- Country-distribution map with a local country-count input.
 - Bilingual interface support for English and Spanish.
 
 Run locally:
@@ -79,6 +82,7 @@ Deployment:
 - AWS, Microsoft Azure, and Google Cloud remain central in platform usage.
 - The respondent base is concentrated in the 25-34 age range, which matters when interpreting adoption patterns.
 - Compensation varies by experience and workstyle, but observed salary records need to be read carefully because the source survey has many missing salary responses.
+- Job satisfaction is shown as a contextual signal rather than a causal explanation: low-sample points are marked separately and missing points indicate no valid satisfaction records for that filtered subgroup.
 
 ## Repository Structure
 
@@ -93,6 +97,6 @@ Deployment:
 - [notebooks/01_data_acquisition.ipynb](notebooks/01_data_acquisition.ipynb)
 - [notebooks/02_data_cleaning.ipynb](notebooks/02_data_cleaning.ipynb)
 - [notebooks/03_eda_statistics.ipynb](notebooks/03_eda_statistics.ipynb)
-- [notebooks/05_dashboarding.ipynb](notebooks/05_dashboarding.ipynb)
+- [notebooks/04_dashboarding.ipynb](notebooks/04_dashboarding.ipynb)
 - [dashboard_dash_plotly/app.py](dashboard_dash_plotly/app.py)
 - [Capstone Project Dashboard.pdf](<Capstone Project Dashboard.pdf>)

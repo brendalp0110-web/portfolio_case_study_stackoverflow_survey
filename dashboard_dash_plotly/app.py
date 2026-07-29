@@ -61,7 +61,7 @@ I18N = {
             ),
             (
                 "Dashboard scope",
-                "The dashboard uses the cleaned, normalized, and reduced survey dataset. Age and workstyle are global filters; technology rankings show the top 10 items per family; dumbbell charts compare high-visibility technologies across current use and future interest; and the map has its own country-count control.",
+                "The dashboard uses the cleaned, normalized, and reduced survey dataset. The first section explores the main technologies and compares high-visibility technologies across current use and future interest. The Respondent Context section covers age, education, compensation, job satisfaction, and geography.",
             ),
             (
                 "Tools",
@@ -95,7 +95,7 @@ I18N = {
         "top_current": "Top Current {family}",
         "top_future": "Top Future {family}",
         "momentum": "Current vs Future {family} Momentum",
-        "age_context": "Respondent Profile",
+        "age_context": "Age and Education",
         "age_context_text": SECTION_COPY["age_context"],
         "age_distribution": "Age Distribution",
         "education_composition": "Education Level Composition by Age Group",
@@ -142,7 +142,7 @@ I18N = {
             ),
             (
                 "Alcance del dashboard",
-                "El dashboard usa el dataset limpio, normalizado y reducido. Edad y modalidad son filtros globales; los rankings tecnológicos muestran el Top 10 por familia; los gráficos dumbbell comparan tecnologías de alta visibilidad entre uso actual e interés futuro; y el mapa tiene su propio control de cantidad de países.",
+                "El dashboard usa el dataset limpio, normalizado y reducido. La primera sección explora las principales tecnologías y compara tecnologías de alta visibilidad entre uso actual e interés futuro. La sección Contexto de encuestados cubre edad, educación, compensación, satisfacción laboral y geografía.",
             ),
             (
                 "Herramientas",
@@ -176,7 +176,7 @@ I18N = {
         "top_current": "Top actual: {family}",
         "top_future": "Top futuro: {family}",
         "momentum": "Momentum actual vs futuro: {family}",
-        "age_context": "Perfil de encuestados",
+        "age_context": "Edad y educación",
         "age_context_text": "Perfila quiénes componen la vista activa mediante edad y composición educativa.",
         "age_distribution": "Distribución por edad",
         "education_composition": "Composición educativa por grupo de edad",
