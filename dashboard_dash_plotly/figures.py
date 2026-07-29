@@ -41,6 +41,7 @@ WORKSTYLE_LINE_STYLES = {
     "Hybrid": "dash",
     "In-person": "dot",
 }
+MIN_JOB_SAT_RECORDS = 10
 TREEMAP_TILE_COLORS = {
     "Languages": [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
     "Databases": [COLORS["accent"], COLORS["primary"], COLORS["sage"], COLORS["clay"], COLORS["violet"], "#b79b61", "#4f7892", "#697b8c", "#d19a66", "#2f6f73"],
@@ -811,33 +812,122 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
     return apply_theme(fig, height=420)
 
 
+def job_satisfaction_axis_range(values) -> tuple[float, float, float]:
+    clean = np.asarray(values, dtype=float)
+    clean = clean[np.isfinite(clean)]
+    if clean.size == 0:
+        return 6.0, 8.0, 0.5
+
+    low = float(clean.min())
+    high = float(clean.max())
+    span = high - low
+    minimum_span = 1.0
+    target_span = max(span * 1.35, minimum_span)
+    center = (low + high) / 2
+    axis_low = max(0.0, center - target_span / 2)
+    axis_high = min(10.0, center + target_span / 2)
+
+    if axis_high - axis_low < minimum_span:
+        if axis_low == 0.0:
+            axis_high = min(10.0, axis_low + minimum_span)
+        elif axis_high == 10.0:
+            axis_low = max(0.0, axis_high - minimum_span)
+
+    tick = 0.25 if axis_high - axis_low <= 1.5 else 0.5
+    return round(axis_low, 2), round(axis_high, 2), tick
+
+
 def job_satisfaction_lines(summary_df, lang: str | None = "EN") -> go.Figure:
     chart = summary_df.copy()
     fig = go.Figure()
+    has_low_sample = bool(((chart["count"] > 0) & (chart["count"] < MIN_JOB_SAT_RECORDS)).any())
     for workstyle, color in WORKSTYLE_COLORS.items():
         series = chart[chart["workstyle"] == workstyle].copy()
         if series.empty:
             continue
         series["experience_hover"] = series["experience_band"].map(lambda value: experience_label(str(value), lang))
+        reliable = series[series["count"] >= MIN_JOB_SAT_RECORDS]
+        low_sample = series[(series["count"] > 0) & (series["count"] < MIN_JOB_SAT_RECORDS)]
+        if reliable.empty and low_sample.empty:
+            continue
+        if not reliable.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=reliable["experience_short"],
+                    y=reliable["mean"],
+                    mode="lines+markers",
+                    name=workstyle,
+                    line={"color": color, "width": 3, "dash": WORKSTYLE_LINE_STYLES.get(workstyle, "solid")},
+                    marker={"size": 9, "color": color, "line": {"color": COLORS["surface"], "width": 1.8}},
+                    customdata=reliable[["experience_hover", "count"]],
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "%{customdata[0]}<br>"
+                        f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
+                        f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
+                    ),
+                )
+            )
+        if not low_sample.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=low_sample["experience_short"],
+                    y=low_sample["mean"],
+                    mode="markers",
+                    name=f"{workstyle} low sample",
+                    marker={
+                        "size": 14,
+                        "color": "rgba(255,255,255,0)",
+                        "line": {"color": color, "width": 2.2},
+                        "symbol": "circle-open",
+                    },
+                    customdata=low_sample[["experience_hover", "count"]],
+                    hovertemplate=(
+                        f"<b>{workstyle} low sample</b><br>"
+                        "%{customdata[0]}<br>"
+                        f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
+                        f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
+                    ),
+                    showlegend=False,
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=low_sample["experience_short"],
+                    y=low_sample["mean"],
+                    mode="markers",
+                    name=f"{workstyle} low sample center",
+                    marker={
+                        "size": 7,
+                        "color": color,
+                        "line": {"width": 0},
+                        "symbol": "x",
+                    },
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+    if has_low_sample:
         fig.add_trace(
             go.Scatter(
-                x=series["experience_short"],
-                y=series["mean"],
-                mode="lines+markers",
-                name=workstyle,
-                line={"color": color, "width": 3, "dash": WORKSTYLE_LINE_STYLES.get(workstyle, "solid")},
-                marker={"size": 9, "color": color, "line": {"color": COLORS["surface"], "width": 1.8}},
-                customdata=series[["experience_hover", "count"]],
-                hovertemplate=(
-                    "<b>%{fullData.name}</b><br>"
-                    "%{customdata[0]}<br>"
-                    f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
-                    f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
-                ),
+                x=[None],
+                y=[None],
+                mode="markers",
+                name="Low sample" if lang != "ES" else "Baja muestra",
+                marker={
+                    "size": 9,
+                    "color": COLORS["muted"],
+                    "line": {"width": 0},
+                    "symbol": "x",
+                },
+                hoverinfo="skip",
+                showlegend=True,
             )
         )
     fig.update_xaxes(title_text=ft(lang, "years_experience"), categoryorder="array", categoryarray=[band.replace(" years", "") for band in data.EXPERIENCE_BAND_ORDER])
-    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), range=[6, 8], dtick=0.5)
+    reliable_values = chart.loc[chart["count"] >= MIN_JOB_SAT_RECORDS, "mean"]
+    axis_low, axis_high, axis_tick = job_satisfaction_axis_range(reliable_values)
+    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), range=[axis_low, axis_high], dtick=axis_tick)
     fig.update_layout(
         hovermode="x unified",
         legend={

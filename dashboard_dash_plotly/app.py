@@ -41,7 +41,7 @@ CHART_TOOLTIPS = {
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
-    "job_satisfaction": "Shows how average job satisfaction varies across experience bands for each workstyle.",
+    "job_satisfaction": "Solid points are based on at least 10 records and form the trend line. X markers indicate 1-9 records. Missing points mean no valid JobSat records for that workstyle and experience band.",
 }
 
 I18N = {
@@ -220,7 +220,7 @@ I18N = {
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
-            "job_satisfaction": "Muestra cómo varía la satisfacción laboral promedio por tramo de experiencia para cada modalidad de trabajo.",
+            "job_satisfaction": "Los puntos sólidos tienen al menos 10 registros y forman la línea de tendencia. Las marcas X indican 1-9 registros. Si no aparece un punto, no hay registros válidos de JobSat para esa modalidad y tramo de experiencia.",
         },
     },
 }
