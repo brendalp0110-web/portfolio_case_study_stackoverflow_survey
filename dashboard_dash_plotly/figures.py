@@ -80,7 +80,7 @@ FIGURE_TEXT = {
         "respondents": "Respondents",
         "average_job_sat": "Average job satisfaction",
         "median_job_sat": "Median job satisfaction",
-        "no_compensation_data": "No compensation records for the active filters.",
+        "no_compensation_data": "No compensation records<br>for the active filters.",
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
@@ -109,7 +109,7 @@ FIGURE_TEXT = {
         "respondents": "Encuestados",
         "average_job_sat": "Satisfacción laboral promedio",
         "median_job_sat": "Satisfacción laboral mediana",
-        "no_compensation_data": "No hay registros de compensación para los filtros activos.",
+        "no_compensation_data": "No hay registros de compensación<br>para los filtros activos.",
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
