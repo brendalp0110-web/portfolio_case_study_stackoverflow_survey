@@ -34,6 +34,30 @@ WORKSTYLE_COLORS = {
     "Hybrid": COLORS["sage"],
     "In-person": COLORS["clay"],
 }
+WORKSTYLE_LINE_STYLES = {
+    "Remote": "solid",
+    "Hybrid": "dash",
+    "In-person": "dot",
+}
+WORKSTYLE_LABELS = {
+    "EN": {
+        "Remote": "Remote",
+        "Hybrid": "Hybrid",
+        "In-person": "In-person",
+    },
+    "ES": {
+        "Remote": "Remoto",
+        "Hybrid": "Híbrido",
+        "In-person": "Presencial",
+    },
+}
+MIN_JOB_SAT_RECORDS = 10
+TREEMAP_TILE_COLORS = {
+    "Languages": [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+    "Databases": [COLORS["accent"], COLORS["primary"], COLORS["sage"], COLORS["clay"], COLORS["violet"], "#b79b61", "#4f7892", "#697b8c", "#d19a66", "#2f6f73"],
+    "Platforms": [COLORS["sage"], COLORS["primary"], COLORS["accent"], COLORS["clay"], COLORS["violet"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+    "Frameworks": [COLORS["violet"], COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
+}
 
 FIGURE_TEXT = {
     "EN": {
@@ -54,6 +78,8 @@ FIGURE_TEXT = {
         "share": "Share",
         "share_pct": "Share %",
         "respondents": "Respondents",
+        "average_job_sat": "Average job satisfaction",
+        "median_job_sat": "Median job satisfaction",
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
@@ -80,6 +106,8 @@ FIGURE_TEXT = {
         "share": "Porcentaje",
         "share_pct": "Porcentaje",
         "respondents": "Encuestados",
+        "average_job_sat": "Satisfacción laboral promedio",
+        "median_job_sat": "Satisfacción laboral mediana",
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
@@ -95,10 +123,27 @@ def ft(lang: str | None, key: str):
     return FIGURE_TEXT.get(lang, FIGURE_TEXT["EN"])[key]
 
 
+def workstyle_label(value: str, lang: str | None = "EN") -> str:
+    return WORKSTYLE_LABELS.get(lang, WORKSTYLE_LABELS["EN"]).get(value, value)
+
+
 def hex_to_rgba(hex_color: str, alpha: float) -> str:
     hex_color = hex_color.lstrip("#")
     red, green, blue = (int(hex_color[index : index + 2], 16) for index in (0, 2, 4))
     return f"rgba({red}, {green}, {blue}, {alpha})"
+
+
+def short_technology_label(value: str) -> str:
+    replacements = {
+        "Bash/Shell (all shells)": "Bash/Shell",
+        "Amazon Web Services (AWS)": "AWS",
+        "Microsoft Azure": "Azure",
+        "Oracle Cloud Infrastructure (OCI)": "Oracle OCI",
+        "Firebase Realtime Database": "Firebase RTDB",
+        "Google Cloud Firestore": "Firestore",
+        "ASP.NET CORE": "ASP.NET Core",
+    }
+    return replacements.get(value, value)
 
 
 def format_share_pct(value: float, decimal_separator: str = ".") -> str:
@@ -221,6 +266,91 @@ def horizontal_bar(df, label_col: str, title_color: str, lang: str | None = "EN"
     return apply_theme(fig, height=max(330, 29 * len(chart) + 86))
 
 
+def vertical_treemap(df, label_col: str, family: str, lang: str | None = "EN") -> go.Figure:
+    chart = df.sort_values("count", ascending=False).reset_index(drop=True).copy()
+    if chart.empty:
+        return apply_theme(go.Figure(), height=335)
+
+    chart["rank"] = np.arange(1, len(chart) + 1)
+    top_total = max(float(chart["count"].sum()), 1.0)
+    row_groups = [chart.iloc[0:3], chart.iloc[3:6], chart.iloc[6:10]]
+    colors = TREEMAP_TILE_COLORS.get(family, TREEMAP_TILE_COLORS["Languages"])
+
+    fig = go.Figure()
+    annotations = []
+    y_top = 100.0
+    color_index = 0
+
+    for row_df in row_groups:
+        if row_df.empty:
+            continue
+        row_height = 100.0 * row_df["count"].sum() / top_total
+        y0 = y_top - row_height
+        x0 = 0.0
+        row_total = max(float(row_df["count"].sum()), 1.0)
+        for row in row_df.itertuples(index=False):
+            width = 100.0 * float(row.count) / row_total
+            color = colors[color_index % len(colors)]
+            label = short_technology_label(getattr(row, label_col))
+            tile_area = width * row_height
+            fig.add_shape(
+                type="rect",
+                x0=x0,
+                y0=y0,
+                x1=x0 + width,
+                y1=y_top,
+                line={"color": COLORS["surface"], "width": 3},
+                fillcolor=color,
+                opacity=0.96,
+            )
+            if tile_area > 440:
+                annotations.extend(
+                    [
+                        {
+                            "x": x0 + 1.2,
+                            "y": y_top - 3,
+                            "text": f"#{int(row.rank)} {label}",
+                            "showarrow": False,
+                            "xanchor": "left",
+                            "yanchor": "top",
+                            "font": {"color": "#ffffff", "size": 15, "family": FONT_FAMILY},
+                        },
+                        {
+                            "x": x0 + 1.2,
+                            "y": y0 + 2.4,
+                            "text": f"{int(row.count):,} | {float(row.share_pct):.1f}%",
+                            "showarrow": False,
+                            "xanchor": "left",
+                            "yanchor": "bottom",
+                            "font": {"color": "#ffffff", "size": 12, "family": FONT_FAMILY},
+                        },
+                    ]
+                )
+            elif tile_area > 200:
+                annotations.append(
+                    {
+                        "x": x0 + width / 2,
+                        "y": y0 + row_height / 2,
+                        "text": f"#{int(row.rank)}<br>{label}<br>{float(row.share_pct):.1f}%",
+                        "showarrow": False,
+                        "xanchor": "center",
+                        "yanchor": "middle",
+                        "font": {"color": "#ffffff", "size": 12, "family": FONT_FAMILY},
+                    }
+                )
+            x0 += width
+            color_index += 1
+        y_top = y0
+
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", marker={"opacity": 0}, hoverinfo="skip", showlegend=False))
+    fig.update_layout(annotations=annotations)
+    fig.update_xaxes(visible=False, range=[0, 100], fixedrange=True)
+    fig.update_yaxes(visible=False, range=[0, 100], fixedrange=True)
+    fig = apply_theme(fig, height=335)
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 4, "b": 4}, dragmode=False)
+    return fig
+
+
 def dumbbell(df, label_col: str, lang: str | None = "EN") -> go.Figure:
     chart = df.sort_values("score", ascending=True)
     fig = go.Figure()
@@ -336,12 +466,14 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
         barmode="stack",
         legend={
             "orientation": "h",
-            "x": 0,
+            "x": 0.02,
             "xanchor": "left",
             "y": 1.08,
             "yanchor": "bottom",
-            "font": {"size": 9},
+            "font": {"family": FONT_FAMILY, "size": 10, "color": COLORS["text"]},
             "itemsizing": "constant",
+            "entrywidth": 0.32,
+            "entrywidthmode": "fraction",
         },
         margin={"l": 8, "r": 28, "t": 42, "b": 40},
     )
@@ -403,6 +535,142 @@ def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None 
     fig.update_yaxes(title_text=ft(lang, "annual_compensation"), range=[0, max(y_max, 1)])
     fig.update_layout(legend={"orientation": "h", "x": 1, "xanchor": "right", "y": 1.08, "yanchor": "bottom"})
     return apply_theme(fig, height=420)
+
+
+def job_satisfaction_axis_range(values) -> tuple[float, float, float]:
+    clean = np.asarray(values, dtype=float)
+    clean = clean[np.isfinite(clean)]
+    if clean.size == 0:
+        return 6.0, 8.0, 0.5
+
+    low = float(clean.min())
+    high = float(clean.max())
+    span = high - low
+    minimum_span = 1.0
+    target_span = max(span * 1.35, minimum_span)
+    center = (low + high) / 2
+    axis_low = max(0.0, center - target_span / 2)
+    axis_high = min(10.0, center + target_span / 2)
+
+    if axis_high - axis_low < minimum_span:
+        if axis_low == 0.0:
+            axis_high = min(10.0, axis_low + minimum_span)
+        elif axis_high == 10.0:
+            axis_low = max(0.0, axis_high - minimum_span)
+
+    tick = 0.25 if axis_high - axis_low <= 1.5 else 0.5
+    return round(axis_low, 2), round(axis_high, 2), tick
+
+
+def job_satisfaction_lines(summary_df, lang: str | None = "EN") -> go.Figure:
+    chart = summary_df.copy()
+    fig = go.Figure()
+    has_low_sample = bool(((chart["count"] > 0) & (chart["count"] < MIN_JOB_SAT_RECORDS)).any())
+    for workstyle, color in WORKSTYLE_COLORS.items():
+        display_workstyle = workstyle_label(workstyle, lang)
+        low_sample_label = "Low sample" if lang != "ES" else "Baja muestra"
+        series = chart[chart["workstyle"] == workstyle].copy()
+        if series.empty:
+            continue
+        series["experience_hover"] = series["experience_band"].map(lambda value: experience_label(str(value), lang))
+        reliable = series[series["count"] >= MIN_JOB_SAT_RECORDS]
+        low_sample = series[(series["count"] > 0) & (series["count"] < MIN_JOB_SAT_RECORDS)]
+        if reliable.empty and low_sample.empty:
+            continue
+        if not reliable.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=reliable["experience_short"],
+                    y=reliable["mean"],
+                    mode="lines+markers",
+                    name=display_workstyle,
+                    line={"color": color, "width": 3, "dash": WORKSTYLE_LINE_STYLES.get(workstyle, "solid")},
+                    marker={"size": 9, "color": color, "line": {"color": COLORS["surface"], "width": 1.8}},
+                    customdata=reliable[["experience_hover", "count"]],
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "%{customdata[0]}<br>"
+                        f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
+                        f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
+                    ),
+                )
+            )
+        if not low_sample.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=low_sample["experience_short"],
+                    y=low_sample["mean"],
+                    mode="markers",
+                    name=f"{display_workstyle} {low_sample_label}",
+                    marker={
+                        "size": 14,
+                        "color": "rgba(255,255,255,0)",
+                        "line": {"color": color, "width": 2.2},
+                        "symbol": "circle-open",
+                    },
+                    customdata=low_sample[["experience_hover", "count"]],
+                    hovertemplate=(
+                        f"<b>{display_workstyle} · {low_sample_label}</b><br>"
+                        "%{customdata[0]}<br>"
+                        f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
+                        f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
+                    ),
+                    showlegend=False,
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=low_sample["experience_short"],
+                    y=low_sample["mean"],
+                    mode="markers",
+                    name=f"{display_workstyle} {low_sample_label} center",
+                    marker={
+                        "size": 7,
+                        "color": color,
+                        "line": {"width": 0},
+                        "symbol": "x",
+                    },
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+    if has_low_sample:
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name="Low sample" if lang != "ES" else "Baja muestra",
+                marker={
+                    "size": 9,
+                    "color": COLORS["muted"],
+                    "line": {"width": 0},
+                    "symbol": "x",
+                },
+                hoverinfo="skip",
+                showlegend=True,
+            )
+        )
+    fig.update_xaxes(title_text=ft(lang, "years_experience"), categoryorder="array", categoryarray=[band.replace(" years", "") for band in data.EXPERIENCE_BAND_ORDER])
+    reliable_values = chart.loc[chart["count"] >= MIN_JOB_SAT_RECORDS, "mean"]
+    axis_low, axis_high, axis_tick = job_satisfaction_axis_range(reliable_values)
+    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), range=[axis_low, axis_high], dtick=axis_tick)
+    fig.update_layout(
+        hovermode="x unified",
+        legend={
+            "orientation": "h",
+            "x": 1,
+            "xanchor": "right",
+            "y": 1.08,
+            "yanchor": "bottom",
+            "bgcolor": "rgba(255,253,250,0.92)",
+            "bordercolor": COLORS["border"],
+            "borderwidth": 1,
+        }
+    )
+    fig = apply_theme(fig, height=380)
+    fig.update_layout(margin={"l": 8, "r": 28, "t": 26, "b": 42})
+    return fig
 
 
 def country_map(df, lang: str | None = "EN") -> go.Figure:

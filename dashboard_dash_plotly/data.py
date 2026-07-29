@@ -226,6 +226,28 @@ def compensation_box_summary(records: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(summaries)
 
 
+def job_satisfaction_by_experience(df: pd.DataFrame) -> pd.DataFrame:
+    records = df[["RemoteWork", "WorkExp_num", "JobSat"]].copy()
+    records["JobSat_num"] = pd.to_numeric(records["JobSat"], errors="coerce")
+    records["workstyle"] = records["RemoteWork"].replace(REMOTE_WORK_LABELS)
+    records["experience_band"] = pd.cut(
+        records["WorkExp_num"],
+        bins=[-0.1, 2, 5, 10, 15, float("inf")],
+        labels=EXPERIENCE_BAND_ORDER,
+    )
+    records = records.dropna(subset=["workstyle", "experience_band", "JobSat_num"])
+    if records.empty:
+        return pd.DataFrame(columns=["workstyle", "experience_band", "experience_short", "mean", "median", "count"])
+
+    summary = (
+        records.groupby(["workstyle", "experience_band"], observed=False)["JobSat_num"]
+        .agg(mean="mean", median="median", count="size")
+        .reset_index()
+    )
+    summary["experience_short"] = summary["experience_band"].astype(str).str.replace(" years", "", regex=False)
+    return summary
+
+
 def country_map_distribution(df: pd.DataFrame, top_n: int | None) -> pd.DataFrame:
     counts = df.loc[df["Country"] != "Nomadic", "Country"].value_counts()
     denominator = max(int(counts.sum()), 1)
