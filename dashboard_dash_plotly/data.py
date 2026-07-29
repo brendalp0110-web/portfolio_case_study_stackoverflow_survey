@@ -195,7 +195,7 @@ def devtype_distribution(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index(name="role_mentions")
         .sort_values(["devtype_group", "role_mentions"], ascending=[True, False])
         .groupby("devtype_group")["role"]
-        .apply(lambda values: "; ".join(values.head(3)))
+        .apply(lambda values: "; ".join(values.head(2)))
     )
     result = counts.rename_axis("devtype_group").reset_index(name="count")
     result["roles_included"] = result["devtype_group"].map(top_roles).fillna("")

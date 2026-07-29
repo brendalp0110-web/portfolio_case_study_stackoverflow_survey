@@ -36,6 +36,11 @@ WORKSTYLE_COLORS = {
     "Hybrid": COLORS["sage"],
     "In-person": COLORS["clay"],
 }
+WORKSTYLE_LINE_STYLES = {
+    "Remote": "solid",
+    "Hybrid": "dash",
+    "In-person": "dot",
+}
 TREEMAP_TILE_COLORS = {
     "Languages": [COLORS["primary"], COLORS["accent"], COLORS["sage"], COLORS["violet"], COLORS["clay"], "#4f7892", "#b79b61", "#697b8c", "#2f6f73", "#d19a66"],
     "Databases": [COLORS["accent"], COLORS["primary"], COLORS["sage"], COLORS["clay"], COLORS["violet"], "#b79b61", "#4f7892", "#697b8c", "#d19a66", "#2f6f73"],
@@ -67,8 +72,8 @@ FIGURE_TEXT = {
         "share_of_role_mentions": "Share of role mentions",
         "roles_included": "Top roles",
         "distinct_roles": "Distinct roles",
-        "average_job_sat": "Average JobSat",
-        "median_job_sat": "Median JobSat",
+        "average_job_sat": "Average job satisfaction",
+        "median_job_sat": "Median job satisfaction",
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
@@ -99,8 +104,8 @@ FIGURE_TEXT = {
         "share_of_role_mentions": "Porcentaje de menciones de rol",
         "roles_included": "Roles principales",
         "distinct_roles": "Roles distintos",
-        "average_job_sat": "JobSat promedio",
-        "median_job_sat": "JobSat mediana",
+        "average_job_sat": "Satisfacción laboral promedio",
+        "median_job_sat": "Satisfacción laboral mediana",
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
@@ -161,15 +166,15 @@ def devtype_group_label(value: str, lang: str | None = "EN") -> str:
 
 def compact_devtype_group_label(value: str, lang: str | None = "EN") -> str:
     labels = {
-        "Core software development": ("Core software dev", "Desarrollo software"),
-        "Leadership & product": ("Leadership/product", "Liderazgo/producto"),
-        "Infrastructure, cloud & operations": ("Infra/cloud/ops", "Infra/cloud/ops"),
-        "Data, analytics & AI": ("Data/analytics/AI", "Datos/analítica/IA"),
-        "Research & education": ("Research/education", "Investigación/educación"),
+        "Core software development": ("Software Developer", "Desarrollo de software"),
+        "Leadership & product": ("Leadership & product", "Liderazgo y producto"),
+        "Infrastructure, cloud & operations": ("Infrastructure", "Infraestructura"),
+        "Data, analytics & AI": ("Data Analytics & AI", "Datos, analítica e IA"),
+        "Research & education": ("Research & Education", "Investigación y educación"),
         "Unspecified": ("Unspecified", "No especificado"),
-        "Developer relations & experience": ("DevRel/DevEx", "DevRel/DevEx"),
+        "Developer relations & experience": ("Developer Community", "Comunidad de desarrollo"),
         "Security": ("Security", "Seguridad"),
-        "Design & commercial": ("Design/commercial", "Diseño/comercial"),
+        "Design & commercial": ("Commercial", "Comercial"),
     }
     if value in labels:
         return labels[value][1 if lang == "ES" else 0]
@@ -219,8 +224,32 @@ def compact_role_label(value: str, lang: str | None = "EN") -> str:
 
 
 def compact_roles_list(value: str, role_count: int, lang: str | None = "EN") -> str:
-    roles = [compact_role_label(role, lang) for role in value.split("; ") if role]
-    suffix = " etc." if role_count > len(roles) else ""
+    role_labels = {
+        "Developer, full-stack": ("Full-Stack Developer", "Desarrollador Full-Stack"),
+        "Developer, back-end": ("Back-end Developer", "Desarrollador Back-end"),
+        "Developer, front-end": ("Front-end Developer", "Desarrollador Front-end"),
+        "Engineering manager": ("Engineering Manager", "Gerente de ingeniería"),
+        "Senior Executive (C-Suite, VP, etc.)": ("Senior Executive", "Ejecutivo senior"),
+        "Data engineer": ("Data Engineer", "Ingeniero de datos"),
+        "Data scientist or machine learning specialist": ("Data Scientist", "Científico de datos"),
+        "DevOps specialist": ("DevOps specialist", "Especialista DevOps"),
+        "Cloud infrastructure engineer": ("Cloud infrastructure engineer", "Ingeniero de infraestructura cloud"),
+        "Research & Development role": ("Research & Development", "Investigación y desarrollo"),
+        "Student": ("Student", "Estudiante"),
+        "Designer": ("Designer", "Diseñador"),
+        "Marketing or sales professional": ("Marketing", "Marketing"),
+        "Developer Experience": ("Developer Experience", "Developer Experience"),
+        "Developer Advocate": ("Developer Advocate", "Developer Advocate"),
+        "Security professional": ("Security professional", "Profesional de seguridad"),
+    }
+    roles = [
+        role_labels.get(role, (role, role))[1 if lang == "ES" else 0]
+        for role in value.split("; ")
+        if role
+    ]
+    if not roles or roles == ["Other (please specify):"]:
+        return ""
+    suffix = ", etc." if role_count > len(roles) else ""
     return ", ".join(roles) + suffix
 
 
@@ -628,9 +657,10 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
     fig = go.Figure()
     annotations = []
     for row, position, radius, color in zip(chart.itertuples(index=False), positions, radii, colors, strict=False):
-        label = devtype_group_label(row.devtype_group, lang)
+        label = compact_devtype_group_label(row.devtype_group, lang)
         text_color = readable_text_color(color)
         roles_included = compact_roles_list(row.roles_included, int(row.role_count), lang)
+        roles_line = f"{ft(lang, 'roles_included')}: {roles_included}<br>" if roles_included else ""
         fig.add_shape(
             type="circle",
             x0=position[0] - radius,
@@ -663,13 +693,13 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
                     "opacity": 0,
                     "line": {"width": 0},
                 },
-                customdata=[[label, row.count, row.share_pct, row.role_count, roles_included]],
+                customdata=[[label, row.count, row.share_pct, row.role_count, roles_line]],
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>"
                     f"{ft(lang, 'role_mentions')}: %{{customdata[1]:,.0f}}<br>"
                     f"{ft(lang, 'share_of_role_mentions')}: %{{customdata[2]:.1f}}%<br>"
                     f"{ft(lang, 'distinct_roles')}: %{{customdata[3]:,.0f}}<br>"
-                    f"{ft(lang, 'roles_included')}: %{{customdata[4]}}<extra></extra>"
+                    "%{customdata[4]}<extra></extra>"
                 ),
                 showlegend=False,
             )
@@ -694,9 +724,14 @@ def devtype_packed_bubbles(df, lang: str | None = "EN") -> go.Figure:
     max_x = max(x + radius for (x, _y), radius in zip(positions, radii, strict=False))
     min_y = min(y - radius for (_x, y), radius in zip(positions, radii, strict=False))
     max_y = max(y + radius for (_x, y), radius in zip(positions, radii, strict=False))
-    pad = max((max(extents) - min(extents)) * 0.005, 0.08)
-    fig.update_xaxes(visible=False, range=[min_x - pad, max_x + pad], fixedrange=True)
-    fig.update_yaxes(visible=False, range=[min_y - pad, max_y + pad], fixedrange=True, scaleanchor="x", scaleratio=1)
+    pad = max((max(extents) - min(extents)) * 0.002, 0.04)
+    x_center = (min_x + max_x) / 2
+    y_center = (min_y + max_y) / 2
+    x_half = (max_x - min_x) / 2 + pad
+    y_half = (max_y - min_y) / 2 + pad
+    zoom_factor = 0.84
+    fig.update_xaxes(visible=False, range=[x_center - x_half * zoom_factor, x_center + x_half * zoom_factor], fixedrange=True)
+    fig.update_yaxes(visible=False, range=[y_center - y_half * zoom_factor, y_center + y_half * zoom_factor], fixedrange=True, scaleanchor="x", scaleratio=1)
     fig = apply_theme(fig, height=410)
     fig.update_layout(
         annotations=annotations,
@@ -788,26 +823,23 @@ def job_satisfaction_lines(summary_df, lang: str | None = "EN") -> go.Figure:
             go.Scatter(
                 x=series["experience_short"],
                 y=series["mean"],
-                mode="lines+markers+text",
+                mode="lines+markers",
                 name=workstyle,
-                line={"color": color, "width": 3},
+                line={"color": color, "width": 3, "dash": WORKSTYLE_LINE_STYLES.get(workstyle, "solid")},
                 marker={"size": 9, "color": color, "line": {"color": COLORS["surface"], "width": 1.8}},
-                text=series["mean"].map(lambda value: f"{value:.1f}"),
-                textposition="top center",
-                textfont={"family": FONT_FAMILY, "size": 11, "color": COLORS["muted"]},
-                customdata=series[["experience_hover", "median", "count"]],
+                customdata=series[["experience_hover", "count"]],
                 hovertemplate=(
                     "<b>%{fullData.name}</b><br>"
                     "%{customdata[0]}<br>"
                     f"{ft(lang, 'average_job_sat')}: %{{y:.1f}}<br>"
-                    f"{ft(lang, 'median_job_sat')}: %{{customdata[1]:.1f}}<br>"
-                    f"{ft(lang, 'records')}: %{{customdata[2]:,.0f}}<extra></extra>"
+                    f"{ft(lang, 'records')}: %{{customdata[1]:,.0f}}<extra></extra>"
                 ),
             )
         )
     fig.update_xaxes(title_text=ft(lang, "years_experience"), categoryorder="array", categoryarray=[band.replace(" years", "") for band in data.EXPERIENCE_BAND_ORDER])
-    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), rangemode="tozero")
+    fig.update_yaxes(title_text=ft(lang, "average_job_sat"), range=[6, 8], dtick=0.5)
     fig.update_layout(
+        hovermode="x unified",
         legend={
             "orientation": "h",
             "x": 1,

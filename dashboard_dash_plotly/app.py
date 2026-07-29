@@ -31,7 +31,7 @@ TECH_COPY = {
 }
 SECTION_COPY = {
     "age_context": "Profile who is represented in the active view through age, developer role groups, and education composition.",
-    "compensation": "Compare observed compensation ranges across experience bands and workstyles.",
+    "compensation": "Compare compensation ranges and job satisfaction patterns across experience bands and workstyles.",
     "country": "Explore geographic concentration. The local control sets how many ranked countries appear on the map.",
 }
 CHART_TOOLTIPS = {
@@ -41,7 +41,7 @@ CHART_TOOLTIPS = {
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
-    "job_satisfaction": "Average job satisfaction by experience band and workstyle in the active filtered view.",
+    "job_satisfaction": "Shows how average job satisfaction varies across experience bands for each workstyle.",
 }
 
 I18N = {
@@ -101,12 +101,12 @@ I18N = {
         "age_distribution": "Age Distribution",
         "education_composition": "Education Level Composition by Age Group",
         "devtype_distribution": "Developer Role Distribution",
-        "compensation": "Compensation by Experience",
+        "compensation": "Compensation and Work Experience",
         "compensation_text": SECTION_COPY["compensation"],
         "remote_compensation": "Remote Compensation",
         "hybrid_compensation": "Hybrid Compensation",
         "inperson_compensation": "In-person Compensation",
-        "job_satisfaction": "Job Satisfaction by Experience and Workstyle",
+        "job_satisfaction": "Workstyle Satisfaction Across Experience",
         "country_distribution": "Country Distribution",
         "country_text": SECTION_COPY["country"],
         "countries_shown": "Countries shown",
@@ -183,12 +183,12 @@ I18N = {
         "age_distribution": "Distribución por edad",
         "education_composition": "Composición educativa por grupo de edad",
         "devtype_distribution": "Distribución de roles de desarrollo",
-        "compensation": "Compensación por experiencia",
-        "compensation_text": "Compara los rangos de compensación observada por experiencia y modalidad de trabajo.",
+        "compensation": "Compensación y experiencia laboral",
+        "compensation_text": "Compara rangos de compensación y patrones de satisfacción laboral por experiencia y modalidad de trabajo.",
         "remote_compensation": "Compensación remota",
         "hybrid_compensation": "Compensación híbrida",
         "inperson_compensation": "Compensación presencial",
-        "job_satisfaction": "Satisfacción laboral por experiencia y modalidad",
+        "job_satisfaction": "Satisfacción por modalidad y experiencia",
         "country_distribution": "Distribución por país",
         "country_text": "Explora la concentración geográfica. El control local define cuántos países aparecen en el mapa.",
         "countries_shown": "Países mostrados",
@@ -220,7 +220,7 @@ I18N = {
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
-            "job_satisfaction": "Satisfacción laboral promedio por experiencia y modalidad en la vista filtrada activa.",
+            "job_satisfaction": "Muestra cómo varía la satisfacción laboral promedio por tramo de experiencia para cada modalidad de trabajo.",
         },
     },
 }
@@ -589,7 +589,7 @@ def layout() -> html.Div:
                                     ),
                                     html.Div(
                                         chart_card(
-                                            "Job Satisfaction by Experience and Workstyle",
+                                            "Workstyle Satisfaction Across Experience",
                                             CHART_TOOLTIPS["job_satisfaction"],
                                             "job-satisfaction",
                                         ),
