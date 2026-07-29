@@ -23,25 +23,24 @@ VIEW_IDS = [
 ]
 TECH_COPY = {
     "current_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies currently used in this family under the active filters.",
-    "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next. Tile area represents respondent count; larger tiles are placed higher.",
+    "future_tooltip": f"Shows the {TECH_TOP_N} most mentioned technologies respondents want to use next in this family under the active filters.",
     "momentum_tooltip": (
         f"Compares current use and future interest for the {TECH_TOP_N} technologies that appear most often in either the current or future ranking. "
         "It prioritizes overall visibility, not the technologies with the biggest increase or decrease."
     ),
 }
 SECTION_COPY = {
-    "age_context": "Profile who is represented in the active view through age, developer role groups, and education composition.",
+    "age_context": "Profile who is represented in the active view through age and education composition.",
     "compensation": "Compare compensation ranges and job satisfaction patterns across experience bands and workstyles.",
     "country": "Explore geographic concentration. The local control sets how many ranked countries appear on the map.",
 }
 CHART_TOOLTIPS = {
     "age_distribution": "Respondent distribution by age group.",
     "education_composition": "Education mix by age group, normalized to 100%.",
-    "devtype_distribution": "Developer roles grouped into macro-categories after applying the active filters. Bubble size represents role mentions; hover to see the most common roles inside each group.",
     "remote_compensation": "Remote compensation ranges by experience band.",
     "hybrid_compensation": "Hybrid compensation ranges by experience band.",
     "inperson_compensation": "In-person compensation ranges by experience band.",
-    "job_satisfaction": "Solid points are based on at least 10 records and form the trend line. X markers indicate 1-9 records. Missing points mean no valid JobSat records for that workstyle and experience band.",
+    "job_satisfaction": "Solid points are based on at least 10 records and form the trend line. X markers indicate 1-9 records. Missing points mean no valid job satisfaction records for that workstyle and experience band.",
 }
 
 I18N = {
@@ -100,7 +99,6 @@ I18N = {
         "age_context_text": SECTION_COPY["age_context"],
         "age_distribution": "Age Distribution",
         "education_composition": "Education Level Composition by Age Group",
-        "devtype_distribution": "Developer Role Distribution",
         "compensation": "Compensation and Work Experience",
         "compensation_text": SECTION_COPY["compensation"],
         "remote_compensation": "Remote Compensation",
@@ -152,7 +150,7 @@ I18N = {
             ),
             (
                 "Autora",
-                "Brenda López Pérez, Data Analyst. Repositorio del proyecto: https://github.com/brendalp0110-web/portfolio_case_study_stackoverflow_survey. LinkedIn: https://linkedin.com/in/brenda-lópez-b0a614345.",
+                "Brenda López Pérez, Analista de datos. Repositorio del proyecto: https://github.com/brendalp0110-web/portfolio_case_study_stackoverflow_survey. LinkedIn: https://linkedin.com/in/brenda-lópez-b0a614345.",
             ),
         ],
         "global_filters": "Filtros globales",
@@ -179,10 +177,9 @@ I18N = {
         "top_future": "Top futuro: {family}",
         "momentum": "Momentum actual vs futuro: {family}",
         "age_context": "Perfil de encuestados",
-        "age_context_text": "Perfila quiénes componen la vista activa mediante edad, grupos de roles de desarrollo y composición educativa.",
+        "age_context_text": "Perfila quiénes componen la vista activa mediante edad y composición educativa.",
         "age_distribution": "Distribución por edad",
         "education_composition": "Composición educativa por grupo de edad",
-        "devtype_distribution": "Distribución de roles de desarrollo",
         "compensation": "Compensación y experiencia laboral",
         "compensation_text": "Compara rangos de compensación y patrones de satisfacción laboral por experiencia y modalidad de trabajo.",
         "remote_compensation": "Compensación remota",
@@ -209,18 +206,17 @@ I18N = {
         },
         "tooltips": {
             "current_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas en uso actual para esta familia bajo los filtros activos.",
-            "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después. El área de cada bloque representa el conteo de encuestados; los bloques más grandes quedan más arriba.",
+            "future_tooltip": f"Muestra las {TECH_TOP_N} tecnologías más mencionadas que los encuestados quieren usar después para esta familia bajo los filtros activos.",
             "momentum_tooltip": (
                 f"Compara uso actual e interés futuro para las {TECH_TOP_N} tecnologías que aparecen con más frecuencia en el ranking actual o futuro. "
                 "Prioriza visibilidad general, no las tecnologías con mayor subida o caída."
             ),
             "age_distribution": "Distribución de encuestados por grupo de edad.",
             "education_composition": "Composición educativa por edad, normalizada a 100%.",
-            "devtype_distribution": "Roles de desarrollo agrupados en macro-categorías después de aplicar los filtros activos. El tamaño de la burbuja representa menciones de rol; pasa el cursor para ver los roles más comunes dentro de cada grupo.",
             "remote_compensation": "Rangos de compensación remota por experiencia.",
             "hybrid_compensation": "Rangos de compensación híbrida por experiencia.",
             "inperson_compensation": "Rangos de compensación presencial por experiencia.",
-            "job_satisfaction": "Los puntos sólidos tienen al menos 10 registros y forman la línea de tendencia. Las marcas X indican 1-9 registros. Si no aparece un punto, no hay registros válidos de JobSat para esa modalidad y tramo de experiencia.",
+            "job_satisfaction": "Los puntos sólidos tienen al menos 10 registros y forman la línea de tendencia. Las marcas X indican 1-9 registros. Si no aparece un punto, no hay registros válidos de satisfacción laboral para esa modalidad y tramo de experiencia.",
         },
     },
 }
@@ -546,25 +542,17 @@ def layout() -> html.Div:
                                         ],
                                         className="section-heading",
                                     ),
-                                     html.Div(
-                                         [
-                                             chart_card("Age Distribution", CHART_TOOLTIPS["age_distribution"], "age-distribution"),
-                                             chart_card(
-                                                "Developer Role Distribution",
-                                                CHART_TOOLTIPS["devtype_distribution"],
-                                                "devtype-distribution",
-                                             ),
-                                         ],
-                                         className="chart-grid two",
-                                     ),
-                                     html.Div(
-                                         chart_card(
-                                            "Education Level Composition by Age Group",
-                                            CHART_TOOLTIPS["education_composition"],
-                                            "education-composition",
-                                         ),
-                                        className="education-row",
-                                     ),
+                                    html.Div(
+                                        [
+                                            chart_card("Age Distribution", CHART_TOOLTIPS["age_distribution"], "age-distribution"),
+                                            chart_card(
+                                                "Education Level Composition by Age Group",
+                                                CHART_TOOLTIPS["education_composition"],
+                                                "education-composition",
+                                            ),
+                                        ],
+                                        className="chart-grid two",
+                                    ),
                                 ],
                                 id="age-context",
                                 className="dashboard-section view-section",
@@ -718,8 +706,6 @@ STATIC_TEXT_OUTPUTS = [
     Output("age-distribution-info", "title"),
     Output("education-composition-title", "children"),
     Output("education-composition-info", "title"),
-    Output("devtype-distribution-title", "children"),
-    Output("devtype-distribution-info", "title"),
     Output("compensation-title", "children"),
     Output("compensation-copy", "children"),
     Output("remote-compensation-title", "children"),
@@ -795,8 +781,6 @@ def update_static_text(lang):
         tooltips["age_distribution"],
         text(lang, "education_composition"),
         tooltips["education_composition"],
-        text(lang, "devtype_distribution"),
-        tooltips["devtype_distribution"],
         text(lang, "compensation"),
         text(lang, "compensation_text"),
         text(lang, "remote_compensation"),
@@ -944,7 +928,6 @@ def clamp_country_count_input(country_count, max_countries):
     *[Output(f"{family.lower()}-momentum", "figure") for family in TECH_FAMILIES],
     Output("age-distribution", "figure"),
     Output("education-composition", "figure"),
-    Output("devtype-distribution", "figure"),
     Output("remote-compensation", "figure"),
     Output("hybrid-compensation", "figure"),
     Output("inperson-compensation", "figure"),
@@ -974,7 +957,6 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
     compensation_y_max = float(compensation_summary["upper"].max() * 1.1) if not compensation_summary.empty else 1.0
     age_distribution_fig = figures.age_bar(data.age_distribution(filtered), lang)
     education_fig = figures.education_stack(data.age_education_distribution(filtered), lang)
-    devtype_fig = figures.devtype_packed_bubbles(data.devtype_distribution(filtered), lang)
     remote_fig = figures.compensation_box(compensation_summary, "Remote", compensation_y_max, lang)
     hybrid_fig = figures.compensation_box(compensation_summary, "Hybrid", compensation_y_max, lang)
     inperson_fig = figures.compensation_box(compensation_summary, "In-person", compensation_y_max, lang)
@@ -986,7 +968,6 @@ def update_dashboard(selected_ages, selected_workstyles, lang):
         *momentum_figs,
         age_distribution_fig,
         education_fig,
-        devtype_fig,
         remote_fig,
         hybrid_fig,
         inperson_fig,

@@ -37,42 +37,6 @@ REMOTE_WORK_LABELS = {
     "Hybrid (some remote, some in-person)": "Hybrid",
     "In-person": "In-person",
 }
-DEVTYPE_MACRO_GROUPS = {
-    "Developer, full-stack": "Core software development",
-    "Developer, back-end": "Core software development",
-    "Developer, front-end": "Core software development",
-    "Developer, desktop or enterprise applications": "Core software development",
-    "Developer, mobile": "Core software development",
-    "Developer, embedded applications or devices": "Core software development",
-    "Developer, game or graphics": "Core software development",
-    "Developer, QA or test": "Core software development",
-    "Developer, AI": "Data, analytics & AI",
-    "Data engineer": "Data, analytics & AI",
-    "Data scientist or machine learning specialist": "Data, analytics & AI",
-    "Data or business analyst": "Data, analytics & AI",
-    "Scientist": "Data, analytics & AI",
-    "DevOps specialist": "Infrastructure, cloud & operations",
-    "Cloud infrastructure engineer": "Infrastructure, cloud & operations",
-    "Engineer, site reliability": "Infrastructure, cloud & operations",
-    "System administrator": "Infrastructure, cloud & operations",
-    "Database administrator": "Infrastructure, cloud & operations",
-    "Blockchain": "Infrastructure, cloud & operations",
-    "Hardware Engineer": "Infrastructure, cloud & operations",
-    "Engineering manager": "Leadership & product",
-    "Senior Executive (C-Suite, VP, etc.)": "Leadership & product",
-    "Project manager": "Leadership & product",
-    "Product manager": "Leadership & product",
-    "Research & Development role": "Research & education",
-    "Academic researcher": "Research & education",
-    "Educator": "Research & education",
-    "Student": "Research & education",
-    "Developer Experience": "Developer relations & experience",
-    "Developer Advocate": "Developer relations & experience",
-    "Security professional": "Security",
-    "Designer": "Design & commercial",
-    "Marketing or sales professional": "Design & commercial",
-    "Other (please specify):": "Unspecified",
-}
 COUNTRY_NAME_ALIASES = {
     "Brunei Darussalam": "Brunei",
     "Congo, Republic of the...": "Congo [Republic]",
@@ -180,27 +144,6 @@ def top_multiselect_counts(df: pd.DataFrame, column: str, top_n: int, label: str
     counts = split_multiselect(df[column]).value_counts().head(top_n)
     result = counts.rename_axis(label).reset_index(name="count")
     result["share_pct"] = result["count"] / max(len(df), 1) * 100
-    return result
-
-
-def devtype_distribution(df: pd.DataFrame) -> pd.DataFrame:
-    roles = split_multiselect(df["DevType"])
-    mapped = pd.DataFrame({"role": roles})
-    mapped["devtype_group"] = mapped["role"].map(DEVTYPE_MACRO_GROUPS).fillna("Unspecified")
-    counts = mapped.groupby("devtype_group").size().sort_values(ascending=False)
-
-    top_roles = (
-        mapped.groupby(["devtype_group", "role"])
-        .size()
-        .reset_index(name="role_mentions")
-        .sort_values(["devtype_group", "role_mentions"], ascending=[True, False])
-        .groupby("devtype_group")["role"]
-        .apply(lambda values: "; ".join(values.head(2)))
-    )
-    result = counts.rename_axis("devtype_group").reset_index(name="count")
-    result["roles_included"] = result["devtype_group"].map(top_roles).fillna("")
-    result["role_count"] = mapped.groupby("devtype_group")["role"].nunique().reindex(result["devtype_group"]).to_numpy()
-    result["share_pct"] = result["count"] / max(result["count"].sum(), 1) * 100
     return result
 
 
