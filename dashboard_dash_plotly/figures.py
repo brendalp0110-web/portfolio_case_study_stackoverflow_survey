@@ -80,6 +80,7 @@ FIGURE_TEXT = {
         "respondents": "Respondents",
         "average_job_sat": "Average job satisfaction",
         "median_job_sat": "Median job satisfaction",
+        "no_compensation_data": "No compensation records for the active filters.",
         "education_labels": {
             "bachelor": "Bachelor's",
             "master": "Master's",
@@ -108,6 +109,7 @@ FIGURE_TEXT = {
         "respondents": "Encuestados",
         "average_job_sat": "Satisfacción laboral promedio",
         "median_job_sat": "Satisfacción laboral mediana",
+        "no_compensation_data": "No hay registros de compensación para los filtros activos.",
         "education_labels": {
             "bachelor": "Licenciatura",
             "master": "Maestría",
@@ -238,6 +240,30 @@ def apply_theme(fig: go.Figure, height: int = 420) -> go.Figure:
         },
         modebar={"orientation": "v"},
         bargap=0.28,
+    )
+    return fig
+
+
+def empty_state_figure(message: str, height: int = 420) -> go.Figure:
+    fig = apply_theme(go.Figure(), height=height)
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    fig.update_layout(
+        annotations=[
+            {
+                "text": message,
+                "xref": "paper",
+                "yref": "paper",
+                "x": 0.5,
+                "y": 0.5,
+                "xanchor": "center",
+                "yanchor": "middle",
+                "showarrow": False,
+                "font": {"family": FONT_FAMILY, "size": 17, "color": COLORS["muted"]},
+                "align": "center",
+            }
+        ],
+        margin={"l": 24, "r": 24, "t": 8, "b": 8},
     )
     return fig
 
@@ -482,6 +508,9 @@ def education_stack(df, lang: str | None = "EN") -> go.Figure:
 
 def compensation_box(summary_df, workstyle: str, y_max: float, lang: str | None = "EN") -> go.Figure:
     chart = summary_df[summary_df["workstyle"] == workstyle].copy()
+    if chart.empty:
+        return empty_state_figure(ft(lang, "no_compensation_data"), height=420)
+
     if not chart.empty:
         chart["experience_hover"] = chart["experience_band"].map(lambda value: experience_label(str(value), lang))
     fig = go.Figure()
