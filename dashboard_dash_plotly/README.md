@@ -29,6 +29,8 @@ http://127.0.0.1:8050
 
 The official hosted dashboard is deployed on Plotly Cloud. For deployment, upload a minimal app package rather than the full project repository.
 
+Public dashboard: [https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/](https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/)
+
 The Plotly Cloud package should include:
 
 - A root `app.py` file defining the Dash app.

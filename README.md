@@ -42,6 +42,8 @@ The cleaning process prioritizes consistency, interpretability, and a compact fi
 
 The official dashboard is implemented with Dash and Plotly in `dashboard_dash_plotly/` and published with Plotly Cloud.
 
+Public dashboard: [https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/](https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/)
+
 It includes:
 
 - Global filters for age and workstyle.
@@ -71,6 +73,7 @@ http://127.0.0.1:8050
 Deployment:
 
 - The public version is hosted on Plotly Cloud.
+- Public URL: [https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/](https://3c9d9e62-a7d7-41ea-907f-aa83ef0012f9.plotly.app/)
 - The deployment uses a minimal upload package rather than the full repository.
 - The package contains a root `app.py`, `dashboard_dash_plotly/`, `data/survey_data_cleaned_reduced.csv`, and dashboard runtime dependencies.
 - Plotly Cloud is configured with `app.py` as the main file and Python 3.13.
